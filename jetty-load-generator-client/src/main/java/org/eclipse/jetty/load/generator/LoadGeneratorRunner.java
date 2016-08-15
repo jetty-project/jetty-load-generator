@@ -28,7 +28,6 @@ import org.eclipse.jetty.util.log.Logger;
 import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -76,13 +75,15 @@ public class LoadGeneratorRunner
                     break;
                 }
 
-                List<LoadGeneratorProfile.Step> steps = buildSteps();
+                List<LoadGeneratorProfile.Step> steps = loadGenerator.getLoadGeneratorProfile().getSteps();
 
                 for ( LoadGeneratorProfile.Step step : steps )
                 {
                     for ( LoadGeneratorProfile.Resource resource : step.getResources() )
                     {
-                        resource.request.send( loadGeneratorResultHandler );
+                        Request request = buildRequest( resource );
+
+                        request.send( loadGeneratorResultHandler );
 
                         loadGeneratorResultHandler.getLoadGeneratorResult().getTotalRequest().incrementAndGet();
                     }
@@ -106,69 +107,27 @@ public class LoadGeneratorRunner
         }
     }
 
-    private List<LoadGeneratorProfile.Step> buildSteps()
-    {
-        LoadGeneratorProfile workflow = loadGenerator.getLoadGeneratorProfile();
 
-        List<LoadGeneratorProfile.Step> steps = new ArrayList<>( workflow.getSteps().size() );
+    private Request buildRequest( LoadGeneratorProfile.Resource resource ) {
+        final String url = //
+            loadGenerator.getScheme() + "://" //
+                + loadGenerator.getHost() + ":" //
+                + loadGenerator.getPort() + //
+                ( resource.getPath() == null ? "" : resource.getPath() );
 
-        for ( LoadGeneratorProfile.Step step : workflow.getSteps() )
+        Request request = httpClient.newRequest( url ).method( resource.getMethod() ).cookie( httpCookie );
+
+        if ( resource.getResponseSize() > 0 )
         {
-
-            LoadGeneratorProfile.Step clone = step.clone();
-
-            for ( LoadGeneratorProfile.Resource resource : clone.getResources() )
-            {
-                final String url = //
-                    loadGenerator.getScheme() + "://" //
-                        + loadGenerator.getHost() + ":" //
-                        + loadGenerator.getPort() + //
-                        ( resource.getPath() == null ? "" : resource.getPath() );
-
-                Request request = httpClient.newRequest( url ).method( resource.getMethod() ).cookie( httpCookie );
-
-                if ( resource.getResponseSize() > 0 )
-                {
-                    request.header( "X-Download", Integer.toString( resource.getResponseSize() ) );
-                }
-
-                if ( resource.getSize() > 0 )
-                {
-                    request.content( new BytesContentProvider( new byte[resource.getSize()] ) );
-                }
-
-                resource.request = request;
-            }
-
-            steps.add( clone );
+            request.header( "X-Download", Integer.toString( resource.getResponseSize() ) );
         }
 
-        return steps;
+        if ( resource.getSize() > 0 )
+        {
+            request.content( new BytesContentProvider( new byte[resource.getSize()] ) );
+        }
+
+        return request;
     }
-
-    private static class DelayedSend
-        implements Delayed
-    {
-        private long requestRate;
-
-        private DelayedSend( long requestRate )
-        {
-            this.requestRate = requestRate;
-        }
-
-        @Override
-        public long getDelay( TimeUnit unit )
-        {
-            return unit.convert( requestRate, TimeUnit.SECONDS );
-        }
-
-        @Override
-        public int compareTo( Delayed o )
-        {
-            // we don't mind
-            return 0;
-        }
-    }
-
 
 }

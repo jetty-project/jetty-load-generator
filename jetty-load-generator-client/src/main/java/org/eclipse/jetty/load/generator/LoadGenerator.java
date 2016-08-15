@@ -18,6 +18,7 @@
 
 package org.eclipse.jetty.load.generator;
 
+import org.HdrHistogram.AtomicHistogram;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Request;
@@ -26,14 +27,19 @@ import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -41,6 +47,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LoadGenerator
 {
+
+    private static final Logger LOGGER = Log.getLogger( LoadGenerator.class );
 
     private int users;
 
@@ -73,6 +81,8 @@ public class LoadGenerator
     private Scheduler httpScheduler;
 
     private SocketAddressResolver socketAddressResolver;
+
+    private Map<String, AtomicHistogram> histogramPerPath = new ConcurrentHashMap<>();
 
     protected enum Transport
     {
@@ -172,6 +182,11 @@ public class LoadGenerator
         return scheme;
     }
 
+    public Map<String, AtomicHistogram> getHistogramPerPath()
+    {
+        return histogramPerPath;
+    }
+
     //--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
@@ -215,7 +230,50 @@ public class LoadGenerator
 
         LoadGeneratorResult loadGeneratorResult = new LoadGeneratorResult();
 
-        LoadGeneratorResultHandler loadGeneratorResultHandler = new LoadGeneratorResultHandler(loadGeneratorResult);
+        // we iterate over all request path to create HdrHistogram now
+        // and do not have to worry about sync after that
+
+        this.histogramPerPath = new ConcurrentHashMap<>(  );
+
+        for ( LoadGeneratorProfile.Step step : getLoadGeneratorProfile().getSteps() )
+        {
+            for ( LoadGeneratorProfile.Resource resource : step.getResources() )
+            {
+                String path = resource.getPath();
+                path = path == null ? "" : path.trim();
+                if ( !histogramPerPath.containsKey( path ) )
+                {
+                    if (StringUtil.isBlank( path ))
+                    {
+                        path = "/";
+                    }
+                    histogramPerPath.put( path, new AtomicHistogram( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                                                     TimeUnit.MINUTES.toNanos( 1 ), //
+                                                                     3 ) {
+
+                                                // a more human readable toString
+                                              @Override
+                                              public String toString()
+                                              {
+                                                  return "max: " +  this.getMaxValue()  //
+                                                        + ", min: " + this.getMinValue() //
+                                                        + ", mean: " + this.getMean() //
+                                                        + ", minNonZero:" + this.getMinNonZeroValue() //
+                                                        + ", totalCount:" + this.getTotalCount();
+                                              }
+                                              
+                                          }
+                    ); //
+                }
+            }
+        }
+
+        LoadGeneratorResultHandler loadGeneratorResultHandler =
+            new LoadGeneratorResultHandler( loadGeneratorResult, histogramPerPath );
+
+        List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
+
+        listeners.add( loadGeneratorResultHandler );
 
         Executors.newWorkStealingPool( this.getUsers()).submit( () -> //
         {
@@ -236,7 +294,9 @@ public class LoadGenerator
 
                     this.clients.add( httpClient );
 
-                    httpClient.getRequestListeners().addAll( this.getRequestListeners() );
+                    httpClient.getRequestListeners().add( loadGeneratorResultHandler );
+
+                    httpClient.getRequestListeners().addAll( listeners );
 
                     LoadGeneratorRunner loadGeneratorRunner =
                         new LoadGeneratorRunner( httpClient, this, loadGeneratorResultHandler );
@@ -245,8 +305,7 @@ public class LoadGenerator
                 }
                 catch ( Exception e )
                 {
-                    // FIXME use any logging mechanism
-                    e.printStackTrace();
+                    LOGGER.warn( "ignore exception", e );
                 }
             }
 
@@ -260,8 +319,7 @@ public class LoadGenerator
             }
             catch ( Throwable e )
             {
-                // FIXME use any logging mechanism
-                e.printStackTrace();
+                LOGGER.warn( "ignore exception", e );
             }
 
 
@@ -321,7 +379,7 @@ public class LoadGenerator
             case HTTP:
             case HTTPS:
             {
-                return new HttpClientTransportOverHTTP( selectors );
+                return new HttpClientTransportOverHTTP( getSelectors() );
             }
             case H2C:
             case H2:
@@ -347,7 +405,7 @@ public class LoadGenerator
     protected HTTP2Client newHTTP2Client()
     {
         HTTP2Client http2Client = new HTTP2Client();
-        http2Client.setSelectors( selectors );
+        http2Client.setSelectors( getSelectors() );
         return http2Client;
     }
 

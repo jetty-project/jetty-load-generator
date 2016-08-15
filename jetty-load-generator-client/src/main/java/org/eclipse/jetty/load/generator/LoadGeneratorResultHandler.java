@@ -18,26 +18,49 @@
 
 package org.eclipse.jetty.load.generator;
 
+import org.HdrHistogram.AtomicHistogram;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.util.StringUtil;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+
+import java.util.Map;
 
 /**
  *
  */
 public class LoadGeneratorResultHandler
-    implements Response.CompleteListener
+    extends Request.Listener.Adapter
+    implements Response.CompleteListener, Request.BeginListener
 {
+
+    private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
+
+    public static final String START_TIME_HEADER = "X-Jetty-LoadGenerator-Start";
 
     private final LoadGeneratorResult loadGeneratorResult;
 
-    public LoadGeneratorResultHandler( LoadGeneratorResult loadGeneratorResult )
+    private final Map<String, AtomicHistogram> histogramPerPath;
+
+    public LoadGeneratorResultHandler( LoadGeneratorResult loadGeneratorResult,
+                                       Map<String, AtomicHistogram> histogramPerPath )
     {
         this.loadGeneratorResult = loadGeneratorResult;
+        this.histogramPerPath = histogramPerPath;
+    }
+
+    @Override
+    public void onBegin( Request request )
+    {
+        request.getHeaders().add( START_TIME_HEADER, Long.toString( System.nanoTime() ) );
     }
 
     @Override
     public void onComplete( Result result )
     {
+        long end = System.nanoTime();
         this.loadGeneratorResult.getTotalResponse().incrementAndGet();
 
         if ( result.isSucceeded() )
@@ -47,6 +70,24 @@ public class LoadGeneratorResultHandler
         else
         {
             this.loadGeneratorResult.getTotalFailure().incrementAndGet();
+        }
+        String path = result.getRequest().getPath();
+
+        AtomicHistogram atomicHistogram = this.histogramPerPath.get( path );
+        if ( atomicHistogram == null )
+        {
+            LOGGER.warn( "cannot find AtomicHistogram for path: {}", path );
+        }
+        else
+        {
+            String startTime = result.getRequest().getHeaders().get( START_TIME_HEADER );
+            if ( !StringUtil.isBlank( startTime ) )
+            {
+                long start = Long.parseLong( startTime );
+                long time = end - start;
+
+                atomicHistogram.recordValue( time );
+            }
         }
     }
 

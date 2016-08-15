@@ -74,7 +74,7 @@ public class LoadGeneratorTest
 
     final int usersNumber;
 
-    Logger logger = Log.getLogger( getClass());
+    Logger logger = Log.getLogger( getClass() );
 
     public LoadGeneratorTest( LoadGenerator.Transport transport, int usersNumber )
     {
@@ -82,11 +82,11 @@ public class LoadGeneratorTest
         this.usersNumber = usersNumber;
     }
 
-    @Parameterized.Parameters(name = "transport/users: {0},{1}")
-    public static Collection<Object[]> data() {
+    @Parameterized.Parameters( name = "transport/users: {0},{1}" )
+    public static Collection<Object[]> data()
+    {
 
-
-        List<LoadGenerator.Transport> transports = new ArrayList<>(  );
+        List<LoadGenerator.Transport> transports = new ArrayList<>();
 
         transports.add( LoadGenerator.Transport.HTTP );
 
@@ -97,15 +97,16 @@ public class LoadGeneratorTest
         //transports.add( LoadGenerator.Transport.H2C );
         //transports.add( LoadGenerator.Transport.FCGI);
 
-
         // number of users
         List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
 
-        List<Object[]> parameters = new ArrayList<>(  );
+        List<Object[]> parameters = new ArrayList<>();
 
-        for ( LoadGenerator.Transport transport : transports) {
-            for (Integer userNumber : users){
-                parameters.add( new Object[]{transport, userNumber});
+        for ( LoadGenerator.Transport transport : transports )
+        {
+            for ( Integer userNumber : users )
+            {
+                parameters.add( new Object[]{ transport, userNumber } );
             }
 
         }
@@ -117,17 +118,43 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        LoadGeneratorProfile loadGeneratorProfile =
-            LoadGeneratorProfile.Builder.builder() //
-                .resource( "/index.html" ).size( 1024 ) //
-                .build();
+        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
+            .resource( "/index.html" ).size( 1024 ) //
+            .resource( "" ).size( 1024 ) //
+            .build();
 
+        runProfile( loadGeneratorProfile );
+
+    }
+
+
+    //@Test
+    public void simple_with_group()
+        throws Exception
+    {
+
+        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
+            .resource( "/index.html" ).size( 1024 ) //
+            .resourceGroup() //
+            .resource( "/foo.html" ) //
+            .resource( "/beer.html" ) //
+            .then() //
+            .resource( "/wine.html" ) //
+            .build();
+
+        runProfile( loadGeneratorProfile );
+
+    }
+
+    protected void runProfile( LoadGeneratorProfile profile )
+        throws Exception
+    {
 
         TestRequestListener testRequestListener = new TestRequestListener();
 
         startServer( new LoadHandler() );
 
-        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false);
+        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
         LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
             .host( "localhost" ) //
@@ -138,7 +165,7 @@ public class LoadGeneratorTest
             .requestListeners( Arrays.asList( testRequestListener ) ) //
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
-            .loadGeneratorWorkflow( loadGeneratorProfile ) //
+            .loadGeneratorWorkflow( profile ) //
             .build() //
             .start();
 
@@ -150,18 +177,19 @@ public class LoadGeneratorTest
 
         Thread.sleep( 3000 );
 
-        Assert.assertTrue("successReponsesReceived :" + result.getTotalSuccess().get(), //
-                          result.getTotalSuccess().get() > 1);
+        Assert.assertTrue( "successReponsesReceived :" + result.getTotalSuccess().get(), //
+                           result.getTotalSuccess().get() > 1 );
 
         logger.info( "successReponsesReceived: {}", result.getTotalSuccess().get() );
 
-        Assert.assertTrue("failedReponsesReceived: " + result.getTotalFailure().get(), //
-                          result.getTotalFailure().get() < 1);
+        Assert.assertTrue( "failedReponsesReceived: " + result.getTotalFailure().get(), //
+                           result.getTotalFailure().get() < 1 );
 
         Assert.assertNotNull( result );
 
         loadGenerator.stop();
 
+        logger.info( "histogram per path: {}", loadGenerator.getHistogramPerPath() );
     }
 
     //---------------------------------------------------
@@ -169,7 +197,8 @@ public class LoadGeneratorTest
     //---------------------------------------------------
 
 
-    String scheme() {
+    String scheme()
+    {
         switch ( this.transport )
         {
             case HTTP:
@@ -187,6 +216,7 @@ public class LoadGeneratorTest
         extends Request.Listener.Adapter
     {
         AtomicLong onSuccessNumber = new AtomicLong();
+
         @Override
         public void onSuccess( Request request )
         {
@@ -213,9 +243,9 @@ public class LoadGeneratorTest
         connector = newServerConnector( server );
         server.addConnector( connector );
 
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
-        server.setHandler(context);
+        ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
+        context.setContextPath( "/" );
+        server.setHandler( context );
         context.addServlet( new ServletHolder( handler ), "/*" );
 
         server.start();
@@ -290,11 +320,12 @@ public class LoadGeneratorTest
 
             String method = request.getMethod().toUpperCase( Locale.ENGLISH );
 
-            HttpSession httpSession = request.getSession( );
+            HttpSession httpSession = request.getSession();
 
             int contentLength = request.getIntHeader( "X-Download" );
 
-            LOGGER.info( "method: {}, contentLength: {}, id: {}", method, contentLength, httpSession.getId()  );
+            LOGGER.info( "method: {}, contentLength: {}, id: {}, pathInfo: {}", //
+                         method, contentLength, httpSession.getId(), request.getPathInfo() );
 
             switch ( method )
             {

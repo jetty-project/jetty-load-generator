@@ -92,6 +92,10 @@ public class LoadGeneratorProfile
 
         public Builder resource( String path )
         {
+            if ( path == null )
+            {
+                path = "";
+            }
             Resource resource = new Resource( path );
             if ( resourceGroup )
             {
@@ -223,11 +227,6 @@ public class LoadGeneratorProfile
         private int size;
 
         private String method = HttpMethod.GET.asString();
-
-        /**
-         * the actual http request
-         */
-        Request request;
 
         public Resource( String path )
         {
