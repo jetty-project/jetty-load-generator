@@ -39,7 +39,7 @@ public class LoadGeneratorRunner
     implements Runnable
 {
 
-    private static final Logger LOGGER = Log.getLogger(LoadGeneratorRunner.class);
+    private static final Logger LOGGER = Log.getLogger( LoadGeneratorRunner.class );
 
     private final HttpClient httpClient;
 
@@ -52,7 +52,7 @@ public class LoadGeneratorRunner
     // maintain a session/cookie per httpClient
     // FIXME olamy: not sure we really need that??
     private final HttpCookie httpCookie = new HttpCookie( "XXX-Jetty-LoadGenerator", //
-                                            Long.toString( System.nanoTime() ) );
+                                                          Long.toString( System.nanoTime() ) );
 
     public LoadGeneratorRunner( HttpClient httpClient, LoadGenerator loadGenerator,
                                 LoadGeneratorResultHandler loadGeneratorResultHandler )
@@ -78,8 +78,9 @@ public class LoadGeneratorRunner
 
                 List<LoadGeneratorProfile.Step> steps = buildSteps();
 
-                for (LoadGeneratorProfile.Step step : steps) {
-                    for( LoadGeneratorProfile.Resource resource : step.getResources())
+                for ( LoadGeneratorProfile.Step step : steps )
+                {
+                    for ( LoadGeneratorProfile.Resource resource : step.getResources() )
                     {
                         resource.request.send( loadGeneratorResultHandler );
 
@@ -92,7 +93,8 @@ public class LoadGeneratorRunner
                 PLATFORM_TIMER.sleep( TimeUnit.MILLISECONDS.toMicros( waitTime ) );
 
             }
-        } catch ( RejectedExecutionException e )
+        }
+        catch ( RejectedExecutionException e )
         {
             // can happen if the client has been stopped
             LOGGER.debug( "ignore RejectedExecutionException", e );
@@ -110,26 +112,29 @@ public class LoadGeneratorRunner
 
         List<LoadGeneratorProfile.Step> steps = new ArrayList<>( workflow.getSteps().size() );
 
-        for( LoadGeneratorProfile.Step step : workflow.getSteps()) {
+        for ( LoadGeneratorProfile.Step step : workflow.getSteps() )
+        {
 
             LoadGeneratorProfile.Step clone = step.clone();
 
-            for ( LoadGeneratorProfile.Resource resource : clone.getResources()) {
+            for ( LoadGeneratorProfile.Resource resource : clone.getResources() )
+            {
                 final String url = //
                     loadGenerator.getScheme() + "://" //
-                    + loadGenerator.getHost() + ":" //
-                    + loadGenerator.getPort() + //
-                    ( resource.getPath() == null ? "" : resource.getPath() );
+                        + loadGenerator.getHost() + ":" //
+                        + loadGenerator.getPort() + //
+                        ( resource.getPath() == null ? "" : resource.getPath() );
 
                 Request request = httpClient.newRequest( url ).method( resource.getMethod() ).cookie( httpCookie );
 
-                if (resource.getResponseSize() > 0)
+                if ( resource.getResponseSize() > 0 )
                 {
                     request.header( "X-Download", Integer.toString( resource.getResponseSize() ) );
                 }
 
-                if (resource.getSize() > 0) {
-                    request.content( new BytesContentProvider( new byte[resource.getSize()]) );
+                if ( resource.getSize() > 0 )
+                {
+                    request.content( new BytesContentProvider( new byte[resource.getSize()] ) );
                 }
 
                 resource.request = request;
@@ -141,11 +146,13 @@ public class LoadGeneratorRunner
         return steps;
     }
 
-    private static class DelayedSend implements Delayed
+    private static class DelayedSend
+        implements Delayed
     {
         private long requestRate;
 
-        private DelayedSend( long requestRate) {
+        private DelayedSend( long requestRate )
+        {
             this.requestRate = requestRate;
         }
 

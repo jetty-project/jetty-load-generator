@@ -148,7 +148,6 @@ public class LoadGeneratorTest
 
         loadGenerator.setRequestRate( 10 );
 
-
         Thread.sleep( 3000 );
 
         Assert.assertTrue("successReponsesReceived :" + result.getTotalSuccess().get(), //
