@@ -1,0 +1,37 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <groupId>org.eclipse.jetty</groupId>
+    <artifactId>jetty-parent</artifactId>
+    <version>20</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.jetty.loadgenerator</groupId>
+  <artifactId>jetty-load-generator</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Jetty Load Generator Project</name>
+
+  <properties>
+    <jetty-93-version>9.3.9.v20160517</jetty-93-version>
+  </properties>
+
+  <modules>
+    <module>jetty-load-generator-client</module>
+  </modules>
+
+  <build>
+    <defaultGoal>install</defaultGoal>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+          <verbose>false</verbose>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
