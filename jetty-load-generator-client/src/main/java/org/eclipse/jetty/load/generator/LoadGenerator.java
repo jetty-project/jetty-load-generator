@@ -22,7 +22,6 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
-import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
 import org.eclipse.jetty.util.SocketAddressResolver;
@@ -30,7 +29,6 @@ import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
-import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -58,7 +56,7 @@ public class LoadGenerator
 
     private int port;
 
-    private LoadGeneratorWorkflow loadGeneratorWorkflow;
+    private LoadGeneratorProfile loadGeneratorProfile;
 
     private Transport transport;
 
@@ -85,14 +83,14 @@ public class LoadGenerator
         FCGI
     }
 
-    LoadGenerator( int users, int requestRate, String host, int port, LoadGeneratorWorkflow loadGeneratorWorkflow )
+    LoadGenerator( int users, int requestRate, String host, int port, LoadGeneratorProfile loadGeneratorProfile )
     {
         this.users = users;
         this.requestRate = requestRate;
         this.host = host;
         this.port = port;
         this.stop = new AtomicBoolean( false );
-        this.loadGeneratorWorkflow = loadGeneratorWorkflow;
+        this.loadGeneratorProfile = loadGeneratorProfile;
     }
 
     //--------------------------------------------------------------
@@ -164,9 +162,9 @@ public class LoadGenerator
         return socketAddressResolver;
     }
 
-    public LoadGeneratorWorkflow getLoadGeneratorWorkflow()
+    public LoadGeneratorProfile getLoadGeneratorProfile()
     {
-        return loadGeneratorWorkflow;
+        return loadGeneratorProfile;
     }
 
     public String getScheme()
@@ -384,7 +382,7 @@ public class LoadGenerator
 
         private SocketAddressResolver socketAddressResolver;
 
-        private LoadGeneratorWorkflow loadGeneratorWorkflow;
+        private LoadGeneratorProfile loadGeneratorProfile;
 
         public static Builder builder()
         {
@@ -472,9 +470,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder loadGeneratorWorkflow( LoadGeneratorWorkflow loadGeneratorWorkflow )
+        public Builder loadGeneratorWorkflow( LoadGeneratorProfile loadGeneratorProfile )
         {
-            this.loadGeneratorWorkflow = loadGeneratorWorkflow;
+            this.loadGeneratorProfile = loadGeneratorProfile;
             return this;
         }
 
@@ -482,7 +480,7 @@ public class LoadGenerator
         {
             this.validate();
             LoadGenerator loadGenerator =
-                new LoadGenerator( users, requestRate, host, port, this.loadGeneratorWorkflow );
+                new LoadGenerator( users, requestRate, host, port, this.loadGeneratorProfile );
             loadGenerator.transport = this.transport;
             loadGenerator.requestListeners = this.requestListeners == null ? new ArrayList<>() // //
                 : this.requestListeners;
@@ -518,8 +516,8 @@ public class LoadGenerator
                 throw new IllegalArgumentException( "port must be a positive integer" );
             }
 
-            if (this.loadGeneratorWorkflow == null) {
-                throw new IllegalArgumentException( "a loadGeneratorWorkflow is mandatory" );
+            if (this.loadGeneratorProfile == null) {
+                throw new IllegalArgumentException( "a loadGeneratorProfile is mandatory" );
             }
 
         }

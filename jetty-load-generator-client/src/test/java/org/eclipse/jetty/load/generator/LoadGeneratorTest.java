@@ -117,8 +117,8 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        LoadGeneratorWorkflow loadGeneratorWorkflow =
-            LoadGeneratorWorkflow.Builder.builder() //
+        LoadGeneratorProfile loadGeneratorProfile =
+            LoadGeneratorProfile.Builder.builder() //
                 .resource( "/index.html" ).size( 1024 ) //
                 .build();
 
@@ -138,7 +138,7 @@ public class LoadGeneratorTest
             .requestListeners( Arrays.asList( testRequestListener ) ) //
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
-            .loadGeneratorWorkflow( loadGeneratorWorkflow ) //
+            .loadGeneratorWorkflow( loadGeneratorProfile ) //
             .build() //
             .start();
 

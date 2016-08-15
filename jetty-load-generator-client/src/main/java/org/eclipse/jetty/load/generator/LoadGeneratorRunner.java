@@ -76,10 +76,10 @@ public class LoadGeneratorRunner
                     break;
                 }
 
-                List<LoadGeneratorWorkflow.Step> steps = buildSteps();
+                List<LoadGeneratorProfile.Step> steps = buildSteps();
 
-                for (LoadGeneratorWorkflow.Step step : steps) {
-                    for( LoadGeneratorWorkflow.Resource resource : step.getResources())
+                for (LoadGeneratorProfile.Step step : steps) {
+                    for( LoadGeneratorProfile.Resource resource : step.getResources())
                     {
                         resource.request.send( loadGeneratorResultHandler );
 
@@ -104,17 +104,17 @@ public class LoadGeneratorRunner
         }
     }
 
-    private List<LoadGeneratorWorkflow.Step> buildSteps()
+    private List<LoadGeneratorProfile.Step> buildSteps()
     {
-        LoadGeneratorWorkflow workflow = loadGenerator.getLoadGeneratorWorkflow();
+        LoadGeneratorProfile workflow = loadGenerator.getLoadGeneratorProfile();
 
-        List<LoadGeneratorWorkflow.Step> steps = new ArrayList<>( workflow.getSteps().size() );
+        List<LoadGeneratorProfile.Step> steps = new ArrayList<>( workflow.getSteps().size() );
 
-        for( LoadGeneratorWorkflow.Step step : workflow.getSteps()) {
+        for( LoadGeneratorProfile.Step step : workflow.getSteps()) {
 
-            LoadGeneratorWorkflow.Step clone = step.clone();
+            LoadGeneratorProfile.Step clone = step.clone();
 
-            for ( LoadGeneratorWorkflow.Resource resource : clone.getResources()) {
+            for ( LoadGeneratorProfile.Resource resource : clone.getResources()) {
                 final String url = //
                     loadGenerator.getScheme() + "://" //
                     + loadGenerator.getHost() + ":" //

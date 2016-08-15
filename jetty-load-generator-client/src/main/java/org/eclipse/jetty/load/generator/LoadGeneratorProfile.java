@@ -28,13 +28,13 @@ import java.util.Stack;
 /**
  *
  */
-public class LoadGeneratorWorkflow
+public class LoadGeneratorProfile
 {
 
     private List<Step> steps = new ArrayList<>();
 
 
-    public LoadGeneratorWorkflow( List<Step> steps )
+    public LoadGeneratorProfile( List<Step> steps )
     {
         this.steps = steps;
     }
@@ -85,9 +85,9 @@ public class LoadGeneratorWorkflow
             // no op
         }
 
-        public LoadGeneratorWorkflow build()
+        public LoadGeneratorProfile build()
         {
-            return new LoadGeneratorWorkflow( steps );
+            return new LoadGeneratorProfile( steps );
         }
 
         public Builder resource( String path )
