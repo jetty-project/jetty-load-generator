@@ -27,12 +27,16 @@ import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.ConnectionFactory;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.HandlerWrapper;
+import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.server.session.HashSessionIdManager;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -75,6 +79,8 @@ public class LoadGeneratorTest
     final int usersNumber;
 
     Logger logger = Log.getLogger( getClass() );
+
+    StatisticsHandler statisticsHandler = new StatisticsHandler();
 
     public LoadGeneratorTest( LoadGenerator.Transport transport, int usersNumber )
     {
@@ -128,7 +134,7 @@ public class LoadGeneratorTest
     }
 
 
-    //@Test
+    @Test
     public void simple_with_group()
         throws Exception
     {
@@ -245,7 +251,12 @@ public class LoadGeneratorTest
 
         ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
         context.setContextPath( "/" );
-        server.setHandler( context );
+
+        HandlerCollection handlerCollection = new HandlerCollection(  );
+        handlerCollection.setHandlers( new Handler[]{context, statisticsHandler});
+
+        server.setHandler( handlerCollection );
+
         context.addServlet( new ServletHolder( handler ), "/*" );
 
         server.start();
@@ -352,5 +363,4 @@ public class LoadGeneratorTest
             }
         }
     }
-
 }

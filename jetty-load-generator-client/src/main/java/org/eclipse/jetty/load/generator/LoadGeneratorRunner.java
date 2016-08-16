@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
@@ -26,7 +27,6 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
 import java.net.HttpCookie;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -79,11 +79,24 @@ public class LoadGeneratorRunner
 
                 for ( LoadGeneratorProfile.Step step : steps )
                 {
+                    boolean lastResource = false;
+                    int resourceNumber = 0;
+
                     for ( LoadGeneratorProfile.Resource resource : step.getResources() )
                     {
+                        resourceNumber++;
+                        lastResource = resourceNumber == step.getResources().size();
                         Request request = buildRequest( resource );
 
-                        request.send( loadGeneratorResultHandler );
+                        if ( step.isWait() && lastResource )
+                        {
+                            ContentResponse contentResponse = request.send();
+                            loadGeneratorResultHandler.onComplete( contentResponse );
+                        }
+                        else
+                        {
+                            request.send( loadGeneratorResultHandler );
+                        }
 
                         loadGeneratorResultHandler.getLoadGeneratorResult().getTotalRequest().incrementAndGet();
                     }
@@ -108,7 +121,8 @@ public class LoadGeneratorRunner
     }
 
 
-    private Request buildRequest( LoadGeneratorProfile.Resource resource ) {
+    private Request buildRequest( LoadGeneratorProfile.Resource resource )
+    {
         final String url = //
             loadGenerator.getScheme() + "://" //
                 + loadGenerator.getHost() + ":" //

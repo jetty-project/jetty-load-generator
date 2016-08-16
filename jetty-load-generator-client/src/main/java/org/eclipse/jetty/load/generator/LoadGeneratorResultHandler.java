@@ -60,10 +60,15 @@ public class LoadGeneratorResultHandler
     @Override
     public void onComplete( Result result )
     {
+        onComplete( result.getResponse() );
+    }
+
+    public void onComplete( Response response )
+    {
         long end = System.nanoTime();
         this.loadGeneratorResult.getTotalResponse().incrementAndGet();
 
-        if ( result.isSucceeded() )
+        if ( ( response.getStatus() / 100 ) == 2 )
         {
             this.loadGeneratorResult.getTotalSuccess().incrementAndGet();
         }
@@ -71,7 +76,7 @@ public class LoadGeneratorResultHandler
         {
             this.loadGeneratorResult.getTotalFailure().incrementAndGet();
         }
-        String path = result.getRequest().getPath();
+        String path = response.getRequest().getPath();
 
         AtomicHistogram atomicHistogram = this.histogramPerPath.get( path );
         if ( atomicHistogram == null )
@@ -80,16 +85,16 @@ public class LoadGeneratorResultHandler
         }
         else
         {
-            String startTime = result.getRequest().getHeaders().get( START_TIME_HEADER );
+            String startTime = response.getRequest().getHeaders().get( START_TIME_HEADER );
             if ( !StringUtil.isBlank( startTime ) )
             {
-                long start = Long.parseLong( startTime );
-                long time = end - start;
+                long time = end - Long.parseLong( startTime );
 
                 atomicHistogram.recordValue( time );
             }
         }
     }
+
 
     public LoadGeneratorResult getLoadGeneratorResult()
     {
