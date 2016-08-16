@@ -196,6 +196,8 @@ public class LoadGeneratorTest
         loadGenerator.stop();
 
         logger.info( "histogram per path: {}", loadGenerator.getHistogramPerPath() );
+
+        logger.info( "latency histogram: {}", loadGenerator.getLatencyHistogram() );
     }
 
     //---------------------------------------------------
@@ -211,7 +213,6 @@ public class LoadGeneratorTest
                 return HttpScheme.HTTP.asString();
             case HTTPS:
                 return HttpScheme.HTTPS.asString();
-
             default:
                 throw new IllegalArgumentException( "unknow scheme" );
         }

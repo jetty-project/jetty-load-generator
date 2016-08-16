@@ -90,11 +90,15 @@ public class LoadGeneratorRunner
 
                         if ( step.isWait() && lastResource )
                         {
+                            request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
+                                            Long.toString( System.nanoTime() ) );
                             ContentResponse contentResponse = request.send();
                             loadGeneratorResultHandler.onComplete( contentResponse );
                         }
                         else
                         {
+                            request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
+                                            Long.toString( System.nanoTime() ) );
                             request.send( loadGeneratorResultHandler );
                         }
 

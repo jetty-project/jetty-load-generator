@@ -84,6 +84,24 @@ public class LoadGenerator
 
     private Map<String, AtomicHistogram> histogramPerPath = new ConcurrentHashMap<>();
 
+    private final AtomicHistogram latencyHistogram = new AtomicHistogram( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                                                         TimeUnit.MINUTES.toNanos( 1 ), //
+                                                                         3 )
+                                                            {
+
+                                                                // a more human readable toString
+                                                                @Override
+                                                                public String toString()
+                                                                {
+                                                                    return "max: " + this.getMaxValue()  //
+                                                                        + ", min: " + this.getMinValue() //
+                                                                        + ", mean: " + this.getMean() //
+                                                                        + ", minNonZero:" + this.getMinNonZeroValue() //
+                                                                        + ", totalCount:" + this.getTotalCount();
+                                                                }
+
+                                                            };
+
     protected enum Transport
     {
         HTTP,
@@ -187,6 +205,11 @@ public class LoadGenerator
         return histogramPerPath;
     }
 
+    public AtomicHistogram getLatencyHistogram()
+    {
+        return latencyHistogram;
+    }
+
     //--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
@@ -271,7 +294,7 @@ public class LoadGenerator
         }
 
         LoadGeneratorResultHandler loadGeneratorResultHandler =
-            new LoadGeneratorResultHandler( loadGeneratorResult, histogramPerPath );
+            new LoadGeneratorResultHandler( loadGeneratorResult, histogramPerPath, latencyHistogram );
 
         List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
