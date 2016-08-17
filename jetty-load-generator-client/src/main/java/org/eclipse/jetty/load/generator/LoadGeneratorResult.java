@@ -18,6 +18,9 @@
 
 package org.eclipse.jetty.load.generator;
 
+import org.HdrHistogram.Recorder;
+
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class LoadGeneratorResult
@@ -30,9 +33,14 @@ public class LoadGeneratorResult
 
     private AtomicLong totalFailure = new AtomicLong( 0 );
 
-    public LoadGeneratorResult()
+    private final Map<String, Recorder> recorderPerPath;
+
+    private final Recorder latencyRecorder;
+
+    public LoadGeneratorResult( Map<String, Recorder> recorderPerPath, Recorder latencyRecorder )
     {
-        // no op
+        this.latencyRecorder = latencyRecorder;
+        this.recorderPerPath = recorderPerPath;
     }
 
     public AtomicLong getTotalRequest()
@@ -53,5 +61,15 @@ public class LoadGeneratorResult
     public AtomicLong getTotalFailure()
     {
         return totalFailure;
+    }
+
+    public Map<String, Recorder> getRecorderPerPath()
+    {
+        return recorderPerPath;
+    }
+
+    public Recorder getLatencyRecorder()
+    {
+        return latencyRecorder;
     }
 }

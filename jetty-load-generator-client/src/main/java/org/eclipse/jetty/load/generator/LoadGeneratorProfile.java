@@ -18,7 +18,6 @@
 
 package org.eclipse.jetty.load.generator;
 
-import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpMethod;
 
 import java.util.ArrayList;

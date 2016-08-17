@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator;
 
 import org.HdrHistogram.AtomicHistogram;
+import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
@@ -50,17 +51,17 @@ public class LoadGeneratorResultHandler
 
     private final LoadGeneratorResult loadGeneratorResult;
 
-    private final Map<String, AtomicHistogram> histogramPerPath;
+    private final Map<String, Recorder> recorderPerPath;
 
-    private AtomicHistogram latencyHistogram;
+    private Recorder latencyRecorder;
 
     public LoadGeneratorResultHandler( LoadGeneratorResult loadGeneratorResult, //
-                                       Map<String, AtomicHistogram> histogramPerPath, //
-                                       AtomicHistogram latencyHistogram )
+                                       Map<String, Recorder> recorderPerPath, //
+                                       Recorder latencyHistogram )
     {
         this.loadGeneratorResult = loadGeneratorResult;
-        this.histogramPerPath = histogramPerPath;
-        this.latencyHistogram = latencyHistogram;
+        this.recorderPerPath = recorderPerPath;
+        this.latencyRecorder = latencyHistogram;
     }
 
     @Override
@@ -70,7 +71,7 @@ public class LoadGeneratorResultHandler
         String sendCallTime = request.getHeaders().get( AFTER_SEND_TIME_HEADER );
         if (StringUtil.isNotBlank( sendCallTime ))
         {
-            this.latencyHistogram.recordValue( System.nanoTime() - Long.parseLong( sendCallTime ) );
+            this.latencyRecorder.recordValue( System.nanoTime() - Long.parseLong( sendCallTime ) );
         }
         request.header( START_SEND_TIME_HEADER, Long.toString( System.nanoTime() ) );
     }
@@ -98,10 +99,10 @@ public class LoadGeneratorResultHandler
         }
         String path = response.getRequest().getPath();
 
-        AtomicHistogram atomicHistogram = this.histogramPerPath.get( path );
-        if ( atomicHistogram == null )
+        Recorder recorder = this.recorderPerPath.get( path );
+        if ( recorder == null )
         {
-            LOGGER.warn( "cannot find AtomicHistogram for path: {}", path );
+            LOGGER.warn( "cannot find Recorder for path: {}", path );
         }
         else
         {
@@ -110,7 +111,7 @@ public class LoadGeneratorResultHandler
             {
                 long time = end - Long.parseLong( startTime );
 
-                atomicHistogram.recordValue( time );
+                recorder.recordValue( time );
             }
         }
     }

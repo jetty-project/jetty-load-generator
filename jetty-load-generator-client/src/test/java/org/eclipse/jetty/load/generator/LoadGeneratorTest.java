@@ -20,6 +20,8 @@ package org.eclipse.jetty.load.generator;
 
 
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.fcgi.server.ServerFCGIConnectionFactory;
 import org.eclipse.jetty.http.HttpScheme;
@@ -193,11 +195,22 @@ public class LoadGeneratorTest
 
         Assert.assertNotNull( result );
 
+
+
+        logger.info( "recorder per path: {}", result.getRecorderPerPath() );
+
+        logger.info( "latency recorder: {}", result.getLatencyRecorder() );
+
+        HttpClient httpClient = new HttpClient(  );
+        httpClient.start();
+        Request request = httpClient.newRequest( "http://localhost:" + loadGenerator.getCollectorPort() + "/collector" );
+        ContentResponse response = request.send();
+
+        Assert.assertEquals( 200, response.getStatus() );
+
         loadGenerator.stop();
 
-        logger.info( "histogram per path: {}", loadGenerator.getHistogramPerPath() );
-
-        logger.info( "latency histogram: {}", loadGenerator.getLatencyHistogram() );
+        httpClient.stop();
     }
 
     //---------------------------------------------------

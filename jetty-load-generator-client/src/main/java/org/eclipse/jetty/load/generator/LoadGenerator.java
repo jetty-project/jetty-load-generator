@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator;
 
 import org.HdrHistogram.AtomicHistogram;
+import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Request;
@@ -58,11 +59,25 @@ public class LoadGenerator
 
     private int selectors = 1;
 
+    /**
+     * target host scheme
+     */
     private String scheme;
 
+    /**
+     * target host
+     */
     private String host;
 
+    /**
+     * target host port
+     */
     private int port;
+
+    /**
+     * port used to collect statistics data
+     */
+    private int collectorPort = 0;
 
     private LoadGeneratorProfile loadGeneratorProfile;
 
@@ -82,25 +97,13 @@ public class LoadGenerator
 
     private SocketAddressResolver socketAddressResolver;
 
-    private Map<String, AtomicHistogram> histogramPerPath = new ConcurrentHashMap<>();
+    private Map<String, Recorder> recorderPerPath = new ConcurrentHashMap<>();
 
-    private final AtomicHistogram latencyHistogram = new AtomicHistogram( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+    private final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
                                                                          TimeUnit.MINUTES.toNanos( 1 ), //
-                                                                         3 )
-                                                            {
+                                                                         3 );
 
-                                                                // a more human readable toString
-                                                                @Override
-                                                                public String toString()
-                                                                {
-                                                                    return "max: " + this.getMaxValue()  //
-                                                                        + ", min: " + this.getMinValue() //
-                                                                        + ", mean: " + this.getMean() //
-                                                                        + ", minNonZero:" + this.getMinNonZeroValue() //
-                                                                        + ", totalCount:" + this.getTotalCount();
-                                                                }
-
-                                                            };
+    private CollectorServer collectorServer;
 
     protected enum Transport
     {
@@ -200,14 +203,9 @@ public class LoadGenerator
         return scheme;
     }
 
-    public Map<String, AtomicHistogram> getHistogramPerPath()
+    public int getCollectorPort()
     {
-        return histogramPerPath;
-    }
-
-    public AtomicHistogram getLatencyHistogram()
-    {
-        return latencyHistogram;
+        return collectorPort;
     }
 
     //--------------------------------------------------------------
@@ -232,6 +230,7 @@ public class LoadGenerator
         this.stop.set( true );
         try
         {
+            collectorServer.stop();
             for ( HttpClient httpClient : this.clients )
             {
                 httpClient.stop();
@@ -251,12 +250,10 @@ public class LoadGenerator
         throws Exception
     {
 
-        LoadGeneratorResult loadGeneratorResult = new LoadGeneratorResult();
-
         // we iterate over all request path to create HdrHistogram now
         // and do not have to worry about sync after that
 
-        this.histogramPerPath = new ConcurrentHashMap<>(  );
+        this.recorderPerPath = new ConcurrentHashMap<>(  );
 
         for ( LoadGeneratorProfile.Step step : getLoadGeneratorProfile().getSteps() )
         {
@@ -264,37 +261,26 @@ public class LoadGenerator
             {
                 String path = resource.getPath();
                 path = path == null ? "" : path.trim();
-                if ( !histogramPerPath.containsKey( path ) )
+                if ( !recorderPerPath.containsKey( path ) )
                 {
                     if (StringUtil.isBlank( path ))
                     {
                         path = "/";
                     }
 
-                    AtomicHistogram atomicHistogram = new AtomicHistogram( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                    Recorder recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
                                                                            TimeUnit.MINUTES.toNanos( 1 ), //
-                                                                           3 ) {
+                                                                           3 );
 
-                        // a more human readable toString
-                        @Override
-                        public String toString()
-                        {
-                            return "max: " + this.getMaxValue()  //
-                                + ", min: " + this.getMinValue() //
-                                + ", mean: " + this.getMean() //
-                                + ", minNonZero:" + this.getMinNonZeroValue() //
-                                + ", totalCount:" + this.getTotalCount();
-                        }
-
-                    };
-
-                    histogramPerPath.put( path, atomicHistogram );
+                    recorderPerPath.put( path, recorder );
                 }
             }
         }
 
+        LoadGeneratorResult loadGeneratorResult = new LoadGeneratorResult(this.recorderPerPath, this.latencyRecorder);
+
         LoadGeneratorResultHandler loadGeneratorResultHandler =
-            new LoadGeneratorResultHandler( loadGeneratorResult, histogramPerPath, latencyHistogram );
+            new LoadGeneratorResultHandler( loadGeneratorResult, recorderPerPath, latencyRecorder );
 
         List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
@@ -349,6 +335,12 @@ public class LoadGenerator
 
 
         } );
+
+        // starting collector part
+
+        collectorServer = new CollectorServer( this );
+
+        collectorServer.start();
 
         return loadGeneratorResult;
     }
@@ -467,6 +459,8 @@ public class LoadGenerator
 
         private LoadGeneratorProfile loadGeneratorProfile;
 
+        private int collectorPort = 0;
+
         public static Builder builder()
         {
             return new Builder();
@@ -559,6 +553,12 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder collectorPort( int collectorPort )
+        {
+            this.collectorPort = collectorPort;
+            return this;
+        }
+
         public LoadGenerator build()
         {
             this.validate();
@@ -574,6 +574,7 @@ public class LoadGenerator
             loadGenerator.httpScheduler = httpScheduler;
             loadGenerator.socketAddressResolver = socketAddressResolver == null ? //
                 new SocketAddressResolver.Sync() : socketAddressResolver;
+            loadGenerator.collectorPort = collectorPort;
             return loadGenerator;
         }
 
@@ -599,8 +600,14 @@ public class LoadGenerator
                 throw new IllegalArgumentException( "port must be a positive integer" );
             }
 
-            if (this.loadGeneratorProfile == null) {
+            if ( this.loadGeneratorProfile == null )
+            {
                 throw new IllegalArgumentException( "a loadGeneratorProfile is mandatory" );
+            }
+
+            if ( collectorPort < 0 )
+            {
+                throw new IllegalArgumentException( "collectorPort must be non negative integer" );
             }
 
         }
