@@ -24,6 +24,7 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.fcgi.server.ServerFCGIConnectionFactory;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
@@ -204,7 +205,7 @@ public class LoadGeneratorTest
         HttpClient httpClient = new HttpClient(  );
         httpClient.start();
         Request request = httpClient.newRequest( "http://localhost:" + loadGenerator.getCollectorPort() + "/collector" );
-        ContentResponse response = request.send();
+        ContentResponse response = request.method( HttpMethod.GET.asString() ).send();
 
         Assert.assertEquals( 200, response.getStatus() );
 

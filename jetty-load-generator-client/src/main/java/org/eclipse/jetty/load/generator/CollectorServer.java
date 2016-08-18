@@ -19,6 +19,7 @@
 
 package org.eclipse.jetty.load.generator;
 
+import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -74,14 +75,16 @@ public class CollectorServer
         server.addConnector( connector );
 
         ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
-        context.setContextPath( "/" );
+
+        server.setHandler( context );
 
         CollectorServlet collectorServlet = new CollectorServlet( loadGenerator );
 
         // TODO path configurable?
-        context.addServlet( new ServletHolder( collectorServlet ), "/collector" );
+        context.addServlet( new ServletHolder( collectorServlet ), "/collector/*" );
 
         server.start();
+
 
         this.port = connector.getLocalPort();
     }
@@ -100,6 +103,7 @@ public class CollectorServer
         server.stop();
     }
 
+
     public static class CollectorServlet
         extends HttpServlet
     {
@@ -111,6 +115,13 @@ public class CollectorServer
         public CollectorServlet( LoadGenerator loadGenerator )
         {
             this.loadGenerator = loadGenerator;
+        }
+
+        @Override
+        protected void service( HttpServletRequest req, HttpServletResponse resp )
+            throws ServletException, IOException
+        {
+            super.service( req, resp );
         }
 
         @Override

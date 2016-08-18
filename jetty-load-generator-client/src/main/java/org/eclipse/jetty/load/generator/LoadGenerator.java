@@ -342,6 +342,8 @@ public class LoadGenerator
 
         collectorServer.start();
 
+        this.collectorPort = collectorServer.getPort();
+
         return loadGeneratorResult;
     }
 

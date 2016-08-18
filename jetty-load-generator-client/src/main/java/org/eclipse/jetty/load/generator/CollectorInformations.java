@@ -1,0 +1,129 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
+package org.eclipse.jetty.load.generator;
+
+import org.HdrHistogram.Histogram;
+
+public class CollectorInformations
+{
+
+    private long totalCount;
+
+    private long minValue;
+
+    private long maxValue;
+
+    private double mean;
+
+    private double stdDeviation;
+
+    private long startTimeStamp;
+
+    private long endTimeStamp;
+
+    public CollectorInformations( Histogram histogram) {
+
+        this.totalCount = histogram.getTotalCount();
+        this.minValue = histogram.getMinNonZeroValue();
+        this.maxValue = histogram.getMaxValue();
+        this.mean = histogram.getMean();
+        this.startTimeStamp = histogram.getStartTimeStamp();
+        this.endTimeStamp = histogram.getEndTimeStamp();
+        this.stdDeviation =histogram.getStdDeviation();
+    }
+
+    public long getEndTimeStamp()
+    {
+        return endTimeStamp;
+    }
+
+    public void setEndTimeStamp( long endTimeStamp )
+    {
+        this.endTimeStamp = endTimeStamp;
+    }
+
+    public long getTotalCount()
+    {
+        return totalCount;
+    }
+
+    public void setTotalCount( long totalCount )
+    {
+        this.totalCount = totalCount;
+    }
+
+    public long getMinValue()
+    {
+        return minValue;
+    }
+
+    public void setMinValue( long minValue )
+    {
+        this.minValue = minValue;
+    }
+
+    public long getMaxValue()
+    {
+        return maxValue;
+    }
+
+    public void setMaxValue( long maxValue )
+    {
+        this.maxValue = maxValue;
+    }
+
+    public double getMean()
+    {
+        return mean;
+    }
+
+    public void setMean( double mean )
+    {
+        this.mean = mean;
+    }
+
+    public double getStdDeviation()
+    {
+        return stdDeviation;
+    }
+
+    public void setStdDeviation( double stdDeviation )
+    {
+        this.stdDeviation = stdDeviation;
+    }
+
+    public long getStartTimeStamp()
+    {
+        return startTimeStamp;
+    }
+
+    public void setStartTimeStamp( long startTimeStamp )
+    {
+        this.startTimeStamp = startTimeStamp;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "CollectorInformations{" + "totalCount=" + totalCount + ", minValue=" + minValue + ", maxValue="
+            + maxValue + ", mean=" + mean + ", stdDeviation=" + stdDeviation + ", startTimeStamp=" + startTimeStamp
+            + ", endTimeStamp=" + endTimeStamp + '}';
+    }
+
+}
