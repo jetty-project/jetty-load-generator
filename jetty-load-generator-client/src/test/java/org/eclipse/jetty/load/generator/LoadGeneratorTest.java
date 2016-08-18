@@ -209,6 +209,8 @@ public class LoadGeneratorTest
 
         Assert.assertEquals( 200, response.getStatus() );
 
+        logger.info( "resp: {}", response.getContentAsString() );
+
         loadGenerator.stop();
 
         httpClient.stop();

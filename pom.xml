@@ -35,7 +35,8 @@
 
   <properties>
     <jetty-93-version>9.3.9.v20160517</jetty-93-version>
-    <jetty.version>${jetty-93-version}</jetty.version>
+    <jackson2-version>2.7.5</jackson2-version>
+    <jetty.version>9.3.12-SNAPSHOT</jetty.version> <!-- ${jetty-93-version} -->
   </properties>
 
   <modules>
@@ -48,6 +49,12 @@
         <groupId>org.hdrhistogram</groupId>
         <artifactId>HdrHistogram</artifactId>
         <version>2.1.9</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson2-version}</version>
       </dependency>
 
       <dependency>

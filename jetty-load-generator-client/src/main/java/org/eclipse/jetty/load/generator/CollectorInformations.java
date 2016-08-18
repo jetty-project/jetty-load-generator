@@ -23,6 +23,17 @@ import org.HdrHistogram.Histogram;
 public class CollectorInformations
 {
 
+    public static enum InformationType
+    {
+        LATENCY,
+        REQUEST,
+        MONITORING;
+    }
+
+    private InformationType informationType;
+
+    private String path;
+
     private long totalCount;
 
     private long minValue;
@@ -37,15 +48,16 @@ public class CollectorInformations
 
     private long endTimeStamp;
 
-    public CollectorInformations( Histogram histogram) {
-
+    public CollectorInformations( Histogram histogram, InformationType informationType )
+    {
+        this.informationType = informationType;
         this.totalCount = histogram.getTotalCount();
         this.minValue = histogram.getMinNonZeroValue();
         this.maxValue = histogram.getMaxValue();
         this.mean = histogram.getMean();
         this.startTimeStamp = histogram.getStartTimeStamp();
         this.endTimeStamp = histogram.getEndTimeStamp();
-        this.stdDeviation =histogram.getStdDeviation();
+        this.stdDeviation = histogram.getStdDeviation();
     }
 
     public long getEndTimeStamp()

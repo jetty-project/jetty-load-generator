@@ -19,6 +19,7 @@
 
 package org.eclipse.jetty.load.generator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -118,19 +119,15 @@ public class CollectorServer
         }
 
         @Override
-        protected void service( HttpServletRequest req, HttpServletResponse resp )
-            throws ServletException, IOException
-        {
-            super.service( req, resp );
-        }
-
-        @Override
         protected void doGet( HttpServletRequest req, HttpServletResponse resp )
             throws ServletException, IOException
         {
             LOGGER.info( "doGet" );
 
-            super.doGet( req, resp );
+            ObjectMapper mapper = new ObjectMapper();
+
+            mapper.writeValue( resp.getOutputStream(), loadGenerator.getLatencyInformations() );
+
         }
     }
 

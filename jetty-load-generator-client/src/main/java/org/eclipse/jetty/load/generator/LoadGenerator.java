@@ -208,6 +208,12 @@ public class LoadGenerator
         return collectorPort;
     }
 
+    public CollectorInformations getLatencyInformations()
+    {
+        return new CollectorInformations( latencyRecorder.getIntervalHistogram(), //
+                                          CollectorInformations.InformationType.LATENCY );
+    }
+
     //--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
