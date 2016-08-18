@@ -204,8 +204,15 @@ public class LoadGeneratorTest
 
         HttpClient httpClient = new HttpClient(  );
         httpClient.start();
-        Request request = httpClient.newRequest( "http://localhost:" + loadGenerator.getCollectorPort() + "/collector" );
+        Request request = httpClient.newRequest( "http://localhost:" + loadGenerator.getCollectorPort() + "/collector/client-latency" );
         ContentResponse response = request.method( HttpMethod.GET.asString() ).send();
+
+        Assert.assertEquals( 200, response.getStatus() );
+
+        logger.info( "resp: {}", response.getContentAsString() );
+
+        request = httpClient.newRequest( "http://localhost:" + loadGenerator.getCollectorPort() + "/collector/response-times" );
+        response = request.method( HttpMethod.GET.asString() ).send();
 
         Assert.assertEquals( 200, response.getStatus() );
 

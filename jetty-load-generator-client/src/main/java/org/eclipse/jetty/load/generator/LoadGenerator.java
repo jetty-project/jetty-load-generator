@@ -34,6 +34,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -212,6 +213,18 @@ public class LoadGenerator
     {
         return new CollectorInformations( latencyRecorder.getIntervalHistogram(), //
                                           CollectorInformations.InformationType.LATENCY );
+    }
+
+    public Map<String, CollectorInformations> getCollectorInformationsPerPath() {
+        Map<String,CollectorInformations> map = new HashMap<>( this.recorderPerPath.size() );
+
+        for(Map.Entry<String, Recorder> entry : this.recorderPerPath.entrySet())
+        {
+            map.put( entry.getKey(), new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                                CollectorInformations.InformationType.REQUEST ) );
+        }
+
+        return map;
     }
 
     //--------------------------------------------------------------

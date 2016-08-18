@@ -20,7 +20,6 @@
 package org.eclipse.jetty.load.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -28,6 +27,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -37,7 +37,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  *
@@ -86,7 +85,6 @@ public class CollectorServer
 
         server.start();
 
-
         this.port = connector.getLocalPort();
     }
 
@@ -109,7 +107,7 @@ public class CollectorServer
         extends HttpServlet
     {
 
-        private static final Logger LOGGER = Log.getLogger( CollectorServlet.class);
+        private static final Logger LOGGER = Log.getLogger( CollectorServlet.class );
 
         private LoadGenerator loadGenerator;
 
@@ -126,7 +124,17 @@ public class CollectorServer
 
             ObjectMapper mapper = new ObjectMapper();
 
-            mapper.writeValue( resp.getOutputStream(), loadGenerator.getLatencyInformations() );
+            if ( StringUtil.endsWithIgnoreCase( req.getPathInfo(), "client-latency" ) )
+            {
+                mapper.writeValue( resp.getOutputStream(), loadGenerator.getLatencyInformations() );
+                return;
+            }
+
+            if ( StringUtil.endsWithIgnoreCase( req.getPathInfo(), "response-times" ) )
+            {
+                mapper.writeValue( resp.getOutputStream(), loadGenerator.getCollectorInformationsPerPath() );
+                return;
+            }
 
         }
     }
