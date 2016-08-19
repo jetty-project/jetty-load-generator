@@ -42,13 +42,13 @@ Then you run the load generator with this profile
 Exposed results
 The LoadGenerator start a collector server you can query to get some informations as: 
 
-    * totalCount;
-    * minValue;
-    * maxValue;
-    * mean;
-    * stdDeviation;
-    * startTimeStamp;
-    * endTimeStamp;
+* totalCount;
+* minValue;
+* maxValue;
+* mean;
+* stdDeviation;
+* startTimeStamp;
+* endTimeStamp;
 
 
 
