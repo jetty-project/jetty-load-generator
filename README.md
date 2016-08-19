@@ -1,11 +1,11 @@
-Project description
-============
+## Project description
+
 
 LoadGenerator will generate some load on an http server using the Jetty HttpClient.
 
-Documentation
-============
+## Documentation
 
+### Profile
 You can use the API to define a running profile (steps with url to hit)
 
 ```java
@@ -15,6 +15,7 @@ You can use the API to define a running profile (steps with url to hit)
             .build();  
 ```
 
+### Load Generator 
 Then you run the load generator with this profile
 
 ```java
@@ -39,7 +40,7 @@ Then you run the load generator with this profile
         
 ```
 
-Exposed results
+### Exposed results
 The LoadGenerator start a collector server you can query to get some informations as: 
 
 * totalCount;
@@ -50,11 +51,14 @@ The LoadGenerator start a collector server you can query to get some information
 * startTimeStamp;
 * endTimeStamp;
 
+You can get those information trough Json result via GET request
 
+* /collector/client-latency will return the httpclient latency informations
+* /collector/response-times will return per http path the response times informations
 
+### Results Collector
 
-Building
-========
+## Building
 
 To build, use:
 ```shell
@@ -63,7 +67,6 @@ To build, use:
 
 It is possible to bypass tests by building with `mvn -DskipTests install`
 
-Professional Services
-============
+## Professional Services
 
 Expert advice and production support are available through [Webtide.com](http://webtide.com).
