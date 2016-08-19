@@ -176,6 +176,7 @@ public class LoadGeneratorTest
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
+            .collectorPort( 0 ) //
             .build() //
             .start();
 

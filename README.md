@@ -29,6 +29,7 @@ Then you run the load generator with this profile
             .transport( transport ) // the transport HTTP, HTTPS, H2 etcc
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
+            .collectorPort( 0 ) // if port < 0 the collector will not be started and information display in log
             .build() //
             .start();
 

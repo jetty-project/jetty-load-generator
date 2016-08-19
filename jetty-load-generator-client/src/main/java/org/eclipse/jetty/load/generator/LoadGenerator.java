@@ -354,14 +354,34 @@ public class LoadGenerator
 
         } );
 
-        // starting collector part
+        if ( this.collectorPort >= 0 )
+        {
+            // starting collector part
 
-        collectorServer = new CollectorServer( this );
+            collectorServer = new CollectorServer( this );
 
-        collectorServer.start();
+            collectorServer.start();
 
-        this.collectorPort = collectorServer.getPort();
+            this.collectorPort = collectorServer.getPort();
+        }
+        else
+        {
+            LOGGER.info( "collector server not started as port == {}", this.collectorPort );
+            // Time configurable!!!
+            Executors.newScheduledThreadPool( 1 ).scheduleWithFixedDelay( new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    LOGGER.info( "latency informations: {}", getLatencyInformations());
 
+                    for ( Map.Entry<String, CollectorInformations> entry : getCollectorInformationsPerPath().entrySet() )
+                    {
+                        LOGGER.info( "recorder per path: {} : {}", entry.getKey(), entry.getValue());
+                    }
+                }
+            }, 1, 1000, TimeUnit.MILLISECONDS );
+        }
         return loadGeneratorResult;
     }
 
@@ -479,7 +499,7 @@ public class LoadGenerator
 
         private LoadGeneratorProfile loadGeneratorProfile;
 
-        private int collectorPort = 0;
+        private int collectorPort = -1;
 
         public static Builder builder()
         {
@@ -623,11 +643,6 @@ public class LoadGenerator
             if ( this.loadGeneratorProfile == null )
             {
                 throw new IllegalArgumentException( "a loadGeneratorProfile is mandatory" );
-            }
-
-            if ( collectorPort < 0 )
-            {
-                throw new IllegalArgumentException( "collectorPort must be non negative integer" );
             }
 
         }
