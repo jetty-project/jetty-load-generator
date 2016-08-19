@@ -44,6 +44,19 @@
     <module>jetty-load-generator-collector</module>
   </modules>
 
+  <repositories>
+    <repository>
+      <id>sonatype.snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/jetty-snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <dependencyManagement>
     <dependencies>
 
