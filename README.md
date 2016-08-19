@@ -57,6 +57,21 @@ You can get those information trough Json result via GET request
 * /collector/response-times will return per http path the response times informations
 
 ### Results Collector
+The Collector client will help to collect statistics on collector server.
+To use it
+
+```java
+
+            CollectorClient collectorClient = CollectorClient.Builder.builder() //
+                .addAddress( "localhost:187" ) //
+                .addAddress( "beer.org:80" ) //
+                .scheduleDelayInMillis( 1000 ) //
+                .build();
+
+            collectorClient.start();
+        
+```
+
 
 ## Building
 
