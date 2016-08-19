@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator;
 
 
+import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -38,7 +39,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.server.session.HashSessionIdManager;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -66,6 +66,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
@@ -129,7 +130,7 @@ public class LoadGeneratorTest
 
         LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
             .resource( "/index.html" ).size( 1024 ) //
-            .resource( "" ).size( 1024 ) //
+            //.resource( "" ).size( 1024 ) //
             .build();
 
         runProfile( loadGeneratorProfile );
@@ -196,27 +197,32 @@ public class LoadGeneratorTest
 
         Assert.assertNotNull( result );
 
-
-
-        logger.info( "recorder per path: {}", result.getRecorderPerPath() );
-
-        logger.info( "latency recorder: {}", result.getLatencyRecorder() );
-
-        HttpClient httpClient = new HttpClient(  );
+        HttpClient httpClient = new HttpClient();
         httpClient.start();
-        Request request = httpClient.newRequest( "http://localhost:" + loadGenerator.getCollectorPort() + "/collector/client-latency" );
+        Request request = httpClient.newRequest(
+            "http://localhost:" + loadGenerator.getCollectorPort() + "/collector/client-latency" );
         ContentResponse response = request.method( HttpMethod.GET.asString() ).send();
 
         Assert.assertEquals( 200, response.getStatus() );
 
-        logger.info( "resp: {}", response.getContentAsString() );
+        logger.info( "latency recorder: {}", //
+                     CollectorInformations.toString( result.getLatencyRecorder().getIntervalHistogram() ) );
 
-        request = httpClient.newRequest( "http://localhost:" + loadGenerator.getCollectorPort() + "/collector/response-times" );
+        logger.info( "resp client latency: {}", response.getContentAsString() );
+
+        request = httpClient.newRequest(
+            "http://localhost:" + loadGenerator.getCollectorPort() + "/collector/response-times" );
         response = request.method( HttpMethod.GET.asString() ).send();
 
         Assert.assertEquals( 200, response.getStatus() );
 
-        logger.info( "resp: {}", response.getContentAsString() );
+        for ( Map.Entry<String, Recorder> entry : result.getRecorderPerPath().entrySet() )
+        {
+            logger.info( "recorder per path: {} : {}", entry.getKey(),
+                         CollectorInformations.toString( entry.getValue().getIntervalHistogram() ) );
+        }
+
+        logger.info( "resp response times: {}", response.getContentAsString() );
 
         loadGenerator.stop();
 
@@ -276,8 +282,8 @@ public class LoadGeneratorTest
         ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
         context.setContextPath( "/" );
 
-        HandlerCollection handlerCollection = new HandlerCollection(  );
-        handlerCollection.setHandlers( new Handler[]{context, statisticsHandler});
+        HandlerCollection handlerCollection = new HandlerCollection();
+        handlerCollection.setHandlers( new Handler[]{ context, statisticsHandler } );
 
         server.setHandler( handlerCollection );
 

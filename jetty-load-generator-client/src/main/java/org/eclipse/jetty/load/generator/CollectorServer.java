@@ -44,6 +44,8 @@ import java.io.IOException;
 public class CollectorServer
 {
 
+    private static final Logger LOGGER = Log.getLogger( CollectorServer.class );
+
     private int port;
 
     private LoadGenerator loadGenerator;
@@ -86,6 +88,9 @@ public class CollectorServer
         server.start();
 
         this.port = connector.getLocalPort();
+
+        LOGGER.info( "CollectorServer started on port {}", this.port );
+
     }
 
     protected ServerConnector newServerConnector( Server server )
@@ -120,17 +125,18 @@ public class CollectorServer
         protected void doGet( HttpServletRequest req, HttpServletResponse resp )
             throws ServletException, IOException
         {
-            LOGGER.info( "doGet" );
+            String pathInfo = req.getPathInfo();
+            LOGGER.debug( "doGet: {}", pathInfo );
 
             ObjectMapper mapper = new ObjectMapper();
 
-            if ( StringUtil.endsWithIgnoreCase( req.getPathInfo(), "client-latency" ) )
+            if ( StringUtil.endsWithIgnoreCase( pathInfo, "client-latency" ) )
             {
                 mapper.writeValue( resp.getOutputStream(), loadGenerator.getLatencyInformations() );
                 return;
             }
 
-            if ( StringUtil.endsWithIgnoreCase( req.getPathInfo(), "response-times" ) )
+            if ( StringUtil.endsWithIgnoreCase( pathInfo, "response-times" ) )
             {
                 mapper.writeValue( resp.getOutputStream(), loadGenerator.getCollectorInformationsPerPath() );
                 return;

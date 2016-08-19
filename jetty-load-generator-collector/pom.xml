@@ -27,12 +27,12 @@
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>jetty-load-generator-client</artifactId>
+  <artifactId>jetty-load-generator-collector</artifactId>
   <packaging>jar</packaging>
-  <name>Jetty :: Load Generator Client</name>
+  <name>Jetty :: Load Generator Collector</name>
 
   <properties>
-    <bundle-symbolic-name>${project.groupId}.load.generator.client</bundle-symbolic-name>
+    <bundle-symbolic-name>${project.groupId}.load.generator.collector</bundle-symbolic-name>
   </properties>
 
   <dependencies>
@@ -45,8 +45,9 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
+      <groupId>org.eclipse.jetty.loadgenerator</groupId>
+      <artifactId>jetty-load-generator-client</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -58,7 +59,13 @@
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlet</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.toolchain</groupId>
@@ -67,16 +74,6 @@
     <dependency>
       <groupId>org.eclipse.jetty.http2</groupId>
       <artifactId>http2-server</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-alpn-server</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.fcgi</groupId>
-      <artifactId>fcgi-server</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

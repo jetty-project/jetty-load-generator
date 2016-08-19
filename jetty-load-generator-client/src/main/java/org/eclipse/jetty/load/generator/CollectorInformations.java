@@ -48,6 +48,11 @@ public class CollectorInformations
 
     private long endTimeStamp;
 
+    public CollectorInformations()
+    {
+        // no op to help json mapper
+    }
+
     public CollectorInformations( Histogram histogram, InformationType informationType )
     {
         this.informationType = informationType;
@@ -133,9 +138,25 @@ public class CollectorInformations
     @Override
     public String toString()
     {
-        return "CollectorInformations{" + "totalCount=" + totalCount + ", minValue=" + minValue + ", maxValue="
-            + maxValue + ", mean=" + mean + ", stdDeviation=" + stdDeviation + ", startTimeStamp=" + startTimeStamp
+        return "CollectorInformations{" + "totalCount=" + totalCount //
+            + ", minValue=" + minValue //
+            + ", maxValue=" + maxValue //
+            + ", mean=" + mean //
+            + ", stdDeviation=" + stdDeviation //
+            + ", startTimeStamp=" + startTimeStamp //
             + ", endTimeStamp=" + endTimeStamp + '}';
+    }
+
+
+    public static String toString( Histogram histogram )
+    {
+        return "CollectorInformations{" + "totalCount=" + histogram.getTotalCount() //
+            + ", minValue=" + histogram.getMinNonZeroValue() //
+            + ", maxValue=" + histogram.getMaxValue() //
+            + ", mean=" + histogram.getMean() //
+            + ", stdDeviation=" + histogram.getStdDeviation() //
+            + ", startTimeStamp=" + histogram.getStartTimeStamp() //
+            + ", endTimeStamp=" + histogram.getEndTimeStamp() + '}';
     }
 
 }

@@ -18,7 +18,6 @@
 
 package org.eclipse.jetty.load.generator;
 
-import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
@@ -106,7 +105,7 @@ public class LoadGenerator
 
     private CollectorServer collectorServer;
 
-    protected enum Transport
+    public enum Transport
     {
         HTTP,
         HTTPS,

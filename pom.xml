@@ -41,10 +41,18 @@
 
   <modules>
     <module>jetty-load-generator-client</module>
+    <module>jetty-load-generator-collector</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
+
+      <dependency>
+        <groupId>org.eclipse.jetty.loadgenerator</groupId>
+        <artifactId>jetty-load-generator-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>org.hdrhistogram</groupId>
         <artifactId>HdrHistogram</artifactId>
