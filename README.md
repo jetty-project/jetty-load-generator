@@ -6,7 +6,38 @@ LoadGenerator will generate some load on an http server using the Jetty HttpClie
 Documentation
 ============
 
-TODO
+You can use the API to define a running profile (steps with url to hit)
+
+```java
+        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
+            .resource( "/index.html" ).size( 1024 ) //
+            //.resource( "" ).size( 1024 ) //
+            .build();  
+```
+
+Then you run the load generator with this profile
+
+```java
+        LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
+            .host( "localhost" ) //
+            .port( port ) //
+            .users( parallel users ) //
+            .requestRate( 1 ) // request/rate per second
+            .scheme( scheme() ) //
+            .requestListeners( ) // some listeners you maybe want to use
+            .transport( this.transport ) // the transport HTTP, HTTPS, H2 etcc
+            .httpClientScheduler( scheduler ) //
+            .loadGeneratorWorkflow( profile ) //
+            .build() //
+            .start();
+
+        LoadGeneratorResult result = loadGenerator.run();
+        
+        Now you generator is running
+        
+        you can now modify the request rate
+        
+```
 
 Building
 ========
