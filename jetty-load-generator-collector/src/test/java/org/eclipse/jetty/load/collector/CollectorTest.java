@@ -124,6 +124,7 @@ public class CollectorTest
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .httpClientScheduler( scheduler ) //
                 .loadGeneratorWorkflow( profile ) //
+                .collectorPort( 0 ) //
                 .build() //
                 .start();
 
