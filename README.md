@@ -25,7 +25,7 @@ Then you run the load generator with this profile
             .requestRate( 1 ) // request/rate per second
             .scheme( scheme() ) //
             .requestListeners( ) // some listeners you maybe want to use
-            .transport( this.transport ) // the transport HTTP, HTTPS, H2 etcc
+            .transport( transport ) // the transport HTTP, HTTPS, H2 etcc
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
             .build() //
@@ -38,6 +38,20 @@ Then you run the load generator with this profile
         you can now modify the request rate
         
 ```
+
+Exposed results
+The LoadGenerator start a collector server you can query to get some informations as: 
+
+    * totalCount;
+    * minValue;
+    * maxValue;
+    * mean;
+    * stdDeviation;
+    * startTimeStamp;
+    * endTimeStamp;
+
+
+
 
 Building
 ========
