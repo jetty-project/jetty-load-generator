@@ -152,6 +152,7 @@ public class CollectorTest
             Thread.sleep( 5000 );
 
             loadGenerator.stop();
+
         }
     }
 

@@ -39,6 +39,8 @@ Then you run the load generator with this profile
         
         you can now modify the request rate
         
+        loadGenerator.stop();
+        
 ```
 
 ### Exposed results
