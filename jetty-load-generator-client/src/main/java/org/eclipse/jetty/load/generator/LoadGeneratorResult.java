@@ -20,6 +20,7 @@ package org.eclipse.jetty.load.generator;
 
 import org.HdrHistogram.Recorder;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -63,13 +64,22 @@ public class LoadGeneratorResult
         return totalFailure;
     }
 
-    public Map<String, Recorder> getRecorderPerPath()
+    public CollectorInformations getLatencyInformations()
     {
-        return recorderPerPath;
+        return new CollectorInformations( latencyRecorder.getIntervalHistogram(), //
+                                          CollectorInformations.InformationType.LATENCY );
     }
 
-    public Recorder getLatencyRecorder()
-    {
-        return latencyRecorder;
+    public Map<String, CollectorInformations> getCollectorInformationsPerPath() {
+        Map<String,CollectorInformations> map = new HashMap<>( this.recorderPerPath.size() );
+
+        for(Map.Entry<String, Recorder> entry : this.recorderPerPath.entrySet())
+        {
+            map.put( entry.getKey(), new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                                CollectorInformations.InformationType.REQUEST ) );
+        }
+
+        return map;
     }
+
 }

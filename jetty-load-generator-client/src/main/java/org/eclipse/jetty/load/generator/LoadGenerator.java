@@ -33,7 +33,6 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,12 +95,6 @@ public class LoadGenerator
     private Scheduler httpScheduler;
 
     private SocketAddressResolver socketAddressResolver;
-
-    private Map<String, Recorder> recorderPerPath = new ConcurrentHashMap<>();
-
-    private final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                                                         TimeUnit.MINUTES.toNanos( 1 ), //
-                                                                         3 );
 
     private CollectorServer collectorServer;
 
@@ -208,24 +201,6 @@ public class LoadGenerator
         return collectorPort;
     }
 
-    public CollectorInformations getLatencyInformations()
-    {
-        return new CollectorInformations( latencyRecorder.getIntervalHistogram(), //
-                                          CollectorInformations.InformationType.LATENCY );
-    }
-
-    public Map<String, CollectorInformations> getCollectorInformationsPerPath() {
-        Map<String,CollectorInformations> map = new HashMap<>( this.recorderPerPath.size() );
-
-        for(Map.Entry<String, Recorder> entry : this.recorderPerPath.entrySet())
-        {
-            map.put( entry.getKey(), new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                                CollectorInformations.InformationType.REQUEST ) );
-        }
-
-        return map;
-    }
-
     //--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
@@ -268,10 +243,13 @@ public class LoadGenerator
         throws Exception
     {
 
+        final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                                               TimeUnit.MINUTES.toNanos( 1 ), //
+                                                               3 );
         // we iterate over all request path to create HdrHistogram now
         // and do not have to worry about sync after that
 
-        this.recorderPerPath = new ConcurrentHashMap<>(  );
+        final Map<String, Recorder> recorderPerPath = new ConcurrentHashMap<>(  );
 
         for ( LoadGeneratorProfile.Step step : getLoadGeneratorProfile().getSteps() )
         {
@@ -295,7 +273,7 @@ public class LoadGenerator
             }
         }
 
-        LoadGeneratorResult loadGeneratorResult = new LoadGeneratorResult(this.recorderPerPath, this.latencyRecorder);
+        LoadGeneratorResult loadGeneratorResult = new LoadGeneratorResult(recorderPerPath, latencyRecorder);
 
         LoadGeneratorResultHandler loadGeneratorResultHandler =
             new LoadGeneratorResultHandler( loadGeneratorResult, recorderPerPath, latencyRecorder );
@@ -358,7 +336,7 @@ public class LoadGenerator
         {
             // starting collector part
 
-            collectorServer = new CollectorServer( this );
+            collectorServer = new CollectorServer( this, loadGeneratorResult );
 
             collectorServer.start();
 
@@ -373,11 +351,15 @@ public class LoadGenerator
                 @Override
                 public void run()
                 {
-                    LOGGER.info( "latency informations: {}", getLatencyInformations());
+                    LOGGER.info( "latency informations: {}", //
+                                 new CollectorInformations( latencyRecorder.getIntervalHistogram(), //
+                                                            CollectorInformations.InformationType.LATENCY ) );
 
-                    for ( Map.Entry<String, CollectorInformations> entry : getCollectorInformationsPerPath().entrySet() )
+                    for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
                     {
-                        LOGGER.info( "recorder per path: {} : {}", entry.getKey(), entry.getValue());
+                        LOGGER.info( "recorder per path: {} : {}", entry.getKey(), //
+                                     new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                                CollectorInformations.InformationType.REQUEST ));
                     }
                 }
             }, 1, 1000, TimeUnit.MILLISECONDS );

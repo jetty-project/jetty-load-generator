@@ -48,16 +48,19 @@ public class CollectorServer
 
     private int port;
 
-    private LoadGenerator loadGenerator;
-
     private Server server;
 
     private ServerConnector connector;
 
-    public CollectorServer( LoadGenerator loadGenerator )
+    private final LoadGenerator loadGenerator;
+
+    private final LoadGeneratorResult loadGeneratorResult;
+
+    public CollectorServer( LoadGenerator loadGenerator, LoadGeneratorResult loadGeneratorResult )
     {
         this.port = loadGenerator.getCollectorPort();
         this.loadGenerator = loadGenerator;
+        this.loadGeneratorResult = loadGeneratorResult;
     }
 
     public int getPort()
@@ -80,7 +83,7 @@ public class CollectorServer
 
         server.setHandler( context );
 
-        CollectorServlet collectorServlet = new CollectorServlet( loadGenerator );
+        CollectorServlet collectorServlet = new CollectorServlet( loadGeneratorResult );
 
         // TODO path configurable?
         context.addServlet( new ServletHolder( collectorServlet ), "/collector/*" );
@@ -114,11 +117,11 @@ public class CollectorServer
 
         private static final Logger LOGGER = Log.getLogger( CollectorServlet.class );
 
-        private LoadGenerator loadGenerator;
+        private LoadGeneratorResult loadGeneratorResult;
 
-        public CollectorServlet( LoadGenerator loadGenerator )
+        public CollectorServlet( LoadGeneratorResult loadGeneratorResult )
         {
-            this.loadGenerator = loadGenerator;
+            this.loadGeneratorResult = loadGeneratorResult;
         }
 
         @Override
@@ -132,13 +135,13 @@ public class CollectorServer
 
             if ( StringUtil.endsWithIgnoreCase( pathInfo, "client-latency" ) )
             {
-                mapper.writeValue( resp.getOutputStream(), loadGenerator.getLatencyInformations() );
+                mapper.writeValue( resp.getOutputStream(), loadGeneratorResult.getLatencyInformations() );
                 return;
             }
 
             if ( StringUtil.endsWithIgnoreCase( pathInfo, "response-times" ) )
             {
-                mapper.writeValue( resp.getOutputStream(), loadGenerator.getCollectorInformationsPerPath() );
+                mapper.writeValue( resp.getOutputStream(), loadGeneratorResult.getCollectorInformationsPerPath() );
                 return;
             }
 

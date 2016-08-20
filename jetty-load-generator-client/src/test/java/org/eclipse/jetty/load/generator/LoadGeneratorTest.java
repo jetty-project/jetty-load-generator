@@ -206,8 +206,7 @@ public class LoadGeneratorTest
 
         Assert.assertEquals( 200, response.getStatus() );
 
-        logger.info( "latency recorder: {}", //
-                     CollectorInformations.toString( result.getLatencyRecorder().getIntervalHistogram() ) );
+        logger.info( "latency recorder: {}", result.getLatencyInformations() );
 
         logger.info( "resp client latency: {}", response.getContentAsString() );
 
@@ -217,10 +216,9 @@ public class LoadGeneratorTest
 
         Assert.assertEquals( 200, response.getStatus() );
 
-        for ( Map.Entry<String, Recorder> entry : result.getRecorderPerPath().entrySet() )
+        for ( Map.Entry<String, CollectorInformations> entry : result.getCollectorInformationsPerPath().entrySet() )
         {
-            logger.info( "recorder per path: {} : {}", entry.getKey(),
-                         CollectorInformations.toString( entry.getValue().getIntervalHistogram() ) );
+            logger.info( "recorder per path: {} : {}", entry.getKey(), entry.getValue() );
         }
 
         logger.info( "resp response times: {}", response.getContentAsString() );
