@@ -288,68 +288,47 @@ public class LoadGenerator
         listeners.add( loadGeneratorResultHandler );
 
         Executors.newWorkStealingPool( this.getUsers() ).submit( () -> //
-                                                                 {
-                                                                     HttpClientTransport httpClientTransport =
-                                                                         this.getHttpClientTransport() != null
-                                                                             ?
-                                                                             //
-                                                                             this.getHttpClientTransport()
-                                                                             : provideClientTransport(
-                                                                                 this.getTransport() );
+            {
+                HttpClientTransport httpClientTransport = this.getHttpClientTransport() != null ? //
+                     this.getHttpClientTransport() : provideClientTransport(this.getTransport() );
 
-                                                                     for ( int i = this.getUsers(); i > 0; i-- )
-                                                                     {
-                                                                         try
-                                                                         {
+                for ( int i = this.getUsers(); i > 0; i-- )
+                {
+                    try
+                    {
+                        HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+                        // TODO dynamic depending on the rate??
+                        httpClient.setMaxRequestsQueuedPerDestination( 2048 );
 
-                                                                             HttpClient httpClient =
-                                                                                 newHttpClient( httpClientTransport,
-                                                                                                getSslContextFactory() );
+                        httpClient.setSocketAddressResolver( this.getSocketAddressResolver() );
+                        this.clients.add( httpClient );
+                        httpClient.getRequestListeners().add( loadGeneratorResultHandler );
+                        httpClient.getRequestListeners().addAll( listeners );
 
-                                                                             // TODO dynamic depending on the rate??
-                                                                             httpClient.setMaxRequestsQueuedPerDestination(
-                                                                                 2048 );
+                        LoadGeneratorRunner loadGeneratorRunner = //
+                            new LoadGeneratorRunner( httpClient, this, loadGeneratorResultHandler );
 
-                                                                             httpClient.setSocketAddressResolver(
-                                                                                 this.getSocketAddressResolver() );
+                        this.executorService.submit( loadGeneratorRunner );
+                    }
+                    catch ( Exception e )
+                    {
+                        LOGGER.warn( "ignore exception", e );
+                    }
+                }
 
-                                                                             this.clients.add( httpClient );
-
-                                                                             httpClient.getRequestListeners().add(
-                                                                                 loadGeneratorResultHandler );
-
-                                                                             httpClient.getRequestListeners().addAll(
-                                                                                 listeners );
-
-                                                                             LoadGeneratorRunner loadGeneratorRunner =
-                                                                                 new LoadGeneratorRunner( httpClient,
-                                                                                                          this,
-                                                                                                          loadGeneratorResultHandler );
-
-                                                                             this.executorService.submit(
-                                                                                 loadGeneratorRunner );
-                                                                         }
-                                                                         catch ( Exception e )
-                                                                         {
-                                                                             LOGGER.warn( "ignore exception", e );
-                                                                         }
-                                                                     }
-
-                                                                     try
-                                                                     {
-                                                                         while ( !this.stop.get() )
-                                                                         {
-                                                                             // wait until stopped
-                                                                             Thread.sleep( 1 );
-                                                                         }
-                                                                     }
-                                                                     catch ( Throwable e )
-                                                                     {
-                                                                         LOGGER.warn( "ignore exception", e );
-                                                                     }
-
-
-                                                                 } );
+                try
+                {
+                    while ( !this.stop.get() )
+                    {
+                        // wait until stopped
+                        Thread.sleep( 1 );
+                    }
+                }
+                catch ( Throwable e )
+                {
+                    LOGGER.warn( "ignore exception", e );
+                }
+            } );
 
         if ( this.collectorPort >= 0 )
         {
