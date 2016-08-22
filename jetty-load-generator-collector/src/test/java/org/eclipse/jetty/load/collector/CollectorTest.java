@@ -81,7 +81,7 @@ public class CollectorTest
     {
         List<Integer> number = new ArrayList<>();
         number.add( Integer.valueOf( 1 ) );
-        //number.add( Integer.valueOf( 2 ) );
+        number.add( Integer.valueOf( 2 ) );
 
         return number;
     }
@@ -226,29 +226,7 @@ public class CollectorTest
             LOGGER.debug( "method: {}, contentLength: {}, id: {}, pathInfo: {}", //
                           method, contentLength, httpSession.getId(), request.getPathInfo() );
 
-            switch ( method )
-            {
-                case "GET":
-                {
-                    if ( contentLength > 0 )
-                    {
-                        response.setHeader( "X-Content", String.valueOf( contentLength ) );
-                        response.getOutputStream().write( new byte[contentLength] );
-                    }
-                    break;
-                }
-                case "POST":
-                {
-                    response.setHeader( "X-Content", request.getHeader( "X-Upload" ) );
-                    IO.copy( request.getInputStream(), response.getOutputStream() );
-                    break;
-                }
-            }
 
-            if ( Boolean.parseBoolean( request.getHeader( "X-Close" ) ) )
-            {
-                response.setHeader( "Connection", "close" );
-            }
         }
     }
 
