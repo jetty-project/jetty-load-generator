@@ -28,6 +28,7 @@ import org.eclipse.jetty.util.log.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -56,11 +57,15 @@ public class CollectorClient
 
     private List<HttpClient> httpClients;
 
-    public CollectorClient( List<String> addresses, long scheduleDelayInMillis )
+    private List<CollectorResultHandler> collectorResultHandlers;
+
+    public CollectorClient( List<String> addresses, long scheduleDelayInMillis,
+                            List<CollectorResultHandler> collectorResultHandlers )
     {
         this.addresses = addresses;
         this.scheduleDelayInMillis = scheduleDelayInMillis;
         this.httpClients = new ArrayList<>( this.addresses.size() );
+        this.collectorResultHandlers = collectorResultHandlers == null ? Collections.emptyList() : collectorResultHandlers;
     }
 
 
@@ -72,10 +77,7 @@ public class CollectorClient
 
         for ( String address : this.addresses )
         {
-            this.scheduledExecutorService.scheduleWithFixedDelay( new Runnable()
-            {
-                @Override
-                public void run()
+            this.scheduledExecutorService.scheduleWithFixedDelay( () ->
                 {
 
                     try
@@ -89,16 +91,20 @@ public class CollectorClient
                             .newRequest( "http://" + address + "/collector/client-latency" ) //
                             .send();
 
-                        LOGGER.debug( "latence response status: {}, response: {}", //
+                        LOGGER.debug( "latency response status: {}, response: {}", //
                                       contentResponse.getStatus(), //
                                       contentResponse.getContentAsString() );
 
                         ObjectMapper objectMapper = new ObjectMapper();
-                        CollectorInformations infos = objectMapper //
+                        CollectorInformations latencyInfos = objectMapper //
                             .readValue( contentResponse.getContentAsString(), //
                                         CollectorInformations.class );
 
-                        LOGGER.debug( "infos: {}", infos );
+                        for (CollectorResultHandler collectorResultHandler: collectorResultHandlers)
+                        {
+                            collectorResultHandler.handleLatencyInformations( latencyInfos );
+                        }
+
 
                         // response time per path informations
                         contentResponse = httpClient //
@@ -117,15 +123,19 @@ public class CollectorClient
                         Map<String, CollectorInformations> responseTimePerPath =
                             objectMapper.readValue( contentResponse.getContentAsString(), typeRef );
 
-                        LOGGER.debug( "responseTimePerPath: {}", responseTimePerPath );
+
+                        for (CollectorResultHandler collectorResultHandler: collectorResultHandlers)
+                        {
+                            collectorResultHandler.handleResponseTime( responseTimePerPath );
+                        }
 
                     }
                     catch ( Throwable e )
                     {
                         LOGGER.warn( e );
                     }
-                }
-            }, 10, this.scheduleDelayInMillis, TimeUnit.MILLISECONDS );
+
+                }, 10, this.scheduleDelayInMillis, TimeUnit.MILLISECONDS );
         }
 
         return this;
@@ -151,6 +161,8 @@ public class CollectorClient
         private List<String> addresses = new ArrayList<>();
 
         private long scheduleDelayInMillis = 5000;
+
+        private List<CollectorResultHandler> collectorResultHandlers;
 
         public static Builder builder()
         {
@@ -187,6 +199,12 @@ public class CollectorClient
             return this;
         }
 
+        public Builder collectorResultHandlers( List<CollectorResultHandler> collectorResultHandlers )
+        {
+            this.collectorResultHandlers = collectorResultHandlers;
+            return this;
+        }
+
 
         public CollectorClient build()
         {
@@ -198,7 +216,7 @@ public class CollectorClient
             {
                 throw new IllegalArgumentException( "scheduleDelayInMillis must be higher than 0" );
             }
-            return new CollectorClient( this.addresses, this.scheduleDelayInMillis );
+            return new CollectorClient( this.addresses, this.scheduleDelayInMillis, this.collectorResultHandlers );
         }
 
 

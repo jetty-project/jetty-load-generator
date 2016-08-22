@@ -49,6 +49,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -111,10 +112,16 @@ public class CollectorTest
         throws Exception
     {
 
-        for (Server server : servers)
+        List<LoadGenerator> loadGenerators = new ArrayList<>( serverNumbers );
+        List<CollectorClient> collectorClients = new ArrayList<>( serverNumbers );
+        List<LoadGeneratorResult> results = new ArrayList<>( serverNumbers );
+
+        List<CollectorResultHandler> collectorResultHandlers = Arrays.asList(new LoggerCollectorResultHandler());
+
+        for ( Server server : servers )
         {
             Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
-            int port =  ((ServerConnector) server.getConnectors()[0]).getLocalPort();
+            int port = ( (ServerConnector) server.getConnectors()[0] ).getLocalPort();
             LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
                 .host( "localhost" ) //
                 .port( port ) //
@@ -129,9 +136,26 @@ public class CollectorTest
                 .start();
 
             LoadGeneratorResult result = loadGenerator.run();
+            results.add( result );
 
-            Thread.sleep( 3000 );
+            loadGenerators.add( loadGenerator );
 
+            CollectorClient collectorClient = CollectorClient.Builder.builder() //
+                .addAddress( "localhost:" + loadGenerator.getCollectorPort() ) //
+                .scheduleDelayInMillis( 1000 ) //
+                .collectorResultHandlers(collectorResultHandlers) //
+                .build();
+
+            collectorClient.start();
+
+            collectorClients.add( collectorClient );
+
+        }
+
+        Thread.sleep( 3000 );
+
+        for ( LoadGeneratorResult result : results )
+        {
             Assert.assertTrue( "successReponsesReceived :" + result.getTotalSuccess().get(), //
                                result.getTotalSuccess().get() > 1 );
 
@@ -141,19 +165,19 @@ public class CollectorTest
                                result.getTotalFailure().get() < 1 );
 
             Assert.assertNotNull( result );
-
-            CollectorClient collectorClient = CollectorClient.Builder.builder() //
-                .addAddress( "localhost:" + loadGenerator.getCollectorPort() ) //
-                .scheduleDelayInMillis( 1000 ) //
-                .build();
-
-            collectorClient.start();
-
-            Thread.sleep( 5000 );
-
-            loadGenerator.stop();
-
         }
+
+        for ( CollectorClient collectorClient : collectorClients )
+        {
+            collectorClient.stop();
+        }
+
+        for ( LoadGenerator loadGenerator : loadGenerators )
+        {
+            loadGenerator.stop();
+        }
+
+
     }
 
     protected Server startServer( HttpServlet handler )
@@ -200,7 +224,7 @@ public class CollectorTest
             int contentLength = request.getIntHeader( "X-Download" );
 
             LOGGER.debug( "method: {}, contentLength: {}, id: {}, pathInfo: {}", //
-                         method, contentLength, httpSession.getId(), request.getPathInfo() );
+                          method, contentLength, httpSession.getId(), request.getPathInfo() );
 
             switch ( method )
             {

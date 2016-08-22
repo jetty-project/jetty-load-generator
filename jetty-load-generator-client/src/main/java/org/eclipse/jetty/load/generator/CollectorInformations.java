@@ -32,7 +32,6 @@ public class CollectorInformations
 
     private InformationType informationType;
 
-    private String path;
 
     private long totalCount;
 
@@ -135,10 +134,21 @@ public class CollectorInformations
         this.startTimeStamp = startTimeStamp;
     }
 
+    public InformationType getInformationType()
+    {
+        return informationType;
+    }
+
+    public void setInformationType( InformationType informationType )
+    {
+        this.informationType = informationType;
+    }
+
     @Override
     public String toString()
     {
-        return "CollectorInformations{" + "totalCount=" + totalCount //
+        return "CollectorInformations{" + "informationType=" + informationType + ", " //
+            + "totalCount=" + totalCount //
             + ", minValue=" + minValue //
             + ", maxValue=" + maxValue //
             + ", mean=" + mean //
