@@ -67,6 +67,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
@@ -226,7 +227,47 @@ public class LoadGeneratorTest
         loadGenerator.stop();
 
         httpClient.stop();
+
+        scheduler.stop();
     }
+
+
+    @Test
+    public void simple_test_limited_time_run()
+        throws Exception
+    {
+
+        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
+            .resource( "/index.html" ).size( 1024 ) //
+            //.resource( "" ).size( 1024 ) //
+            .build();
+
+        startServer( new LoadHandler() );
+
+        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
+
+        LoadGeneratorResult result = LoadGenerator.Builder.builder() //
+            .host( "localhost" ) //
+            .port( connector.getLocalPort() ) //
+            .users( this.usersNumber ) //
+            .httpClientScheduler( scheduler ) //
+            .requestRate( 1 ) //
+            .scheme( scheme() ) //
+            .transport( this.transport ) //
+            .loadGeneratorWorkflow( loadGeneratorProfile ) //
+            .collectorPort( -1 ) //
+            .build() //
+            .start() //
+            .run( 5, TimeUnit.SECONDS );
+
+        for ( Map.Entry<String, CollectorInformations> entry : result.getCollectorInformationsPerPath().entrySet() )
+        {
+            logger.info( "recorder per path: {} : {}", entry.getKey(), entry.getValue() );
+        }
+
+        scheduler.stop();
+    }
+
 
     //---------------------------------------------------
     // utilities

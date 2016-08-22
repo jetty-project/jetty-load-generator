@@ -25,6 +25,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
+import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
@@ -223,7 +224,10 @@ public class LoadGenerator
         this.stop.set( true );
         try
         {
-            collectorServer.stop();
+            if ( collectorServer != null )
+            {
+                collectorServer.stop();
+            }
             for ( HttpClient httpClient : this.clients )
             {
                 httpClient.stop();
@@ -244,12 +248,13 @@ public class LoadGenerator
     {
 
         final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                                               TimeUnit.MINUTES.toNanos( 1 ), //
-                                                               3 );
+                                                       TimeUnit.MINUTES.toNanos( 1 ), //
+                                                       3 );
+
         // we iterate over all request path to create HdrHistogram now
         // and do not have to worry about sync after that
 
-        final Map<String, Recorder> recorderPerPath = new ConcurrentHashMap<>(  );
+        final Map<String, Recorder> recorderPerPath = new ConcurrentHashMap<>();
 
         for ( LoadGeneratorProfile.Step step : getLoadGeneratorProfile().getSteps() )
         {
@@ -259,21 +264,21 @@ public class LoadGenerator
                 path = path == null ? "" : path.trim();
                 if ( !recorderPerPath.containsKey( path ) )
                 {
-                    if (StringUtil.isBlank( path ))
+                    if ( StringUtil.isBlank( path ) )
                     {
                         path = "/";
                     }
 
                     Recorder recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                                                           TimeUnit.MINUTES.toNanos( 1 ), //
-                                                                           3 );
+                                                      TimeUnit.MINUTES.toNanos( 1 ), //
+                                                      3 );
 
                     recorderPerPath.put( path, recorder );
                 }
             }
         }
 
-        LoadGeneratorResult loadGeneratorResult = new LoadGeneratorResult(recorderPerPath, latencyRecorder);
+        LoadGeneratorResult loadGeneratorResult = new LoadGeneratorResult( recorderPerPath, latencyRecorder );
 
         LoadGeneratorResultHandler loadGeneratorResultHandler =
             new LoadGeneratorResultHandler( loadGeneratorResult, recorderPerPath, latencyRecorder );
@@ -282,55 +287,69 @@ public class LoadGenerator
 
         listeners.add( loadGeneratorResultHandler );
 
-        Executors.newWorkStealingPool( this.getUsers()).submit( () -> //
-        {
-            HttpClientTransport httpClientTransport = this.getHttpClientTransport() != null ? //
-                this.getHttpClientTransport() : provideClientTransport( this.getTransport() );
+        Executors.newWorkStealingPool( this.getUsers() ).submit( () -> //
+                                                                 {
+                                                                     HttpClientTransport httpClientTransport =
+                                                                         this.getHttpClientTransport() != null
+                                                                             ?
+                                                                             //
+                                                                             this.getHttpClientTransport()
+                                                                             : provideClientTransport(
+                                                                                 this.getTransport() );
 
-            for (int i = this.getUsers(); i > 0; i--)
-            {
-                try
-                {
+                                                                     for ( int i = this.getUsers(); i > 0; i-- )
+                                                                     {
+                                                                         try
+                                                                         {
 
-                    HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+                                                                             HttpClient httpClient =
+                                                                                 newHttpClient( httpClientTransport,
+                                                                                                getSslContextFactory() );
 
-                    // TODO dynamic depending on the rate??
-                    httpClient.setMaxRequestsQueuedPerDestination( 2048 );
+                                                                             // TODO dynamic depending on the rate??
+                                                                             httpClient.setMaxRequestsQueuedPerDestination(
+                                                                                 2048 );
 
-                    httpClient.setSocketAddressResolver( this.getSocketAddressResolver() );
+                                                                             httpClient.setSocketAddressResolver(
+                                                                                 this.getSocketAddressResolver() );
 
-                    this.clients.add( httpClient );
+                                                                             this.clients.add( httpClient );
 
-                    httpClient.getRequestListeners().add( loadGeneratorResultHandler );
+                                                                             httpClient.getRequestListeners().add(
+                                                                                 loadGeneratorResultHandler );
 
-                    httpClient.getRequestListeners().addAll( listeners );
+                                                                             httpClient.getRequestListeners().addAll(
+                                                                                 listeners );
 
-                    LoadGeneratorRunner loadGeneratorRunner =
-                        new LoadGeneratorRunner( httpClient, this, loadGeneratorResultHandler );
+                                                                             LoadGeneratorRunner loadGeneratorRunner =
+                                                                                 new LoadGeneratorRunner( httpClient,
+                                                                                                          this,
+                                                                                                          loadGeneratorResultHandler );
 
-                    this.executorService.submit( loadGeneratorRunner );
-                }
-                catch ( Exception e )
-                {
-                    LOGGER.warn( "ignore exception", e );
-                }
-            }
+                                                                             this.executorService.submit(
+                                                                                 loadGeneratorRunner );
+                                                                         }
+                                                                         catch ( Exception e )
+                                                                         {
+                                                                             LOGGER.warn( "ignore exception", e );
+                                                                         }
+                                                                     }
 
-            try
-            {
-                while ( !this.stop.get() )
-                {
-                    // wait until stopped
-                    Thread.sleep( 1 );
-                }
-            }
-            catch ( Throwable e )
-            {
-                LOGGER.warn( "ignore exception", e );
-            }
+                                                                     try
+                                                                     {
+                                                                         while ( !this.stop.get() )
+                                                                         {
+                                                                             // wait until stopped
+                                                                             Thread.sleep( 1 );
+                                                                         }
+                                                                     }
+                                                                     catch ( Throwable e )
+                                                                     {
+                                                                         LOGGER.warn( "ignore exception", e );
+                                                                     }
 
 
-        } );
+                                                                 } );
 
         if ( this.collectorPort >= 0 )
         {
@@ -359,12 +378,20 @@ public class LoadGenerator
                     {
                         LOGGER.info( "recorder per path: {} : {}", entry.getKey(), //
                                      new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                                CollectorInformations.InformationType.REQUEST ));
+                                                                CollectorInformations.InformationType.REQUEST ) );
                     }
                 }
             }, 1, 1000, TimeUnit.MILLISECONDS );
         }
         return loadGeneratorResult;
+    }
+
+    public LoadGeneratorResult run( long time, TimeUnit timeUnit )
+        throws Exception
+    {
+        LoadGeneratorResult result = this.run();
+        PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
+        return result;
     }
 
 
@@ -397,7 +424,6 @@ public class LoadGenerator
             }
 
         }
-
 
         // FIXME weird circularity
         transport.setHttpClient( httpClient );
@@ -498,8 +524,8 @@ public class LoadGenerator
             this.users = users;
             return this;
         }
+
         /**
-         *
          * @param requestRate number of requests per second
          * @return {@link Builder}
          */
