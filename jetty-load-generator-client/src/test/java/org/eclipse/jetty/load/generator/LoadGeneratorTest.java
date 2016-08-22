@@ -161,6 +161,9 @@ public class LoadGeneratorTest
         throws Exception
     {
 
+        HistogramLatencyRecorder latencyRecorder = new HistogramLatencyRecorder();
+        List<LatencyListener> latencyListeners = Arrays.asList( latencyRecorder );
+
         TestRequestListener testRequestListener = new TestRequestListener();
 
         startServer( new LoadHandler() );
@@ -177,6 +180,7 @@ public class LoadGeneratorTest
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
+            .latencyListeners( latencyListeners ) //
             .collectorPort( 0 ) //
             .build() //
             .start();
@@ -207,7 +211,7 @@ public class LoadGeneratorTest
 
         Assert.assertEquals( 200, response.getStatus() );
 
-        logger.info( "latency recorder: {}", result.getLatencyInformations() );
+        logger.info( "latency recorder: {}", latencyRecorder.getCollectorInformations());
 
         logger.info( "resp client latency: {}", response.getContentAsString() );
 

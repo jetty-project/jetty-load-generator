@@ -27,6 +27,7 @@ import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,15 +54,15 @@ public class LoadGeneratorResultHandler
 
     private final Map<String, Recorder> recorderPerPath;
 
-    private Recorder latencyRecorder;
+    private List<LatencyListener> latencyListeners;
 
     public LoadGeneratorResultHandler( LoadGeneratorResult loadGeneratorResult, //
                                        Map<String, Recorder> recorderPerPath, //
-                                       Recorder latencyHistogram )
+                                       List<LatencyListener> latencyListeners )
     {
         this.loadGeneratorResult = loadGeneratorResult;
         this.recorderPerPath = recorderPerPath;
-        this.latencyRecorder = latencyHistogram;
+        this.latencyListeners = latencyListeners;
     }
 
     @Override
@@ -69,9 +70,13 @@ public class LoadGeneratorResultHandler
     {
         // latency since queued
         String sendCallTime = request.getHeaders().get( AFTER_SEND_TIME_HEADER );
-        if (StringUtil.isNotBlank( sendCallTime ))
+        if (StringUtil.isNotBlank( sendCallTime ) && latencyListeners != null)
         {
-            this.latencyRecorder.recordValue( System.nanoTime() - Long.parseLong( sendCallTime ) );
+            long latencyValue = System.nanoTime() - Long.parseLong( sendCallTime );
+            for( LatencyListener latencyListener : latencyListeners)
+            {
+                latencyListener.onLatencyValue( latencyValue );
+            }
         }
         request.header( START_SEND_TIME_HEADER, Long.toString( System.nanoTime() ) );
     }

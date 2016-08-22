@@ -36,11 +36,8 @@ public class LoadGeneratorResult
 
     private final Map<String, Recorder> recorderPerPath;
 
-    private final Recorder latencyRecorder;
-
-    public LoadGeneratorResult( Map<String, Recorder> recorderPerPath, Recorder latencyRecorder )
+    public LoadGeneratorResult( Map<String, Recorder> recorderPerPath )
     {
-        this.latencyRecorder = latencyRecorder;
         this.recorderPerPath = recorderPerPath;
     }
 
@@ -62,12 +59,6 @@ public class LoadGeneratorResult
     public AtomicLong getTotalFailure()
     {
         return totalFailure;
-    }
-
-    public CollectorInformations getLatencyInformations()
-    {
-        return new CollectorInformations( latencyRecorder.getIntervalHistogram(), //
-                                          CollectorInformations.InformationType.LATENCY );
     }
 
     public Map<String, CollectorInformations> getCollectorInformationsPerPath() {

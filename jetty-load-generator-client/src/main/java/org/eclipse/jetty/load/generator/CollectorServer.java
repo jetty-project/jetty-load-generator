@@ -52,14 +52,11 @@ public class CollectorServer
 
     private ServerConnector connector;
 
-    private final LoadGenerator loadGenerator;
-
     private final LoadGeneratorResult loadGeneratorResult;
 
     public CollectorServer( LoadGenerator loadGenerator, LoadGeneratorResult loadGeneratorResult )
     {
         this.port = loadGenerator.getCollectorPort();
-        this.loadGenerator = loadGenerator;
         this.loadGeneratorResult = loadGeneratorResult;
     }
 
@@ -133,11 +130,14 @@ public class CollectorServer
 
             ObjectMapper mapper = new ObjectMapper();
 
+            // FIXME expose it!!
+            /*
             if ( StringUtil.endsWithIgnoreCase( pathInfo, "client-latency" ) )
             {
                 mapper.writeValue( resp.getOutputStream(), loadGeneratorResult.getLatencyInformations() );
                 return;
             }
+            */
 
             if ( StringUtil.endsWithIgnoreCase( pathInfo, "response-times" ) )
             {

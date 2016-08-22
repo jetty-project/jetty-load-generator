@@ -20,6 +20,8 @@ package org.eclipse.jetty.load.generator;
 
 import org.HdrHistogram.Histogram;
 
+import java.util.concurrent.TimeUnit;
+
 public class CollectorInformations
 {
 
@@ -56,12 +58,12 @@ public class CollectorInformations
     {
         this.informationType = informationType;
         this.totalCount = histogram.getTotalCount();
-        this.minValue = histogram.getMinNonZeroValue();
-        this.maxValue = histogram.getMaxValue();
-        this.mean = histogram.getMean();
+        this.minValue = TimeUnit.NANOSECONDS.toMillis( histogram.getMinValue() );
+        this.maxValue = TimeUnit.NANOSECONDS.toMillis( histogram.getMaxValue() );
+        this.mean = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getMean() ) );
         this.startTimeStamp = histogram.getStartTimeStamp();
         this.endTimeStamp = histogram.getEndTimeStamp();
-        this.stdDeviation = histogram.getStdDeviation();
+        this.stdDeviation = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getStdDeviation() ) );
     }
 
     public long getEndTimeStamp()
