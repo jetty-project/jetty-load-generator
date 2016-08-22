@@ -73,6 +73,12 @@ public class CollectorClient
         throws Exception
     {
 
+        // at least a default one
+        if (this.collectorResultHandlers.isEmpty())
+        {
+            this.collectorResultHandlers = Arrays.asList( new LoggerCollectorResultHandler() );
+        }
+
         this.scheduledExecutorService = Executors.newScheduledThreadPool( addresses.size() );
 
         for ( String address : this.addresses )
