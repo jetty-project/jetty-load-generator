@@ -25,9 +25,12 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
-import org.eclipse.jetty.load.generator.latency.HistogramLatencyRecorder;
+import org.eclipse.jetty.load.generator.latency.LatencyRecorder;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.latency.LatencyValueListener;
+import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
+import org.eclipse.jetty.load.generator.response.ResponseTimeRecorder;
+import org.eclipse.jetty.load.generator.response.ResponseTimeValueListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
@@ -106,6 +109,14 @@ public class LoadGenerator
     private List<LatencyListener> latencyListeners;
 
     private List<LatencyValueListener> latencyValueListeners;
+
+    private List<ResponseTimeListener> responseTimeListeners;
+
+    private List<ResponseTimeValueListener> responseTimeValueListeners;
+
+    private LoadGeneratorResult loadGeneratorResult;
+
+    private LoadGeneratorResultHandler _loadGeneratorResultHandler;
 
     public enum Transport
     {
@@ -220,50 +231,9 @@ public class LoadGenerator
     public LoadGenerator start()
     {
 
-        this.latencyListeners = Arrays.asList(new HistogramLatencyRecorder(this.latencyValueListeners));
+        this.latencyListeners = Arrays.asList(new LatencyRecorder( this.latencyValueListeners));
 
         this.executorService = Executors.newWorkStealingPool( this.getUsers() );
-
-        return this;
-    }
-
-    /**
-     * stop (clear resources) the generator lifecycle
-     */
-    public LoadGenerator stop()
-    {
-        this.stop.set( true );
-        try
-        {
-            if ( latencyListeners != null )
-            {
-                for ( LatencyListener latencyListener : latencyListeners )
-                {
-                    latencyListener.onLoadGeneratorStop();
-                }
-            }
-            if ( collectorServer != null )
-            {
-                collectorServer.stop();
-            }
-            for ( HttpClient httpClient : this.clients )
-            {
-                httpClient.stop();
-            }
-        }
-        catch ( Exception e )
-        {
-            throw new RuntimeException( e.getMessage(), e.getCause() );
-        }
-        return this;
-    }
-
-    /**
-     * run the defined load (users / request numbers)
-     */
-    public LoadGeneratorResult run()
-        throws Exception
-    {
 
         // we iterate over all request path to create HdrHistogram now
         // and do not have to worry about sync after that
@@ -292,14 +262,67 @@ public class LoadGenerator
             }
         }
 
-        LoadGeneratorResult loadGeneratorResult = new LoadGeneratorResult( recorderPerPath );
+        ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder( recorderPerPath, responseTimeValueListeners );
 
-        LoadGeneratorResultHandler loadGeneratorResultHandler =
-            new LoadGeneratorResultHandler( loadGeneratorResult, recorderPerPath, latencyListeners );
+        this.responseTimeListeners = Arrays.asList( responseTimeRecorder );
+
+        loadGeneratorResult = new LoadGeneratorResult( recorderPerPath );
+
+        _loadGeneratorResultHandler =
+            new LoadGeneratorResultHandler( loadGeneratorResult, responseTimeListeners, latencyListeners );
+
+        return this;
+    }
+
+    /**
+     * stop (clear resources) the generator lifecycle
+     */
+    public LoadGenerator stop()
+    {
+        this.stop.set( true );
+        try
+        {
+            if ( latencyListeners != null )
+            {
+                for ( LatencyListener latencyListener : latencyListeners )
+                {
+                    latencyListener.onLoadGeneratorStop();
+                }
+            }
+            if (responseTimeListeners != null)
+            {
+                for (ResponseTimeListener responseTimeListener : responseTimeListeners)
+                {
+                    responseTimeListener.onLoadGeneratorStop();
+                }
+            }
+            if ( collectorServer != null )
+            {
+                collectorServer.stop();
+            }
+            for ( HttpClient httpClient : this.clients )
+            {
+                httpClient.stop();
+            }
+        }
+        catch ( Exception e )
+        {
+            throw new RuntimeException( e.getMessage(), e.getCause() );
+        }
+        return this;
+    }
+
+    /**
+     * run the defined load (users / request numbers)
+     */
+    public LoadGeneratorResult run()
+        throws Exception
+    {
+
 
         List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
-        listeners.add( loadGeneratorResultHandler );
+        listeners.add( _loadGeneratorResultHandler );
 
         Executors.newWorkStealingPool( this.getUsers() ).submit( () -> //
         {
@@ -316,11 +339,11 @@ public class LoadGenerator
                     httpClient.setMaxRequestsQueuedPerDestination( 2048 );
                     httpClient.setSocketAddressResolver( this.getSocketAddressResolver() );
                     this.clients.add( httpClient );
-                    httpClient.getRequestListeners().add( loadGeneratorResultHandler );
+                    httpClient.getRequestListeners().add( _loadGeneratorResultHandler );
                     httpClient.getRequestListeners().addAll( listeners );
 
                     LoadGeneratorRunner loadGeneratorRunner = //
-                            new LoadGeneratorRunner( httpClient, this, loadGeneratorResultHandler );
+                            new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler );
 
                     this.executorService.submit( loadGeneratorRunner );
                 }
@@ -353,21 +376,6 @@ public class LoadGenerator
             collectorServer.start();
 
             this.collectorPort = collectorServer.getPort();
-        }
-        else
-        {
-            LOGGER.info( "collector server not started as port == {}", this.collectorPort );
-            // Time configurable!!!
-            Executors.newScheduledThreadPool( 1 ).scheduleWithFixedDelay( () ->
-                {
-
-                    for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
-                    {
-                        LOGGER.info( "recorder per path: {} : {}", entry.getKey(), //
-                                     new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                                CollectorInformations.InformationType.REQUEST ) );
-                    }
-                }, 1, 1000, TimeUnit.SECONDS );
         }
         return loadGeneratorResult;
     }
@@ -497,6 +505,8 @@ public class LoadGenerator
 
         private List<LatencyValueListener> latencyValueListeners;
 
+        private List<ResponseTimeValueListener> responseTimeValueListeners;
+
         public static Builder builder()
         {
             return new Builder();
@@ -601,6 +611,12 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder responseTimeValueListeners( List<ResponseTimeValueListener> responseTimeValueListeners )
+        {
+            this.responseTimeValueListeners = responseTimeValueListeners;
+            return this;
+        }
+
         public LoadGenerator build()
         {
             this.validate();
@@ -618,6 +634,7 @@ public class LoadGenerator
                 new SocketAddressResolver.Sync() : socketAddressResolver;
             loadGenerator.collectorPort = collectorPort;
             loadGenerator.latencyValueListeners = latencyValueListeners;
+            loadGenerator.responseTimeValueListeners = responseTimeValueListeners;
             return loadGenerator;
         }
 

@@ -23,6 +23,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
@@ -52,16 +53,16 @@ public class LoadGeneratorResultHandler
 
     private final LoadGeneratorResult loadGeneratorResult;
 
-    private final Map<String, Recorder> recorderPerPath;
-
     private List<LatencyListener> latencyListeners;
 
+    private List<ResponseTimeListener> responseTimeListeners;
+
     public LoadGeneratorResultHandler( LoadGeneratorResult loadGeneratorResult, //
-                                       Map<String, Recorder> recorderPerPath, //
+                                       List<ResponseTimeListener> responseTimeListeners, //
                                        List<LatencyListener> latencyListeners )
     {
         this.loadGeneratorResult = loadGeneratorResult;
-        this.recorderPerPath = recorderPerPath;
+        this.responseTimeListeners =responseTimeListeners;
         this.latencyListeners = latencyListeners;
     }
 
@@ -104,19 +105,12 @@ public class LoadGeneratorResultHandler
         }
         String path = response.getRequest().getPath();
 
-        Recorder recorder = this.recorderPerPath.get( path );
-        if ( recorder == null )
+        String startTime = response.getRequest().getHeaders().get( START_SEND_TIME_HEADER );
+        if ( !StringUtil.isBlank( startTime ) )
         {
-            LOGGER.warn( "cannot find Recorder for path: {}", path );
-        }
-        else
-        {
-            String startTime = response.getRequest().getHeaders().get( START_SEND_TIME_HEADER );
-            if ( !StringUtil.isBlank( startTime ) )
-            {
-                long time = end - Long.parseLong( startTime );
-
-                recorder.recordValue( time );
+            long time = end - Long.parseLong( startTime );
+            for (ResponseTimeListener responseTimeListener : responseTimeListeners) {
+                responseTimeListener.onResponseTimeValue( path, time);
             }
         }
     }

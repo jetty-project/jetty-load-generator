@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator;
 
 
+import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -30,6 +31,7 @@ import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.load.generator.latency.LatencyValueListener;
+import org.eclipse.jetty.load.generator.response.ResponseTimeValueListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -161,10 +163,12 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        LatencyValueListener latencyValueListener = collectorInformations ->
-        {
+        LatencyValueListener latencyValueListener = collectorInformations -> //
             logger.info( "latency recorder: {}", collectorInformations );
-        };
+
+
+        ResponseTimeValueListener responseTimeValueListener = ( path, collectorInformations ) -> //
+            logger.info( "response time for {} value: {}", path, collectorInformations );
 
         TestRequestListener testRequestListener = new TestRequestListener();
 
@@ -183,6 +187,7 @@ public class LoadGeneratorTest
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
             .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
+            .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
             .collectorPort( 0 ) //
             .build() //
             .start();

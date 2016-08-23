@@ -24,10 +24,8 @@ import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
-import java.sql.Time;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class HistogramLatencyRecorder
+public class LatencyRecorder
     implements LatencyListener
 {
 
@@ -52,7 +50,7 @@ public class HistogramLatencyRecorder
     private ValueListenerRunnable runnable;
 
 
-    public HistogramLatencyRecorder(List<LatencyValueListener> latencyValueListeners)
+    public LatencyRecorder( List<LatencyValueListener> latencyValueListeners)
     {
         this.latencyValueListeners = latencyValueListeners == null ? Collections.emptyList() : latencyValueListeners;
 
