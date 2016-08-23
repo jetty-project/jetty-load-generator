@@ -18,11 +18,11 @@
 
 package org.eclipse.jetty.load.generator;
 
-import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
@@ -70,10 +70,10 @@ public class LoadGeneratorResultHandler
     {
         // latency since queued
         String sendCallTime = request.getHeaders().get( AFTER_SEND_TIME_HEADER );
-        if (StringUtil.isNotBlank( sendCallTime ) && latencyListeners != null)
+        if ( StringUtil.isNotBlank( sendCallTime ) && latencyListeners != null )
         {
             long latencyValue = System.nanoTime() - Long.parseLong( sendCallTime );
-            for( LatencyListener latencyListener : latencyListeners)
+            for ( LatencyListener latencyListener : latencyListeners )
             {
                 latencyListener.onLatencyValue( latencyValue );
             }

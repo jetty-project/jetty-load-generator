@@ -19,7 +19,6 @@
 package org.eclipse.jetty.load.generator;
 
 
-import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -30,6 +29,8 @@ import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
+import org.eclipse.jetty.load.generator.latency.HistogramLatencyRecorder;
+import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;

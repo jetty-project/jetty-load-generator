@@ -16,9 +16,11 @@
 //  ========================================================================
 //
 
-package org.eclipse.jetty.load.generator;
+package org.eclipse.jetty.load.generator.latency;
 
 import org.HdrHistogram.Recorder;
+import org.eclipse.jetty.load.generator.CollectorInformations;
+import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
@@ -36,6 +38,7 @@ public class HistogramLatencyRecorder
     private final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
                                                    TimeUnit.MINUTES.toNanos( 1 ), //
                                                    3 );
+
 
     public HistogramLatencyRecorder()
     {

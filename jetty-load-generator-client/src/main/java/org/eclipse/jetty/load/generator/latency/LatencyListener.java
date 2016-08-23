@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.eclipse.jetty.load.generator;
+package org.eclipse.jetty.load.generator.latency;
 
 /**
  *

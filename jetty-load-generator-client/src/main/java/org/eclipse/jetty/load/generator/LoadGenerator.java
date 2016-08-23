@@ -25,6 +25,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
+import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
@@ -226,9 +227,9 @@ public class LoadGenerator
         this.stop.set( true );
         try
         {
-            if (latencyListeners != null)
+            if ( latencyListeners != null )
             {
-                for (LatencyListener latencyListener:latencyListeners)
+                for ( LatencyListener latencyListener : latencyListeners )
                 {
                     latencyListener.onLoadGeneratorStop();
                 }
