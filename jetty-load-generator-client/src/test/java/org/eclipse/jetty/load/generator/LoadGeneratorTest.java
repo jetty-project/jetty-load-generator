@@ -159,6 +159,44 @@ public class LoadGeneratorTest
 
     }
 
+    @Test
+    public void manual_test()
+        throws Exception
+    {
+
+        LatencyValueListener latencyValueListener = collectorInformations -> //
+            logger.info( "latency recorder: {}", collectorInformations );
+
+
+        ResponseTimeValueListener responseTimeValueListener = ( path, collectorInformations ) -> //
+            logger.info( "response time for {} value: {}", path, collectorInformations );
+
+        LoadGeneratorProfile profile = LoadGeneratorProfile.Builder.builder() //
+            .resource( "/" ).size( 1024 ) //
+            .build();
+
+        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
+
+        LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
+            .host( "strava.com" ) //
+            .port( 80 ) //
+            .users( this.usersNumber ) //
+            .requestRate( 2 ) //
+            .scheme( "http" ) //
+            //.requestListeners( Arrays.asList( testRequestListener ) ) //
+            .transport( this.transport ) //
+            .httpClientScheduler( scheduler ) //
+            .loadGeneratorWorkflow( profile ) //
+            .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
+            .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
+            .build() //
+            .start() //
+            ;
+
+        loadGenerator.run( 10, TimeUnit.SECONDS );
+
+    }
+
     protected void runProfile( LoadGeneratorProfile profile )
         throws Exception
     {
@@ -226,11 +264,6 @@ public class LoadGeneratorTest
 
         Assert.assertEquals( 200, response.getStatus() );
 
-        for ( Map.Entry<String, CollectorInformations> entry : result.getCollectorInformationsPerPath().entrySet() )
-        {
-            logger.info( "recorder per path: {} : {}", entry.getKey(), entry.getValue() );
-        }
-
         logger.info( "resp response times: {}", response.getContentAsString() );
 
         loadGenerator.stop();
@@ -245,6 +278,13 @@ public class LoadGeneratorTest
     public void simple_test_limited_time_run()
         throws Exception
     {
+
+        LatencyValueListener latencyValueListener = collectorInformations -> //
+            logger.info( "latency recorder: {}", collectorInformations );
+
+
+        ResponseTimeValueListener responseTimeValueListener = ( path, collectorInformations ) -> //
+            logger.info( "response time for {} value: {}", path, collectorInformations );
 
         LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
             .resource( "/index.html" ).size( 1024 ) //
@@ -265,14 +305,11 @@ public class LoadGeneratorTest
             .transport( this.transport ) //
             .loadGeneratorWorkflow( loadGeneratorProfile ) //
             .collectorPort( -1 ) //
+            .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
+            .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
             .build() //
             .start() //
             .run( 5, TimeUnit.SECONDS );
-
-        for ( Map.Entry<String, CollectorInformations> entry : result.getCollectorInformationsPerPath().entrySet() )
-        {
-            logger.info( "recorder per path: {} : {}", entry.getKey(), entry.getValue() );
-        }
 
         scheduler.stop();
     }

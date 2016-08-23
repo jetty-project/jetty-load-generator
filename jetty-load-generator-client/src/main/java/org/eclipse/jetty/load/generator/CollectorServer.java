@@ -20,6 +20,9 @@
 package org.eclipse.jetty.load.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.HdrHistogram.Recorder;
+import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -37,11 +40,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class CollectorServer
+    implements LatencyListener, ResponseTimeListener
 {
 
     private static final Logger LOGGER = Log.getLogger( CollectorServer.class );
@@ -52,12 +61,24 @@ public class CollectorServer
 
     private ServerConnector connector;
 
-    private final LoadGeneratorResult loadGeneratorResult;
+    private final Map<String, Recorder> recorderPerPath;
 
-    public CollectorServer( LoadGenerator loadGenerator, LoadGeneratorResult loadGeneratorResult )
+    private final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                                           TimeUnit.MINUTES.toNanos( 1 ), //
+                                                           3 );
+
+
+    public CollectorServer( LoadGenerator loadGenerator, Collection<String> paths )
     {
         this.port = loadGenerator.getCollectorPort();
-        this.loadGeneratorResult = loadGeneratorResult;
+        this.recorderPerPath = new ConcurrentHashMap<>( paths.size() );
+
+        for ( String path : paths )
+        {
+            this.recorderPerPath.put( path, new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                                          TimeUnit.MINUTES.toNanos( 1 ), //
+                                                          3 ) );
+        }
     }
 
     public int getPort()
@@ -80,7 +101,7 @@ public class CollectorServer
 
         server.setHandler( context );
 
-        CollectorServlet collectorServlet = new CollectorServlet( loadGeneratorResult );
+        CollectorServlet collectorServlet = new CollectorServlet( latencyRecorder, recorderPerPath );
 
         // TODO path configurable?
         context.addServlet( new ServletHolder( collectorServlet ), "/collector/*" );
@@ -114,11 +135,14 @@ public class CollectorServer
 
         private static final Logger LOGGER = Log.getLogger( CollectorServlet.class );
 
-        private LoadGeneratorResult loadGeneratorResult;
+        private Recorder latencyRecorder;
 
-        public CollectorServlet( LoadGeneratorResult loadGeneratorResult )
+        private Map<String, Recorder> recorderPerPath;
+
+        public CollectorServlet( Recorder latencyRecorder, Map<String, Recorder> recorderPerPath )
         {
-            this.loadGeneratorResult = loadGeneratorResult;
+            this.latencyRecorder = latencyRecorder;
+            this.recorderPerPath = recorderPerPath;
         }
 
         @Override
@@ -131,21 +155,50 @@ public class CollectorServer
             ObjectMapper mapper = new ObjectMapper();
 
             // FIXME expose it!!
-            /*
+
             if ( StringUtil.endsWithIgnoreCase( pathInfo, "client-latency" ) )
             {
-                mapper.writeValue( resp.getOutputStream(), loadGeneratorResult.getLatencyInformations() );
+
+                mapper.writeValue( resp.getOutputStream(),  //
+                                   new CollectorInformations( latencyRecorder.getIntervalHistogram(), //
+                                                              CollectorInformations.InformationType.LATENCY ) );
                 return;
             }
-            */
 
             if ( StringUtil.endsWithIgnoreCase( pathInfo, "response-times" ) )
             {
-                mapper.writeValue( resp.getOutputStream(), loadGeneratorResult.getCollectorInformationsPerPath() );
+                Map<String, CollectorInformations> infos = new HashMap<>( recorderPerPath.size() );
+                for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
+                {
+                    infos.put( entry.getKey(), new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                                          CollectorInformations.InformationType.REQUEST ) );
+                }
+                mapper.writeValue( resp.getOutputStream(), infos );
                 return;
             }
 
         }
     }
 
+    @Override
+    public void onLatencyValue( long latencyValue )
+    {
+        latencyRecorder.recordValue( latencyValue );
+    }
+
+    @Override
+    public void onResponseTimeValue( String path, long responseTime )
+    {
+        Recorder recorder = recorderPerPath.get( path );
+        if ( recorder != null )
+        {
+            recorder.recordValue( responseTime );
+        }
+    }
+
+    @Override
+    public void onLoadGeneratorStop()
+    {
+        // no op
+    }
 }

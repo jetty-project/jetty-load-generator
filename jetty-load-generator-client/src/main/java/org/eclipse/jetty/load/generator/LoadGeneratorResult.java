@@ -18,10 +18,6 @@
 
 package org.eclipse.jetty.load.generator;
 
-import org.HdrHistogram.Recorder;
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class LoadGeneratorResult
@@ -34,11 +30,9 @@ public class LoadGeneratorResult
 
     private AtomicLong totalFailure = new AtomicLong( 0 );
 
-    private final Map<String, Recorder> recorderPerPath;
-
-    public LoadGeneratorResult( Map<String, Recorder> recorderPerPath )
+    public LoadGeneratorResult()
     {
-        this.recorderPerPath = recorderPerPath;
+        // no op
     }
 
     public AtomicLong getTotalRequest()
@@ -59,18 +53,6 @@ public class LoadGeneratorResult
     public AtomicLong getTotalFailure()
     {
         return totalFailure;
-    }
-
-    public Map<String, CollectorInformations> getCollectorInformationsPerPath() {
-        Map<String,CollectorInformations> map = new HashMap<>( this.recorderPerPath.size() );
-
-        for(Map.Entry<String, Recorder> entry : this.recorderPerPath.entrySet())
-        {
-            map.put( entry.getKey(), new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                                CollectorInformations.InformationType.REQUEST ) );
-        }
-
-        return map;
     }
 
 }

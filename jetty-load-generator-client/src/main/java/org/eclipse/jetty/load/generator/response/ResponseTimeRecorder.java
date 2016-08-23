@@ -23,6 +23,7 @@ import org.eclipse.jetty.load.generator.CollectorInformations;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -67,7 +68,8 @@ public class ResponseTimeRecorder
         private ValueListenerRunnable( List<ResponseTimeValueListener> responseTimeValueListeners,
                                        Map<String, Recorder> recorderPerPath )
         {
-            this.responseTimeValueListeners = responseTimeValueListeners;
+            this.responseTimeValueListeners = responseTimeValueListeners == null ? //
+                Collections.emptyList() : responseTimeValueListeners;
             this.recorderPerPath = recorderPerPath;
         }
 

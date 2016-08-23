@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collector;
 
 /**
  *
@@ -69,7 +70,8 @@ public class LatencyRecorder
 
         private ValueListenerRunnable( List<LatencyValueListener> latencyValueListeners, Recorder latencyRecorder )
         {
-            this.latencyValueListeners = latencyValueListeners;
+            this.latencyValueListeners = latencyValueListeners == null ? //
+                 Collections.emptyList() : latencyValueListeners;
             this.latencyRecorder = latencyRecorder;
         }
 

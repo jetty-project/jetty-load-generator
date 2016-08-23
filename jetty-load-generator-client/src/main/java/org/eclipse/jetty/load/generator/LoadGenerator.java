@@ -118,6 +118,8 @@ public class LoadGenerator
 
     private LoadGeneratorResultHandler _loadGeneratorResultHandler;
 
+    private Map<String, Recorder> _recorderPerPath;
+
     public enum Transport
     {
         HTTP,
@@ -238,7 +240,7 @@ public class LoadGenerator
         // we iterate over all request path to create HdrHistogram now
         // and do not have to worry about sync after that
 
-        final Map<String, Recorder> recorderPerPath = new ConcurrentHashMap<>();
+        _recorderPerPath = new ConcurrentHashMap<>();
 
         for ( LoadGeneratorProfile.Step step : getLoadGeneratorProfile().getSteps() )
         {
@@ -246,7 +248,7 @@ public class LoadGenerator
             {
                 String path = resource.getPath();
                 path = path == null ? "" : path.trim();
-                if ( !recorderPerPath.containsKey( path ) )
+                if ( !_recorderPerPath.containsKey( path ) )
                 {
                     if ( StringUtil.isBlank( path ) )
                     {
@@ -257,16 +259,16 @@ public class LoadGenerator
                                                       TimeUnit.MINUTES.toNanos( 1 ), //
                                                       3 );
 
-                    recorderPerPath.put( path, recorder );
+                    _recorderPerPath.put( path, recorder );
                 }
             }
         }
 
-        ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder( recorderPerPath, responseTimeValueListeners );
+        ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder( _recorderPerPath, responseTimeValueListeners );
 
         this.responseTimeListeners = Arrays.asList( responseTimeRecorder );
 
-        loadGeneratorResult = new LoadGeneratorResult( recorderPerPath );
+        loadGeneratorResult = new LoadGeneratorResult( );
 
         _loadGeneratorResultHandler =
             new LoadGeneratorResultHandler( loadGeneratorResult, responseTimeListeners, latencyListeners );
@@ -307,6 +309,7 @@ public class LoadGenerator
         }
         catch ( Exception e )
         {
+            LOGGER.warn( e.getMessage(), e );
             throw new RuntimeException( e.getMessage(), e.getCause() );
         }
         return this;
@@ -371,7 +374,7 @@ public class LoadGenerator
         {
             // starting collector part
 
-            collectorServer = new CollectorServer( this, loadGeneratorResult );
+            collectorServer = new CollectorServer( this, _recorderPerPath.keySet() );
 
             collectorServer.start();
 

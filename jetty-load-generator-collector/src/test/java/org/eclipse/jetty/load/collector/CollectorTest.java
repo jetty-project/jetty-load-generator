@@ -126,7 +126,7 @@ public class CollectorTest
                 .host( "localhost" ) //
                 .port( port ) //
                 .users( 2 ) //
-                .requestRate( 3 ) //
+                .requestRate( 5 ) //
                 .scheme( "http" ) //
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .httpClientScheduler( scheduler ) //
@@ -142,7 +142,7 @@ public class CollectorTest
 
             CollectorClient collectorClient = CollectorClient.Builder.builder() //
                 .addAddress( "localhost:" + loadGenerator.getCollectorPort() ) //
-                .scheduleDelayInMillis( 1000 ) //
+                .scheduleDelayInMillis( 500 ) //
                 .collectorResultHandlers(collectorResultHandlers) //
                 .build();
 
