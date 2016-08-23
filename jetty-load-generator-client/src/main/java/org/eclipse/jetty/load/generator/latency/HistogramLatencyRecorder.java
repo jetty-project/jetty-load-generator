@@ -24,6 +24,12 @@ import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import java.sql.Time;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,10 +45,45 @@ public class HistogramLatencyRecorder
                                                    TimeUnit.MINUTES.toNanos( 1 ), //
                                                    3 );
 
+    private List<LatencyValueListener> latencyValueListeners;
 
-    public HistogramLatencyRecorder()
+    private ScheduledExecutorService scheduledExecutorService;
+
+    private ValueListenerRunnable runnable;
+
+
+    public HistogramLatencyRecorder(List<LatencyValueListener> latencyValueListeners)
     {
-        // no op
+        this.latencyValueListeners = latencyValueListeners == null ? Collections.emptyList() : latencyValueListeners;
+
+        runnable = new ValueListenerRunnable( this.latencyValueListeners, this.latencyRecorder );
+
+        scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
+        // FIXME configurable!!!
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
+    }
+
+    private static class ValueListenerRunnable implements Runnable
+    {
+        private final List<LatencyValueListener> latencyValueListeners;
+
+        private final Recorder latencyRecorder;
+
+        private ValueListenerRunnable( List<LatencyValueListener> latencyValueListeners, Recorder latencyRecorder )
+        {
+            this.latencyValueListeners = latencyValueListeners;
+            this.latencyRecorder = latencyRecorder;
+        }
+
+        @Override
+        public void run()
+        {
+            for (LatencyValueListener latencyValueListener : latencyValueListeners)
+            {
+                latencyValueListener.onValue( new CollectorInformations( latencyRecorder.getIntervalHistogram(),
+                                                                         CollectorInformations.InformationType.LATENCY ) );
+            }
+        }
     }
 
     @Override
@@ -51,24 +92,12 @@ public class HistogramLatencyRecorder
         this.latencyRecorder.recordValue( latencyValue );
     }
 
-    // FIXME schedule fixed delay print
-    /*
-    LOGGER.info( "latency informations: {}", //
-                            new CollectorInformations( latencyRecorder.getIntervalHistogram(),
-                                CollectorInformations.InformationType.LATENCY ) );
-    */
-
-    public CollectorInformations getCollectorInformations()
-    {
-        return new CollectorInformations( latencyRecorder.getIntervalHistogram(),
-                                          CollectorInformations.InformationType.LATENCY );
-    }
 
     @Override
     public void onLoadGeneratorStop()
     {
-        LOGGER.info( "latency informations: {}", //
-                     new CollectorInformations( latencyRecorder.getIntervalHistogram(),
-                                                CollectorInformations.InformationType.LATENCY ) );
+        scheduledExecutorService.shutdown();
+        // last run
+        runnable.run();
     }
 }

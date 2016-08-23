@@ -25,7 +25,9 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
+import org.eclipse.jetty.load.generator.latency.HistogramLatencyRecorder;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.latency.LatencyValueListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
@@ -35,6 +37,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -101,6 +104,8 @@ public class LoadGenerator
     private CollectorServer collectorServer;
 
     private List<LatencyListener> latencyListeners;
+
+    private List<LatencyValueListener> latencyValueListeners;
 
     public enum Transport
     {
@@ -214,6 +219,9 @@ public class LoadGenerator
      */
     public LoadGenerator start()
     {
+
+        this.latencyListeners = Arrays.asList(new HistogramLatencyRecorder(this.latencyValueListeners));
+
         this.executorService = Executors.newWorkStealingPool( this.getUsers() );
 
         return this;
@@ -487,7 +495,7 @@ public class LoadGenerator
 
         private int collectorPort = -1;
 
-        private List<LatencyListener> latencyListeners;
+        private List<LatencyValueListener> latencyValueListeners;
 
         public static Builder builder()
         {
@@ -587,9 +595,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder latencyListeners( List<LatencyListener> latencyListeners )
+        public Builder latencyValueListeners( List<LatencyValueListener> latencyValueListeners )
         {
-            this.latencyListeners = latencyListeners;
+            this.latencyValueListeners = latencyValueListeners;
             return this;
         }
 
@@ -609,7 +617,7 @@ public class LoadGenerator
             loadGenerator.socketAddressResolver = socketAddressResolver == null ? //
                 new SocketAddressResolver.Sync() : socketAddressResolver;
             loadGenerator.collectorPort = collectorPort;
-            loadGenerator.latencyListeners = latencyListeners;
+            loadGenerator.latencyValueListeners = latencyValueListeners;
             return loadGenerator;
         }
 

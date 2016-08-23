@@ -29,8 +29,7 @@ import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
-import org.eclipse.jetty.load.generator.latency.HistogramLatencyRecorder;
-import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.latency.LatencyValueListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -162,8 +161,10 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        HistogramLatencyRecorder latencyRecorder = new HistogramLatencyRecorder();
-        List<LatencyListener> latencyListeners = Arrays.asList( latencyRecorder );
+        LatencyValueListener latencyValueListener = collectorInformations ->
+        {
+            logger.info( "latency recorder: {}", collectorInformations );
+        };
 
         TestRequestListener testRequestListener = new TestRequestListener();
 
@@ -181,7 +182,7 @@ public class LoadGeneratorTest
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
-            .latencyListeners( latencyListeners ) //
+            .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
             .collectorPort( 0 ) //
             .build() //
             .start();
@@ -211,8 +212,6 @@ public class LoadGeneratorTest
         ContentResponse response = request.method( HttpMethod.GET.asString() ).send();
 
         Assert.assertEquals( 200, response.getStatus() );
-
-        logger.info( "latency recorder: {}", latencyRecorder.getCollectorInformations());
 
         logger.info( "resp client latency: {}", response.getContentAsString() );
 
