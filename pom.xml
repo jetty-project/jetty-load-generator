@@ -34,7 +34,7 @@
   <name>Jetty Load Generator Project</name>
 
   <properties>
-    <alpn.version></alpn.version>
+    <alpn.version>8.1.9.v20160720</alpn.version>
     <jetty-93-version>9.3.9.v20160517</jetty-93-version>
     <jackson2-version>2.7.5</jackson2-version>
     <jetty.version>9.3.12-SNAPSHOT</jetty.version> <!-- ${jetty-93-version} -->
