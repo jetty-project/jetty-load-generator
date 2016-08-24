@@ -52,7 +52,8 @@ public class SummaryResponseTimeListener
     public void onLoadGeneratorStop()
     {
         StringBuilder message =  //
-            new StringBuilder( "--------------------------------------" ).append( System.lineSeparator() ) //
+            new StringBuilder( System.lineSeparator()) //
+                .append( "--------------------------------------" ).append( System.lineSeparator() ) //
                 .append( "   Response Time Summary    " ).append( System.lineSeparator() ) //
                 .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 

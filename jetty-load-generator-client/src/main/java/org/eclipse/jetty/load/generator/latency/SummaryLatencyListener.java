@@ -48,7 +48,8 @@ public class SummaryLatencyListener
     public void onLoadGeneratorStop()
     {
         StringBuilder message =  //
-            new StringBuilder( "--------------------------------------" ).append( System.lineSeparator() ) //
+            new StringBuilder(System.lineSeparator() ) //
+                .append( "--------------------------------------" ).append( System.lineSeparator() ) //
                 .append( "   Latency Summary    " ).append( System.lineSeparator() ) //
                 .append( "--------------------------------------" ).append( System.lineSeparator() ) //
                 .append( new CollectorInformations( latencyRecorder.getIntervalHistogram(), //

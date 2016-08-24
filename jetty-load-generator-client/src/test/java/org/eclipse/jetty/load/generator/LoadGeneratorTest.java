@@ -157,13 +157,13 @@ public class LoadGeneratorTest
 
     }
 
-
+    @Test
     public void manual_test()
         throws Exception
     {
 
         LatencyValueListener latencyValueListener = collectorInformations -> //
-            logger.info( "latency recorder: {}", collectorInformations );
+            logger.info( "latency informations: {}", collectorInformations );
 
 
         ResponseTimeValueListener responseTimeValueListener = ( path, collectorInformations ) -> //
@@ -186,6 +186,7 @@ public class LoadGeneratorTest
             .loadGeneratorWorkflow( profile ) //
             .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
+            .latencyListening( true ) //
             .build() //
             .start();
 
@@ -198,7 +199,7 @@ public class LoadGeneratorTest
     {
 
         LatencyValueListener latencyValueListener = collectorInformations -> //
-            logger.info( "latency recorder: {}", collectorInformations );
+            logger.info( "latency informations: {}", collectorInformations );
 
 
         ResponseTimeValueListener responseTimeValueListener = ( path, collectorInformations ) -> //
@@ -220,8 +221,9 @@ public class LoadGeneratorTest
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
-            .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
+            .latencyValueListeners( Arrays.asList( latencyValueListener ), 1, 1, TimeUnit.SECONDS ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
+            .latencyListening( true ) //
             .collectorPort( 0 ) //
             .build() //
             .start();
