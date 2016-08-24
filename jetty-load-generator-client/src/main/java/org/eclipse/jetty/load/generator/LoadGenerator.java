@@ -25,12 +25,14 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
-import org.eclipse.jetty.load.generator.latency.LatencyRecorder;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.latency.LatencyRecorder;
 import org.eclipse.jetty.load.generator.latency.LatencyValueListener;
+import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeRecorder;
 import org.eclipse.jetty.load.generator.response.ResponseTimeValueListener;
+import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
@@ -235,22 +237,44 @@ public class LoadGenerator
     public LoadGenerator start()
     {
 
-        this.latencyListeners = Arrays.asList(new LatencyRecorder( this.latencyValueListeners, this.latencySchedulerDetails));
+        this.latencyListeners = Arrays.asList(new LatencyRecorder( this.latencyValueListeners, this.latencySchedulerDetails), //
+                                              new SummaryLatencyListener());
 
         this.executorService = Executors.newWorkStealingPool( this.getUsers() );
 
         // we iterate over all request path to create HdrHistogram now
         // and do not have to worry about sync after that
 
-        _recorderPerPath = new ConcurrentHashMap<>();
+        _recorderPerPath = buildMap( loadGeneratorProfile );
 
-        for ( LoadGeneratorProfile.Step step : getLoadGeneratorProfile().getSteps() )
+        SummaryResponseTimeListener summaryResponseTimeListener =
+            new SummaryResponseTimeListener(buildMap( loadGeneratorProfile ));
+
+        ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder( _recorderPerPath, //
+                                                                              responseTimeValueListeners, //
+                                                                              responseTimeSchedulerDetails );
+
+        this.responseTimeListeners = Arrays.asList( responseTimeRecorder, summaryResponseTimeListener );
+
+        loadGeneratorResult = new LoadGeneratorResult( );
+
+        _loadGeneratorResultHandler =
+            new LoadGeneratorResultHandler( loadGeneratorResult, responseTimeListeners, latencyListeners );
+
+        return this;
+    }
+
+    private static Map<String, Recorder> buildMap(LoadGeneratorProfile profile)
+    {
+        Map<String, Recorder> map = new ConcurrentHashMap<>();
+
+        for ( LoadGeneratorProfile.Step step : profile.getSteps() )
         {
             for ( LoadGeneratorProfile.Resource resource : step.getResources() )
             {
                 String path = resource.getPath();
                 path = path == null ? "" : path.trim();
-                if ( !_recorderPerPath.containsKey( path ) )
+                if ( !map.containsKey( path ) )
                 {
                     if ( StringUtil.isBlank( path ) )
                     {
@@ -261,23 +285,12 @@ public class LoadGenerator
                                                       TimeUnit.MINUTES.toNanos( 1 ), //
                                                       3 );
 
-                    _recorderPerPath.put( path, recorder );
+                    map.put( path, recorder );
                 }
             }
         }
 
-        ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder(   _recorderPerPath, //
-                                                                                responseTimeValueListeners, //
-                                                                                responseTimeSchedulerDetails);
-
-        this.responseTimeListeners = Arrays.asList( responseTimeRecorder );
-
-        loadGeneratorResult = new LoadGeneratorResult( );
-
-        _loadGeneratorResultHandler =
-            new LoadGeneratorResultHandler( loadGeneratorResult, responseTimeListeners, latencyListeners );
-
-        return this;
+        return map;
     }
 
     /**

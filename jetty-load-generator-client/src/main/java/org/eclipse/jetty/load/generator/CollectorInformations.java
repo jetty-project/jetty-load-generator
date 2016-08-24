@@ -20,6 +20,7 @@ package org.eclipse.jetty.load.generator;
 
 import org.HdrHistogram.Histogram;
 
+import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 
 public class CollectorInformations
@@ -149,14 +150,21 @@ public class CollectorInformations
     @Override
     public String toString()
     {
-        return "CollectorInformations{" + "informationType=" + informationType + ", " //
-            + "totalCount=" + totalCount //
-            + ", minValue=" + minValue //
-            + ", maxValue=" + maxValue //
-            + ", mean=" + mean //
-            + ", stdDeviation=" + stdDeviation //
-            + ", startTimeStamp=" + startTimeStamp //
-            + ", endTimeStamp=" + endTimeStamp + '}';
+        return toString(false);
+    }
+
+    public String toString(boolean ls)
+    {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
+        return "CollectorInformations{" + ( ls ?  System.lineSeparator() : "" ) //
+            + "informationType=" + informationType + ( ls ?  System.lineSeparator() : "" ) //
+            + ",totalCount=" + totalCount + ( ls ?  System.lineSeparator() : "" ) //
+            + ", minValue=" + minValue + ( ls ?  System.lineSeparator() : "" ) //
+            + ", maxValue=" + maxValue +  ( ls ?  System.lineSeparator() : "" ) //
+            + ", mean=" + mean + ( ls ?  System.lineSeparator() : "" ) //
+            + ", stdDeviation=" + stdDeviation + ( ls ?  System.lineSeparator() : "" ) //
+            + ", startTimeStamp=" + simpleDateFormat.format( startTimeStamp ) + ( ls ?  System.lineSeparator() : "" ) //
+            + ", endTimeStamp=" + simpleDateFormat.format(endTimeStamp ) + '}';
     }
 
 
