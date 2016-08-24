@@ -23,6 +23,8 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
+import org.eclipse.jetty.fcgi.client.http.HttpClientTransportOverFCGI;
+import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
@@ -239,6 +241,7 @@ public class LoadGenerator
      */
     public LoadGenerator start()
     {
+        this.scheme = scheme( this.transport );
         this.latencyListeners = latencyListening ? Arrays.asList( new LatencyRecorder( this.latencyValueListeners, //
                                                                     this.latencySchedulerDetails ), //
                                                new SummaryLatencyListener() ) : Collections.emptyList();
@@ -470,18 +473,32 @@ public class LoadGenerator
                 HTTP2Client http2Client = newHTTP2Client();
                 return new HttpClientTransportOverHTTP2( http2Client );
             }
-            /*
-            TODO
             case FCGI:
             {
-                return new HttpClientTransportOverFCGI(1, false, "");
+                return new HttpClientTransportOverFCGI( selectors, false, "");
             }
-            */
             default:
             {
                 throw new IllegalArgumentException();
             }
         }
+    }
+
+    static String scheme( LoadGenerator.Transport transport)
+    {
+        switch ( transport )
+        {
+            case HTTP:
+            case H2C:
+            case FCGI:
+                return HttpScheme.HTTP.asString();
+            case HTTPS:
+            case H2:
+                return HttpScheme.HTTPS.asString();
+            default:
+                throw new IllegalArgumentException( "unknow scheme" );
+        }
+
     }
 
 
@@ -502,8 +519,6 @@ public class LoadGenerator
         private int users;
 
         private int requestRate;
-
-        private String scheme = "http";
 
         private String host;
 
@@ -599,12 +614,6 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder scheme( String scheme )
-        {
-            this.scheme = scheme;
-            return this;
-        }
-
         public Builder requestListeners( List<Request.Listener> requestListeners )
         {
             this.requestListeners = requestListeners;
@@ -680,7 +689,6 @@ public class LoadGenerator
             loadGenerator.httpClientTransport = httpClientTransport;
             loadGenerator.sslContextFactory = sslContextFactory;
             loadGenerator.selectors = selectors;
-            loadGenerator.scheme = scheme;
             loadGenerator.httpScheduler = httpScheduler;
             loadGenerator.socketAddressResolver = socketAddressResolver == null ? //
                 new SocketAddressResolver.Sync() : socketAddressResolver;

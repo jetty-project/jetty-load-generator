@@ -127,7 +127,6 @@ public class CollectorTest
                 .port( port ) //
                 .users( 2 ) //
                 .requestRate( 5 ) //
-                .scheme( "http" ) //
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .httpClientScheduler( scheduler ) //
                 .loadGeneratorWorkflow( profile ) //

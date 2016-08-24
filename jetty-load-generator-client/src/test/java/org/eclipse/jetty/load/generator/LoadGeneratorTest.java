@@ -25,7 +25,6 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.fcgi.server.ServerFCGIConnectionFactory;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
@@ -52,6 +51,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -103,13 +103,13 @@ public class LoadGeneratorTest
 
         // FIXME LoadGenerator.Transport.H2, issue with ALPN
         // FIXME other transports
-        //transports.add( LoadGenerator.Transport.HTTPS );
-        //transports.add( LoadGenerator.Transport.H2 );
-        //transports.add( LoadGenerator.Transport.H2C );
-        //transports.add( LoadGenerator.Transport.FCGI);
+        transports.add( LoadGenerator.Transport.HTTPS );
+        transports.add( LoadGenerator.Transport.H2 );
+        transports.add( LoadGenerator.Transport.H2C );
+        transports.add( LoadGenerator.Transport.FCGI);
 
         // number of users
-        List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
+        List<Integer> users = Arrays.asList( 1, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
@@ -157,7 +157,7 @@ public class LoadGeneratorTest
 
     }
 
-    @Test
+    @Ignore
     public void manual_test()
         throws Exception
     {
@@ -176,11 +176,10 @@ public class LoadGeneratorTest
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
         LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
-            .host( "www.beer.org" ) //
+            .host( "www.strava.comm" ) //
             .port( 80 ) //
             .users( this.usersNumber ) //
             .requestRate( 2 ) //
-            .scheme( "http" ) //
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
@@ -216,10 +215,10 @@ public class LoadGeneratorTest
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
             .requestRate( 1 ) //
-            .scheme( scheme() ) //
             .requestListeners( Arrays.asList( testRequestListener ) ) //
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
+            .sslContextFactory( sslContextFactory ) //
             .loadGeneratorWorkflow( profile ) //
             .latencyValueListeners( Arrays.asList( latencyValueListener ), 1, 1, TimeUnit.SECONDS ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
@@ -299,7 +298,6 @@ public class LoadGeneratorTest
             .users( this.usersNumber ) //
             .httpClientScheduler( scheduler ) //
             .requestRate( 1 ) //
-            .scheme( scheme() ) //
             .transport( this.transport ) //
             .loadGeneratorWorkflow( loadGeneratorProfile ) //
             .collectorPort( -1 ) //
@@ -316,21 +314,6 @@ public class LoadGeneratorTest
     //---------------------------------------------------
     // utilities
     //---------------------------------------------------
-
-
-    String scheme()
-    {
-        switch ( this.transport )
-        {
-            case HTTP:
-                return HttpScheme.HTTP.asString();
-            case HTTPS:
-                return HttpScheme.HTTPS.asString();
-            default:
-                throw new IllegalArgumentException( "unknow scheme" );
-        }
-
-    }
 
     static class TestRequestListener
         extends Request.Listener.Adapter
@@ -449,10 +432,11 @@ public class LoadGeneratorTest
 
             int contentLength = request.getIntHeader( "X-Download" );
 
-            LOGGER.info( "method: {}, contentLength: {}, id: {}, pathInfo: {}", //
+            LOGGER.debug( "method: {}, contentLength: {}, id: {}, pathInfo: {}", //
                          method, contentLength, httpSession.getId(), request.getPathInfo() );
 
             switch ( method )
+
             {
                 case "GET":
                 {
