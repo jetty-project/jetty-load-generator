@@ -43,6 +43,7 @@ import org.eclipse.jetty.util.thread.Scheduler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -123,6 +124,8 @@ public class LoadGenerator
     private LoadGeneratorResultHandler _loadGeneratorResultHandler;
 
     private Map<String, Recorder> _recorderPerPath;
+
+    private boolean latencyListening;
 
     public enum Transport
     {
@@ -236,9 +239,9 @@ public class LoadGenerator
      */
     public LoadGenerator start()
     {
-
-        this.latencyListeners = Arrays.asList(new LatencyRecorder( this.latencyValueListeners, this.latencySchedulerDetails), //
-                                              new SummaryLatencyListener());
+        this.latencyListeners = latencyListening ? Arrays.asList( new LatencyRecorder( this.latencyValueListeners, //
+                                                                    this.latencySchedulerDetails ), //
+                                               new SummaryLatencyListener() ) : Collections.emptyList();
 
         this.executorService = Executors.newWorkStealingPool( this.getUsers() );
 
@@ -248,7 +251,7 @@ public class LoadGenerator
         _recorderPerPath = buildMap( loadGeneratorProfile );
 
         SummaryResponseTimeListener summaryResponseTimeListener =
-            new SummaryResponseTimeListener(buildMap( loadGeneratorProfile ));
+            new SummaryResponseTimeListener( buildMap( loadGeneratorProfile ) );
 
         ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder( _recorderPerPath, //
                                                                               responseTimeValueListeners, //
@@ -256,12 +259,13 @@ public class LoadGenerator
 
         this.responseTimeListeners = Arrays.asList( responseTimeRecorder, summaryResponseTimeListener );
 
-        loadGeneratorResult = new LoadGeneratorResult( );
+        loadGeneratorResult = new LoadGeneratorResult();
 
         _loadGeneratorResultHandler =
             new LoadGeneratorResultHandler( loadGeneratorResult, responseTimeListeners, latencyListeners );
 
         return this;
+
     }
 
     private static Map<String, Recorder> buildMap(LoadGeneratorProfile profile)
@@ -527,6 +531,8 @@ public class LoadGenerator
 
         private List<ResponseTimeValueListener> responseTimeValueListeners;
 
+        private boolean latencyListening;
+
         //TODO check if default are correct?
         private SchedulerDetails latencySchedulerDetails = new SchedulerDetails( 0, 1, TimeUnit.SECONDS ), //
             responseTimeSchedulerDetails = new SchedulerDetails( 0, 1, TimeUnit.SECONDS );
@@ -657,6 +663,12 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder latencyListening(boolean latencyListening)
+        {
+            this.latencyListening = latencyListening;
+            return this;
+        }
+
         public LoadGenerator build()
         {
             this.validate();
@@ -677,6 +689,7 @@ public class LoadGenerator
             loadGenerator.latencySchedulerDetails = latencySchedulerDetails;
             loadGenerator.responseTimeValueListeners = responseTimeValueListeners;
             loadGenerator.responseTimeSchedulerDetails = responseTimeSchedulerDetails;
+            loadGenerator.latencyListening = latencyListening;
             return loadGenerator;
         }
 
