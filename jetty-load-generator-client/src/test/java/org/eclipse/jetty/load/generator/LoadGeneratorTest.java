@@ -181,7 +181,6 @@ public class LoadGeneratorTest
             .users( this.usersNumber ) //
             .requestRate( 2 ) //
             .scheme( "http" ) //
-            //.requestListeners( Arrays.asList( testRequestListener ) ) //
             .transport( this.transport ) //
             .httpClientScheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
