@@ -19,7 +19,6 @@
 package org.eclipse.jetty.load.generator;
 
 
-import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -68,7 +67,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -159,7 +157,7 @@ public class LoadGeneratorTest
 
     }
 
-    @Test
+
     public void manual_test()
         throws Exception
     {
@@ -178,7 +176,7 @@ public class LoadGeneratorTest
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
         LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
-            .host( "strava.com" ) //
+            .host( "www.beer.org" ) //
             .port( 80 ) //
             .users( this.usersNumber ) //
             .requestRate( 2 ) //
@@ -190,8 +188,7 @@ public class LoadGeneratorTest
             .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
             .build() //
-            .start() //
-            ;
+            .start();
 
         loadGenerator.run( 10, TimeUnit.SECONDS );
 

@@ -51,15 +51,16 @@ public class LatencyRecorder
     private ValueListenerRunnable runnable;
 
 
-    public LatencyRecorder( List<LatencyValueListener> latencyValueListeners)
+    public LatencyRecorder( List<LatencyValueListener> latencyValueListeners, LoadGenerator.SchedulerDetails schedulerDetails)
     {
         this.latencyValueListeners = latencyValueListeners == null ? Collections.emptyList() : latencyValueListeners;
 
         runnable = new ValueListenerRunnable( this.latencyValueListeners, this.latencyRecorder );
 
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        // FIXME configurable!!!
-        scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
+
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, schedulerDetails.initialDelay, //
+                                                         schedulerDetails.delay, schedulerDetails.unit );
     }
 
     private static class ValueListenerRunnable implements Runnable

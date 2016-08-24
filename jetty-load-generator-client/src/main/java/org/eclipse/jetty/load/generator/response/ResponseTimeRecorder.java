@@ -20,6 +20,7 @@ package org.eclipse.jetty.load.generator.response;
 
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.CollectorInformations;
+import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
@@ -47,15 +48,16 @@ public class ResponseTimeRecorder
 
     private ValueListenerRunnable runnable;
 
-    public ResponseTimeRecorder( Map<String, Recorder> recorderPerPath,
-                                 List<ResponseTimeValueListener> responseTimeValueListeners )
+    public ResponseTimeRecorder( Map<String, Recorder> recorderPerPath, //
+                                 List<ResponseTimeValueListener> responseTimeValueListeners, //
+                                 LoadGenerator.SchedulerDetails schedulerDetails)
     {
         this.recorderPerPath = recorderPerPath;
         this.responseTimeValueListeners = responseTimeValueListeners;
         this.runnable = new ValueListenerRunnable( responseTimeValueListeners, recorderPerPath );
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        // FIXME configurable!!!
-        scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, schedulerDetails.initialDelay, //
+                                                         schedulerDetails.delay, schedulerDetails.unit );
     }
 
     private static class ValueListenerRunnable

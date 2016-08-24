@@ -114,6 +114,8 @@ public class LoadGenerator
 
     private List<ResponseTimeValueListener> responseTimeValueListeners;
 
+    private SchedulerDetails latencySchedulerDetails, responseTimeSchedulerDetails;
+
     private LoadGeneratorResult loadGeneratorResult;
 
     private LoadGeneratorResultHandler _loadGeneratorResultHandler;
@@ -233,7 +235,7 @@ public class LoadGenerator
     public LoadGenerator start()
     {
 
-        this.latencyListeners = Arrays.asList(new LatencyRecorder( this.latencyValueListeners));
+        this.latencyListeners = Arrays.asList(new LatencyRecorder( this.latencyValueListeners, this.latencySchedulerDetails));
 
         this.executorService = Executors.newWorkStealingPool( this.getUsers() );
 
@@ -264,7 +266,9 @@ public class LoadGenerator
             }
         }
 
-        ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder( _recorderPerPath, responseTimeValueListeners );
+        ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder(   _recorderPerPath, //
+                                                                                responseTimeValueListeners, //
+                                                                                responseTimeSchedulerDetails);
 
         this.responseTimeListeners = Arrays.asList( responseTimeRecorder );
 
@@ -510,6 +514,10 @@ public class LoadGenerator
 
         private List<ResponseTimeValueListener> responseTimeValueListeners;
 
+        //TODO check if default are correct?
+        private SchedulerDetails latencySchedulerDetails = new SchedulerDetails( 0, 1, TimeUnit.SECONDS ), //
+            responseTimeSchedulerDetails = new SchedulerDetails( 0, 1, TimeUnit.SECONDS );
+
         public static Builder builder()
         {
             return new Builder();
@@ -614,9 +622,25 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder latencyValueListeners( List<LatencyValueListener> latencyValueListeners, //
+                                              long initialDelay, long delay, TimeUnit unit )
+        {
+            this.latencyValueListeners = latencyValueListeners;
+            this.latencySchedulerDetails = new SchedulerDetails( initialDelay, delay, unit );
+            return this;
+        }
+
         public Builder responseTimeValueListeners( List<ResponseTimeValueListener> responseTimeValueListeners )
         {
             this.responseTimeValueListeners = responseTimeValueListeners;
+            return this;
+        }
+
+        public Builder responseTimeValueListeners( List<ResponseTimeValueListener> responseTimeValueListeners, //
+                                                   long initialDelay, long delay, TimeUnit unit)
+        {
+            this.responseTimeValueListeners = responseTimeValueListeners;
+            this.responseTimeSchedulerDetails = new SchedulerDetails( initialDelay, delay, unit );
             return this;
         }
 
@@ -637,7 +661,9 @@ public class LoadGenerator
                 new SocketAddressResolver.Sync() : socketAddressResolver;
             loadGenerator.collectorPort = collectorPort;
             loadGenerator.latencyValueListeners = latencyValueListeners;
+            loadGenerator.latencySchedulerDetails = latencySchedulerDetails;
             loadGenerator.responseTimeValueListeners = responseTimeValueListeners;
+            loadGenerator.responseTimeSchedulerDetails = responseTimeSchedulerDetails;
             return loadGenerator;
         }
 
@@ -670,6 +696,18 @@ public class LoadGenerator
 
         }
 
+    }
+
+    public static class SchedulerDetails {
+        public final Long initialDelay, delay;
+        public final TimeUnit unit;
+
+        public SchedulerDetails( long initialDelay, long delay, TimeUnit unit )
+        {
+            this.initialDelay = initialDelay;
+            this.delay = delay;
+            this.unit = unit;
+        }
     }
 
 }
