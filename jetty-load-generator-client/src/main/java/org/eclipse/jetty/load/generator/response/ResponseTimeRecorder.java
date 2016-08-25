@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -48,15 +49,13 @@ public class ResponseTimeRecorder
     private ValueListenerRunnable runnable;
 
     public ResponseTimeRecorder( Map<String, Recorder> recorderPerPath, //
-                                 List<ResponseTimeValueListener> responseTimeValueListeners, //
-                                 LoadGenerator.SchedulerDetails schedulerDetails)
+                                 List<ResponseTimeValueListener> responseTimeValueListeners)
     {
         this.recorderPerPath = recorderPerPath;
         this.responseTimeValueListeners = responseTimeValueListeners;
         this.runnable = new ValueListenerRunnable( responseTimeValueListeners, recorderPerPath );
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        scheduledExecutorService.scheduleWithFixedDelay( runnable, schedulerDetails.initialDelay, //
-                                                         schedulerDetails.delay, schedulerDetails.unit );
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
     }
 
     private static class ValueListenerRunnable

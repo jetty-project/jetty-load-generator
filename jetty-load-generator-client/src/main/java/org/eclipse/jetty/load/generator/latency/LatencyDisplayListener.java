@@ -24,8 +24,6 @@ import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,56 +31,46 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class LatencyRecorder
+public class LatencyDisplayListener
     implements LatencyListener
 {
 
-    private static final Logger LOGGER = Log.getLogger( LoadGenerator.class );
+    private static final Logger LOGGER = Log.getLogger( LatencyDisplayListener.class );
 
     private final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                                   TimeUnit.MINUTES.toNanos( 1 ), //
-                                                   3 );
-
-    private List<LatencyValueListener> latencyValueListeners;
+                                                           TimeUnit.MINUTES.toNanos( 1 ), //
+                                                           3 );
 
     private ScheduledExecutorService scheduledExecutorService;
 
     private ValueListenerRunnable runnable;
 
 
-    public LatencyRecorder( List<LatencyValueListener> latencyValueListeners, LoadGenerator.SchedulerDetails schedulerDetails)
+    public LatencyDisplayListener( )
     {
-        this.latencyValueListeners = latencyValueListeners == null ? Collections.emptyList() : latencyValueListeners;
 
-        runnable = new ValueListenerRunnable( this.latencyValueListeners, this.latencyRecorder );
+        runnable = new ValueListenerRunnable( this.latencyRecorder );
 
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
 
-        scheduledExecutorService.scheduleWithFixedDelay( runnable, schedulerDetails.initialDelay, //
-                                                         schedulerDetails.delay, schedulerDetails.unit );
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
     }
 
-    private static class ValueListenerRunnable implements Runnable
+    private static class ValueListenerRunnable
+        implements Runnable
     {
-        private final List<LatencyValueListener> latencyValueListeners;
-
         private final Recorder latencyRecorder;
 
-        private ValueListenerRunnable( List<LatencyValueListener> latencyValueListeners, Recorder latencyRecorder )
+        private ValueListenerRunnable( Recorder latencyRecorder )
         {
-            this.latencyValueListeners = latencyValueListeners == null ? //
-                 Collections.emptyList() : latencyValueListeners;
             this.latencyRecorder = latencyRecorder;
         }
 
         @Override
         public void run()
         {
-            for (LatencyValueListener latencyValueListener : latencyValueListeners)
-            {
-                latencyValueListener.onValue( new CollectorInformations( latencyRecorder.getIntervalHistogram(),
+            LOGGER.info( "latency value: {}", new CollectorInformations( this.latencyRecorder.getIntervalHistogram(), //
                                                                          CollectorInformations.InformationType.LATENCY ) );
-            }
         }
     }
 
