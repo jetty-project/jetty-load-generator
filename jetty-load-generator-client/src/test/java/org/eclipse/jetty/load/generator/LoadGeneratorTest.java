@@ -182,7 +182,7 @@ public class LoadGeneratorTest
             .requestRate( 2 ) //
             .transport( this.transport ) //
             .scheduler( scheduler ) //
-            .loadGeneratorWorkflow( profile ) //
+            .loadProfile( profile ) //
             .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
             .latencyListening( ) //
@@ -219,7 +219,7 @@ public class LoadGeneratorTest
             .transport( this.transport ) //
             .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
-            .loadGeneratorWorkflow( profile ) //
+            .loadProfile( profile ) //
             .latencyValueListeners( Arrays.asList( latencyValueListener ), 1, 1, TimeUnit.SECONDS ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
             .latencyListening( ) //
@@ -299,7 +299,7 @@ public class LoadGeneratorTest
             .scheduler( scheduler ) //
             .requestRate( 1 ) //
             .transport( this.transport ) //
-            .loadGeneratorWorkflow( loadGeneratorProfile ) //
+            .loadProfile( loadGeneratorProfile ) //
             .collectorPort( -1 ) //
             .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //

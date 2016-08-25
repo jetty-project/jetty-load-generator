@@ -128,7 +128,7 @@ public class CollectorTest
                 .requestRate( 5 ) //
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .scheduler( scheduler ) //
-                .loadGeneratorWorkflow( profile ) //
+                .loadProfile( profile ) //
                 .collectorPort( 0 ) //
                 .build() //
                 .start();

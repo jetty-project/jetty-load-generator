@@ -75,7 +75,7 @@ public class LoadGeneratorRunner
                     break;
                 }
 
-                List<LoadGeneratorProfile.Step> steps = loadGenerator.getLoadGeneratorProfile().getSteps();
+                List<LoadGeneratorProfile.Step> steps = loadGenerator.getProfile().getSteps();
 
                 for ( LoadGeneratorProfile.Step step : steps )
                 {

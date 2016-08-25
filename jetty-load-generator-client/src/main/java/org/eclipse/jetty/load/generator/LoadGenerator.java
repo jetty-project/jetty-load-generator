@@ -91,7 +91,7 @@ public class LoadGenerator
      */
     private int collectorPort = 0;
 
-    private LoadGeneratorProfile loadGeneratorProfile;
+    private LoadGeneratorProfile profile;
 
     private Transport transport;
 
@@ -138,14 +138,14 @@ public class LoadGenerator
         FCGI
     }
 
-    LoadGenerator( int users, int requestRate, String host, int port, LoadGeneratorProfile loadGeneratorProfile )
+    LoadGenerator( int users, int requestRate, String host, int port, LoadGeneratorProfile profile )
     {
         this.users = users;
         this.requestRate = requestRate;
         this.host = host;
         this.port = port;
         this.stop = new AtomicBoolean( false );
-        this.loadGeneratorProfile = loadGeneratorProfile;
+        this.profile = profile;
     }
 
     //--------------------------------------------------------------
@@ -217,9 +217,9 @@ public class LoadGenerator
         return socketAddressResolver;
     }
 
-    public LoadGeneratorProfile getLoadGeneratorProfile()
+    public LoadGeneratorProfile getProfile()
     {
-        return loadGeneratorProfile;
+        return profile;
     }
 
     public String getScheme()
@@ -251,10 +251,10 @@ public class LoadGenerator
         // we iterate over all request path to create HdrHistogram now
         // and do not have to worry about sync after that
 
-        _recorderPerPath = buildMap( loadGeneratorProfile );
+        _recorderPerPath = buildMap( profile );
 
         SummaryResponseTimeListener summaryResponseTimeListener =
-            new SummaryResponseTimeListener( buildMap( loadGeneratorProfile ) );
+            new SummaryResponseTimeListener( buildMap( profile ) );
 
         ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder( _recorderPerPath, //
                                                                               responseTimeValueListeners, //
@@ -538,7 +538,7 @@ public class LoadGenerator
 
         private SocketAddressResolver socketAddressResolver;
 
-        private LoadGeneratorProfile loadGeneratorProfile;
+        private LoadGeneratorProfile profile;
 
         private int collectorPort = -1;
 
@@ -632,9 +632,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder loadGeneratorWorkflow( LoadGeneratorProfile loadGeneratorProfile )
+        public Builder loadProfile( LoadGeneratorProfile loadGeneratorProfile )
         {
-            this.loadGeneratorProfile = loadGeneratorProfile;
+            this.profile = loadGeneratorProfile;
             return this;
         }
 
@@ -682,7 +682,7 @@ public class LoadGenerator
         {
             this.validate();
             LoadGenerator loadGenerator =
-                new LoadGenerator( users, requestRate, host, port, this.loadGeneratorProfile );
+                new LoadGenerator( users, requestRate, host, port, this.profile );
             loadGenerator.transport = this.transport;
             loadGenerator.requestListeners = this.requestListeners == null ? new ArrayList<>() // //
                 : this.requestListeners;
@@ -723,9 +723,9 @@ public class LoadGenerator
                 throw new IllegalArgumentException( "port must be a positive integer" );
             }
 
-            if ( this.loadGeneratorProfile == null )
+            if ( this.profile == null )
             {
-                throw new IllegalArgumentException( "a loadGeneratorProfile is mandatory" );
+                throw new IllegalArgumentException( "a profile is mandatory" );
             }
 
         }
