@@ -18,6 +18,7 @@
 
 package org.eclipse.jetty.load.collector;
 
+import org.eclipse.jetty.load.generator.CollectorServer;
 import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.load.generator.LoadGeneratorProfile;
 import org.eclipse.jetty.load.generator.LoadGeneratorResult;
@@ -119,6 +120,7 @@ public class CollectorTest
 
         for ( Server server : servers )
         {
+            CollectorServer collectorServer = new CollectorServer( 0 ).start();
             Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
             int port = ( (ServerConnector) server.getConnectors()[0] ).getLocalPort();
             LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
@@ -129,7 +131,8 @@ public class CollectorTest
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .scheduler( scheduler ) //
                 .loadProfile( profile ) //
-                .collectorPort( 0 ) //
+                .latencyListeners( Arrays.asList( collectorServer ) ) //
+                .responseTimeListeners( Arrays.asList( collectorServer ) ) //
                 .build() //
                 .start();
 
@@ -139,7 +142,7 @@ public class CollectorTest
             loadGenerators.add( loadGenerator );
 
             CollectorClient collectorClient = CollectorClient.Builder.builder() //
-                .addAddress( "localhost:" + loadGenerator.getCollectorPort() ) //
+                .addAddress( "localhost:" + collectorServer.getPort() ) //
                 .scheduleDelayInMillis( 500 ) //
                 .collectorResultHandlers(collectorResultHandlers) //
                 .build();

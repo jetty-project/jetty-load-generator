@@ -51,8 +51,8 @@ public class LatencyDisplayListener
 
         runnable = new ValueListenerRunnable( this.latencyRecorder );
 
+        // FIXME configurable or using a shared one
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-
         scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
     }
 

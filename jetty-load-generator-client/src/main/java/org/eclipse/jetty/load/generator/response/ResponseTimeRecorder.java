@@ -27,6 +27,7 @@ import org.eclipse.jetty.util.log.Logger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -42,18 +43,15 @@ public class ResponseTimeRecorder
 
     private final Map<String, Recorder> recorderPerPath;
 
-    private final List<ResponseTimeValueListener> responseTimeValueListeners;
-
     private ScheduledExecutorService scheduledExecutorService;
 
     private ValueListenerRunnable runnable;
 
-    public ResponseTimeRecorder( Map<String, Recorder> recorderPerPath, //
-                                 List<ResponseTimeValueListener> responseTimeValueListeners)
+    public ResponseTimeRecorder()
     {
-        this.recorderPerPath = recorderPerPath;
-        this.responseTimeValueListeners = responseTimeValueListeners;
-        this.runnable = new ValueListenerRunnable( responseTimeValueListeners, recorderPerPath );
+        this.recorderPerPath = new ConcurrentHashMap<>(  );
+        this.runnable = new ValueListenerRunnable( recorderPerPath );
+        // FIXME configurable or using a shared one
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
         scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
     }
@@ -61,29 +59,24 @@ public class ResponseTimeRecorder
     private static class ValueListenerRunnable
         implements Runnable
     {
-        private final List<ResponseTimeValueListener> responseTimeValueListeners;
-
         private final Map<String, Recorder> recorderPerPath;
 
-        private ValueListenerRunnable( List<ResponseTimeValueListener> responseTimeValueListeners,
-                                       Map<String, Recorder> recorderPerPath )
+        private ValueListenerRunnable( Map<String, Recorder> recorderPerPath )
         {
-            this.responseTimeValueListeners = responseTimeValueListeners == null ? //
-                Collections.emptyList() : responseTimeValueListeners;
             this.recorderPerPath = recorderPerPath;
         }
 
         @Override
         public void run()
         {
-            for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet())
+            for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
             {
-                for ( ResponseTimeValueListener responseTimeValueListener : responseTimeValueListeners )
-                {
-                    responseTimeValueListener.onValue( entry.getKey(), //
-                        new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                   CollectorInformations.InformationType.REQUEST ) );
-                }
+                StringBuilder message = new StringBuilder( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
+                message.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                           CollectorInformations.InformationType.REQUEST ) //
+                                    .toString( true ) ) //
+                    .append( System.lineSeparator() );
+                LOGGER.info( message.toString() );
             }
         }
     }
@@ -95,12 +88,12 @@ public class ResponseTimeRecorder
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
-            LOGGER.warn( "cannot find Histogram to record response time for path: {}", path );
+            recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                     TimeUnit.MINUTES.toNanos( 1 ), //
+                                     3 );
+            recorderPerPath.put( path, recorder );
         }
-        else
-        {
-            recorder.recordValue( responseTime );
-        }
+        recorder.recordValue( responseTime );
     }
 
     @Override

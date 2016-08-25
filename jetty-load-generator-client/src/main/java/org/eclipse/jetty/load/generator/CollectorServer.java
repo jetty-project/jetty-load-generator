@@ -61,24 +61,16 @@ public class CollectorServer
 
     private ServerConnector connector;
 
-    private final Map<String, Recorder> recorderPerPath;
+    private final Map<String, Recorder> recorderPerPath = new ConcurrentHashMap<>(  );
 
     private final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
                                                            TimeUnit.MINUTES.toNanos( 1 ), //
                                                            3 );
 
 
-    public CollectorServer( LoadGenerator loadGenerator, Collection<String> paths )
+    public CollectorServer( int port )
     {
-        this.port = loadGenerator.getCollectorPort();
-        this.recorderPerPath = new ConcurrentHashMap<>( paths.size() );
-
-        for ( String path : paths )
-        {
-            this.recorderPerPath.put( path, new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                                          TimeUnit.MINUTES.toNanos( 1 ), //
-                                                          3 ) );
-        }
+        this.port = port;
     }
 
     public int getPort()
@@ -86,7 +78,7 @@ public class CollectorServer
         return port;
     }
 
-    public void start()
+    public CollectorServer start()
         throws Exception
     {
 
@@ -111,6 +103,8 @@ public class CollectorServer
         this.port = connector.getLocalPort();
 
         LOGGER.info( "CollectorServer started on port {}", this.port );
+
+        return this;
 
     }
 
@@ -190,10 +184,14 @@ public class CollectorServer
     public void onResponseTimeValue( String path, long responseTime )
     {
         Recorder recorder = recorderPerPath.get( path );
-        if ( recorder != null )
+        if ( recorder == null )
         {
-            recorder.recordValue( responseTime );
+            recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                     TimeUnit.MINUTES.toNanos( 1 ), //
+                                     3 );
+            recorderPerPath.put( path, recorder );
         }
+        recorder.recordValue( responseTime );
     }
 
     @Override

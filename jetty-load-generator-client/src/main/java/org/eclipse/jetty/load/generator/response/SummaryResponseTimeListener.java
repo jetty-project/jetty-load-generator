@@ -21,6 +21,8 @@ import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.CollectorInformations;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -33,19 +35,23 @@ public class SummaryResponseTimeListener
 
     private Map<String, Recorder> recorderPerPath;
 
-    public SummaryResponseTimeListener( Map<String, Recorder> recorderPerPath )
+    public SummaryResponseTimeListener( )
     {
-        this.recorderPerPath = recorderPerPath;
+        this.recorderPerPath = new ConcurrentHashMap<>(  );
     }
 
     @Override
     public void onResponseTimeValue( String path, long responseTime )
     {
         Recorder recorder = recorderPerPath.get( path );
-        if ( recorder != null )
+        if ( recorder == null )
         {
-            recorder.recordValue( responseTime );
+            recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                     TimeUnit.MINUTES.toNanos( 1 ), //
+                                     3 );
+            recorderPerPath.put( path, recorder );
         }
+        recorder.recordValue( responseTime );
     }
 
     @Override

@@ -30,8 +30,6 @@ import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeRecorder;
-import org.eclipse.jetty.load.generator.response.ResponseTimeValueListener;
-import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
@@ -82,11 +80,6 @@ public class LoadGenerator
      */
     private int port;
 
-    /**
-     * port used to collect statistics data
-     */
-    private int collectorPort = 0;
-
     private LoadGeneratorProfile profile;
 
     private Transport transport;
@@ -111,15 +104,11 @@ public class LoadGenerator
 
     private List<ResponseTimeListener> responseTimeListeners;
 
-    private List<ResponseTimeValueListener> responseTimeValueListeners;
-
     private LoadGeneratorResult loadGeneratorResult;
 
     private LoadGeneratorResultHandler _loadGeneratorResultHandler;
 
     private Map<String, Recorder> _recorderPerPath;
-
-    private boolean latencyListening;
 
     public enum Transport
     {
@@ -219,11 +208,6 @@ public class LoadGenerator
         return scheme;
     }
 
-    public int getCollectorPort()
-    {
-        return collectorPort;
-    }
-
     //--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
@@ -237,19 +221,6 @@ public class LoadGenerator
 
         this.executorService = Executors.newWorkStealingPool( this.getUsers() );
 
-        // we iterate over all request path to create HdrHistogram now
-        // and do not have to worry about sync after that
-
-        _recorderPerPath = buildMap( profile );
-
-        SummaryResponseTimeListener summaryResponseTimeListener =
-            new SummaryResponseTimeListener( buildMap( profile ) );
-
-        ResponseTimeRecorder responseTimeRecorder = new ResponseTimeRecorder( _recorderPerPath, //
-                                                                              responseTimeValueListeners );
-
-        this.responseTimeListeners = Arrays.asList( responseTimeRecorder, summaryResponseTimeListener );
-
         loadGeneratorResult = new LoadGeneratorResult();
 
         _loadGeneratorResultHandler =
@@ -257,35 +228,6 @@ public class LoadGenerator
 
         return this;
 
-    }
-
-    private static Map<String, Recorder> buildMap(LoadGeneratorProfile profile)
-    {
-        Map<String, Recorder> map = new ConcurrentHashMap<>();
-
-        for ( LoadGeneratorProfile.Step step : profile.getSteps() )
-        {
-            for ( LoadGeneratorProfile.Resource resource : step.getResources() )
-            {
-                String path = resource.getPath();
-                path = path == null ? "" : path.trim();
-                if ( !map.containsKey( path ) )
-                {
-                    if ( StringUtil.isBlank( path ) )
-                    {
-                        path = "/";
-                    }
-
-                    Recorder recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                                      TimeUnit.MINUTES.toNanos( 1 ), //
-                                                      3 );
-
-                    map.put( path, recorder );
-                }
-            }
-        }
-
-        return map;
     }
 
     /**
@@ -382,16 +324,6 @@ public class LoadGenerator
             }
         } );
 
-        if ( this.collectorPort >= 0 )
-        {
-            // starting collector part
-
-            collectorServer = new CollectorServer( this, _recorderPerPath.keySet() );
-
-            collectorServer.start();
-
-            this.collectorPort = collectorServer.getPort();
-        }
         return loadGeneratorResult;
     }
 
@@ -528,13 +460,10 @@ public class LoadGenerator
 
         private LoadGeneratorProfile profile;
 
-        private int collectorPort = -1;
-
         private List<LatencyListener> latencyListeners;
 
-        private List<ResponseTimeValueListener> responseTimeValueListeners;
+        private List<ResponseTimeListener> responseTimeListeners;
 
-        private boolean latencyListening;
 
         public static Builder builder()
         {
@@ -622,27 +551,15 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder collectorPort( int collectorPort )
-        {
-            this.collectorPort = collectorPort;
-            return this;
-        }
-
         public Builder latencyListeners( List<LatencyListener> latencyListeners )
         {
             this.latencyListeners = latencyListeners;
             return this;
         }
 
-        public Builder responseTimeValueListeners( List<ResponseTimeValueListener> responseTimeValueListeners )
+        public Builder responseTimeListeners( List<ResponseTimeListener> responseTimeListeners )
         {
-            this.responseTimeValueListeners = responseTimeValueListeners;
-            return this;
-        }
-
-        public Builder latencyListening()
-        {
-            this.latencyListening = true;
+            this.responseTimeListeners = responseTimeListeners;
             return this;
         }
 
@@ -660,10 +577,8 @@ public class LoadGenerator
             loadGenerator.scheduler = httpScheduler;
             loadGenerator.socketAddressResolver = socketAddressResolver == null ? //
                 new SocketAddressResolver.Sync() : socketAddressResolver;
-            loadGenerator.collectorPort = collectorPort;
             loadGenerator.latencyListeners = latencyListeners;
-            loadGenerator.responseTimeValueListeners = responseTimeValueListeners;
-            loadGenerator.latencyListening = latencyListening;
+            loadGenerator.responseTimeListeners = responseTimeListeners;
             return loadGenerator;
         }
 

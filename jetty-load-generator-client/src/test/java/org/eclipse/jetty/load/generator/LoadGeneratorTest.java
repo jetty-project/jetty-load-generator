@@ -31,7 +31,9 @@ import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
-import org.eclipse.jetty.load.generator.response.ResponseTimeValueListener;
+import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
+import org.eclipse.jetty.load.generator.response.ResponseTimeRecorder;
+import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -167,9 +169,8 @@ public class LoadGeneratorTest
         List<LatencyListener> latencyListeners =
             Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
 
-
-        ResponseTimeValueListener responseTimeValueListener = ( path, collectorInformations ) -> //
-            logger.info( "response time for {} value: {}", path, collectorInformations );
+        List<ResponseTimeListener> responseTimeListeners =
+            Arrays.asList( new ResponseTimeRecorder(), new SummaryResponseTimeListener() );
 
         LoadGeneratorProfile profile = LoadGeneratorProfile.Builder.builder() //
             .resource( "/" ).size( 1024 ) //
@@ -186,8 +187,7 @@ public class LoadGeneratorTest
             .scheduler( scheduler ) //
             .loadProfile( profile ) //
             .latencyListeners( latencyListeners ) //
-            .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
-            .latencyListening( ) //
+            .responseTimeListeners( responseTimeListeners ) //
             .build() //
             .start();
 
@@ -199,11 +199,13 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        List<LatencyListener> latencyListeners =
-            Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
+        CollectorServer collectorServer = new CollectorServer( 0 ).start();
 
-        ResponseTimeValueListener responseTimeValueListener = ( path, collectorInformations ) -> //
-            logger.info( "response time for {} value: {}", path, collectorInformations );
+        List<LatencyListener> latencyListeners =
+            Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener(), collectorServer );
+
+        List<ResponseTimeListener> responseTimeListeners =
+            Arrays.asList( new ResponseTimeRecorder(), new SummaryResponseTimeListener(), collectorServer );
 
         TestRequestListener testRequestListener = new TestRequestListener();
 
@@ -222,9 +224,7 @@ public class LoadGeneratorTest
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
             .latencyListeners( latencyListeners ) //
-            .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
-            .latencyListening( ) //
-            .collectorPort( 0 ) //
+            .responseTimeListeners( responseTimeListeners ) //
             .build() //
             .start();
 
@@ -249,7 +249,7 @@ public class LoadGeneratorTest
         HttpClient httpClient = new HttpClient();
         httpClient.start();
         Request request = httpClient.newRequest(
-            "http://localhost:" + loadGenerator.getCollectorPort() + "/collector/client-latency" );
+            "http://localhost:" + collectorServer.getPort() + "/collector/client-latency" );
         ContentResponse response = request.method( HttpMethod.GET.asString() ).send();
 
         Assert.assertEquals( 200, response.getStatus() );
@@ -257,7 +257,7 @@ public class LoadGeneratorTest
         logger.info( "resp client latency: {}", response.getContentAsString() );
 
         request = httpClient.newRequest(
-            "http://localhost:" + loadGenerator.getCollectorPort() + "/collector/response-times" );
+            "http://localhost:" + collectorServer.getPort() + "/collector/response-times" );
         response = request.method( HttpMethod.GET.asString() ).send();
 
         Assert.assertEquals( 200, response.getStatus() );
@@ -281,8 +281,8 @@ public class LoadGeneratorTest
             Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
 
 
-        ResponseTimeValueListener responseTimeValueListener = ( path, collectorInformations ) -> //
-            logger.info( "response time for {} value: {}", path, collectorInformations );
+        List<ResponseTimeListener> responseTimeListeners =
+            Arrays.asList( new ResponseTimeRecorder(), new SummaryResponseTimeListener() );
 
         LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
             .resource( "/index.html" ).size( 1024 ) //
@@ -301,9 +301,8 @@ public class LoadGeneratorTest
             .requestRate( 1 ) //
             .transport( this.transport ) //
             .loadProfile( loadGeneratorProfile ) //
-            .collectorPort( -1 ) //
             .latencyListeners( latencyListeners ) //
-            .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
+            .responseTimeListeners( responseTimeListeners ) //
             .build() //
             .start() //
             .run( 5, TimeUnit.SECONDS );
