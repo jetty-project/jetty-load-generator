@@ -45,15 +45,19 @@ public class LatencyDisplayListener
 
     private ValueListenerRunnable runnable;
 
-
-    public LatencyDisplayListener( )
+    public LatencyDisplayListener( long initialDelay, long delay, TimeUnit timeUnit )
     {
 
         runnable = new ValueListenerRunnable( this.latencyRecorder );
 
         // FIXME configurable or using a shared one
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, initialDelay, delay, timeUnit );
+    }
+
+    public LatencyDisplayListener( )
+    {
+       this( 0, 1, TimeUnit.SECONDS );
     }
 
     private static class ValueListenerRunnable

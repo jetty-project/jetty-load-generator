@@ -87,6 +87,8 @@ public class LoadGenerator
 
     private ExecutorService executorService;
 
+    private ExecutorService runnersExecutorService;
+
     private CopyOnWriteArrayList<HttpClient> clients = new CopyOnWriteArrayList<>();
 
     private Scheduler scheduler;
@@ -215,6 +217,8 @@ public class LoadGenerator
 
         this.executorService = Executors.newWorkStealingPool( parallelism );
 
+        this.runnersExecutorService = Executors.newWorkStealingPool( parallelism );
+
         _loadGeneratorResultHandler =
             new LoadGeneratorResultHandler( responseTimeListeners, latencyListeners );
 
@@ -230,6 +234,12 @@ public class LoadGenerator
         this.stop.set( true );
         try
         {
+            this.runnersExecutorService.shutdown();
+            // wait the end?
+            while( !runnersExecutorService.isTerminated()) {
+                Thread.sleep( 2 );
+            }
+
             this.executorService.shutdown();
 
             // wait the end?
@@ -279,48 +289,49 @@ public class LoadGenerator
 
         listeners.add( _loadGeneratorResultHandler );
 
-        executorService.submit( () -> //
-        {
-            HttpClientTransport httpClientTransport =
-                this.getHttpClientTransport() != null ?//
-                 this.getHttpClientTransport() : provideClientTransport( this.getTransport() );
-
-            for ( int i = this.getUsers(); i > 0; i-- )
+        executorService.submit( () ->
             {
+                HttpClientTransport httpClientTransport =
+                    LoadGenerator.this.getHttpClientTransport() != null ?//
+                        LoadGenerator.this.getHttpClientTransport() : provideClientTransport( LoadGenerator.this.getTransport() );
+
+                for ( int i = LoadGenerator.this.getUsers(); i > 0; i-- )
+                {
+                    try
+                    {
+                        HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+                        // TODO dynamic depending on the rate??
+                        httpClient.setMaxRequestsQueuedPerDestination( 2048 );
+                        httpClient.setSocketAddressResolver( LoadGenerator.this.getSocketAddressResolver() );
+                        LoadGenerator.this.clients.add( httpClient );
+                        httpClient.getRequestListeners().addAll( listeners );
+
+                        LoadGeneratorRunner loadGeneratorRunner = //
+                            new LoadGeneratorRunner( httpClient, LoadGenerator.this, _loadGeneratorResultHandler );
+
+                        LoadGenerator.this.runnersExecutorService.submit( loadGeneratorRunner );
+                    }
+                    catch ( Exception e )
+                    {
+                        LOGGER.warn( "ignore exception", e );
+                    }
+                }
+
                 try
                 {
-                    HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
-                    // TODO dynamic depending on the rate??
-                    httpClient.setMaxRequestsQueuedPerDestination( 2048 );
-                    httpClient.setSocketAddressResolver( this.getSocketAddressResolver() );
-                    this.clients.add( httpClient );
-                    httpClient.getRequestListeners().addAll( listeners );
-
-                    LoadGeneratorRunner loadGeneratorRunner = //
-                            new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler );
-
-                    this.executorService.submit( loadGeneratorRunner );
+                    while ( !LoadGenerator.this.stop.get() )
+                    {
+                        // wait until stopped
+                        Thread.sleep( 1 );
+                    }
                 }
-                catch ( Exception e )
+                catch ( Throwable e )
                 {
                     LOGGER.warn( "ignore exception", e );
                 }
+                LOGGER.debug( "exit run lambda" );
             }
-
-            try
-            {
-                while ( !this.stop.get() )
-                {
-                    // wait until stopped
-                    Thread.sleep( 1 );
-                }
-            }
-            catch ( Throwable e )
-            {
-                LOGGER.warn( "ignore exception", e );
-            }
-            LOGGER.debug( "exit run lambda" );
-        } );
+        );
     }
 
     public void run( long time, TimeUnit timeUnit )

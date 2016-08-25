@@ -107,15 +107,15 @@ public class LoadGeneratorTest
 
         // FIXME LoadGenerator.Transport.H2, issue with ALPN
         // FIXME other transports
-        /*
+
         transports.add( LoadGenerator.Transport.HTTPS );
         transports.add( LoadGenerator.Transport.H2 );
         transports.add( LoadGenerator.Transport.H2C );
         transports.add( LoadGenerator.Transport.FCGI);
-        */
+
 
         // number of users
-        List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
+        List<Integer> users = Arrays.asList( 1, 2 );//, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
@@ -237,7 +237,7 @@ public class LoadGeneratorTest
 
         loadGenerator.setRequestRate( 10 );
 
-        Thread.sleep( 20000 );
+        Thread.sleep( 4000 );
 
         Assert.assertTrue( "successReponsesReceived :" + testRequestListener.success.get(), //
                            testRequestListener.success.get() > 1 );

@@ -44,13 +44,18 @@ public class ResponseTimeDisplayListener
 
     private ValueListenerRunnable runnable;
 
-    public ResponseTimeDisplayListener()
+    public ResponseTimeDisplayListener(long initial, long delay, TimeUnit timeUnit)
     {
         this.recorderPerPath = new ConcurrentHashMap<>(  );
         this.runnable = new ValueListenerRunnable( recorderPerPath );
         // FIXME configurable or using a shared one
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        scheduledExecutorService.scheduleWithFixedDelay( runnable, 0, 1, TimeUnit.SECONDS );
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, initial, initial, timeUnit );
+    }
+
+    public ResponseTimeDisplayListener()
+    {
+        this(0, 1, TimeUnit.SECONDS);
     }
 
     private static class ValueListenerRunnable

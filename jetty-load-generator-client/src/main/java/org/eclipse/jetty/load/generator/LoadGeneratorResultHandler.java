@@ -27,6 +27,7 @@ import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,8 +57,8 @@ public class LoadGeneratorResultHandler
     public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners, //
                                        List<LatencyListener> latencyListeners )
     {
-        this.responseTimeListeners =responseTimeListeners;
-        this.latencyListeners = latencyListeners;
+        this.responseTimeListeners =responseTimeListeners == null ? Collections.emptyList() : responseTimeListeners;
+        this.latencyListeners = latencyListeners == null ? Collections.emptyList() : latencyListeners;
     }
 
     @Override
