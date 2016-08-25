@@ -181,11 +181,11 @@ public class LoadGeneratorTest
             .users( this.usersNumber ) //
             .requestRate( 2 ) //
             .transport( this.transport ) //
-            .httpClientScheduler( scheduler ) //
+            .scheduler( scheduler ) //
             .loadGeneratorWorkflow( profile ) //
             .latencyValueListeners( Arrays.asList( latencyValueListener ) ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
-            .latencyListening( true ) //
+            .latencyListening( ) //
             .build() //
             .start();
 
@@ -217,12 +217,12 @@ public class LoadGeneratorTest
             .requestRate( 1 ) //
             .requestListeners( Arrays.asList( testRequestListener ) ) //
             .transport( this.transport ) //
-            .httpClientScheduler( scheduler ) //
+            .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
             .loadGeneratorWorkflow( profile ) //
             .latencyValueListeners( Arrays.asList( latencyValueListener ), 1, 1, TimeUnit.SECONDS ) //
             .responseTimeValueListeners( Arrays.asList( responseTimeValueListener ) ) //
-            .latencyListening( true ) //
+            .latencyListening( ) //
             .collectorPort( 0 ) //
             .build() //
             .start();
@@ -296,7 +296,7 @@ public class LoadGeneratorTest
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
-            .httpClientScheduler( scheduler ) //
+            .scheduler( scheduler ) //
             .requestRate( 1 ) //
             .transport( this.transport ) //
             .loadGeneratorWorkflow( loadGeneratorProfile ) //

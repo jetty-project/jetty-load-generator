@@ -30,7 +30,6 @@ import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.session.HashSessionIdManager;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.IO;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -128,7 +127,7 @@ public class CollectorTest
                 .users( 2 ) //
                 .requestRate( 5 ) //
                 .transport( LoadGenerator.Transport.HTTP ) //
-                .httpClientScheduler( scheduler ) //
+                .scheduler( scheduler ) //
                 .loadGeneratorWorkflow( profile ) //
                 .collectorPort( 0 ) //
                 .build() //

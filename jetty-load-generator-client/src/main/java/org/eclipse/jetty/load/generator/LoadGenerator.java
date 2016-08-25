@@ -105,7 +105,7 @@ public class LoadGenerator
 
     private CopyOnWriteArrayList<HttpClient> clients = new CopyOnWriteArrayList<>();
 
-    private Scheduler httpScheduler;
+    private Scheduler scheduler;
 
     private SocketAddressResolver socketAddressResolver;
 
@@ -207,9 +207,9 @@ public class LoadGenerator
         return stop;
     }
 
-    public Scheduler getHttpScheduler()
+    public Scheduler getScheduler()
     {
-        return httpScheduler;
+        return scheduler;
     }
 
     public SocketAddressResolver getSocketAddressResolver()
@@ -450,9 +450,9 @@ public class LoadGenerator
         transport.setHttpClient( httpClient );
         httpClient.start();
 
-        if ( this.getHttpScheduler() != null )
+        if ( this.getScheduler() != null )
         {
-            httpClient.setScheduler( this.getHttpScheduler() );
+            httpClient.setScheduler( this.getScheduler() );
         }
 
         return httpClient;
@@ -620,7 +620,7 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder httpClientScheduler( Scheduler scheduler )
+        public Builder scheduler( Scheduler scheduler )
         {
             this.httpScheduler = scheduler;
             return this;
@@ -672,9 +672,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder latencyListening(boolean latencyListening)
+        public Builder latencyListening()
         {
-            this.latencyListening = latencyListening;
+            this.latencyListening = true;
             return this;
         }
 
@@ -689,7 +689,7 @@ public class LoadGenerator
             loadGenerator.httpClientTransport = httpClientTransport;
             loadGenerator.sslContextFactory = sslContextFactory;
             loadGenerator.selectors = selectors;
-            loadGenerator.httpScheduler = httpScheduler;
+            loadGenerator.scheduler = httpScheduler;
             loadGenerator.socketAddressResolver = socketAddressResolver == null ? //
                 new SocketAddressResolver.Sync() : socketAddressResolver;
             loadGenerator.collectorPort = collectorPort;
