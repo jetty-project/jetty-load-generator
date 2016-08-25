@@ -20,12 +20,9 @@ package org.eclipse.jetty.load.generator.response;
 
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.CollectorInformations;
-import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -35,11 +32,11 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class ResponseTimeRecorder
+public class ResponseTimeDisplayListener
     implements ResponseTimeListener
 {
 
-    private static final Logger LOGGER = Log.getLogger( ResponseTimeRecorder.class );
+    private static final Logger LOGGER = Log.getLogger( ResponseTimeDisplayListener.class );
 
     private final Map<String, Recorder> recorderPerPath;
 
@@ -47,7 +44,7 @@ public class ResponseTimeRecorder
 
     private ValueListenerRunnable runnable;
 
-    public ResponseTimeRecorder()
+    public ResponseTimeDisplayListener()
     {
         this.recorderPerPath = new ConcurrentHashMap<>(  );
         this.runnable = new ValueListenerRunnable( recorderPerPath );

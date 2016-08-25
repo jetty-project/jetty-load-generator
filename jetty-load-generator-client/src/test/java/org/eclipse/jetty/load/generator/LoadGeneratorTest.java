@@ -32,7 +32,7 @@ import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
-import org.eclipse.jetty.load.generator.response.ResponseTimeRecorder;
+import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
@@ -170,7 +170,7 @@ public class LoadGeneratorTest
             Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
 
         List<ResponseTimeListener> responseTimeListeners =
-            Arrays.asList( new ResponseTimeRecorder(), new SummaryResponseTimeListener() );
+            Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
 
         LoadGeneratorProfile profile = LoadGeneratorProfile.Builder.builder() //
             .resource( "/" ).size( 1024 ) //
@@ -205,7 +205,7 @@ public class LoadGeneratorTest
             Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener(), collectorServer );
 
         List<ResponseTimeListener> responseTimeListeners =
-            Arrays.asList( new ResponseTimeRecorder(), new SummaryResponseTimeListener(), collectorServer );
+            Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener(), collectorServer );
 
         TestRequestListener testRequestListener = new TestRequestListener();
 
@@ -282,7 +282,7 @@ public class LoadGeneratorTest
 
 
         List<ResponseTimeListener> responseTimeListeners =
-            Arrays.asList( new ResponseTimeRecorder(), new SummaryResponseTimeListener() );
+            Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
 
         LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
             .resource( "/index.html" ).size( 1024 ) //
