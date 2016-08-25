@@ -107,13 +107,15 @@ public class LoadGeneratorTest
 
         // FIXME LoadGenerator.Transport.H2, issue with ALPN
         // FIXME other transports
+        /*
         transports.add( LoadGenerator.Transport.HTTPS );
         transports.add( LoadGenerator.Transport.H2 );
         transports.add( LoadGenerator.Transport.H2C );
         transports.add( LoadGenerator.Transport.FCGI);
+        */
 
         // number of users
-        List<Integer> users = Arrays.asList( 1, 2, 4 );
+        List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
@@ -225,26 +227,25 @@ public class LoadGeneratorTest
             .loadProfile( profile ) //
             .latencyListeners( latencyListeners ) //
             .responseTimeListeners( responseTimeListeners ) //
+            .requestListeners( Arrays.asList( testRequestListener ) ) //
             .build() //
             .start();
 
-        LoadGeneratorResult result = loadGenerator.run();
+        loadGenerator.run();
 
         Thread.sleep( 5000 );
 
         loadGenerator.setRequestRate( 10 );
 
-        Thread.sleep( 3000 );
+        Thread.sleep( 20000 );
 
-        Assert.assertTrue( "successReponsesReceived :" + result.getTotalSuccess().get(), //
-                           result.getTotalSuccess().get() > 1 );
+        Assert.assertTrue( "successReponsesReceived :" + testRequestListener.success.get(), //
+                           testRequestListener.success.get() > 1 );
 
-        logger.info( "successReponsesReceived: {}", result.getTotalSuccess().get() );
+        logger.info( "successReponsesReceived: {}", testRequestListener.success.get() );
 
-        Assert.assertTrue( "failedReponsesReceived: " + result.getTotalFailure().get(), //
-                           result.getTotalFailure().get() < 1 );
-
-        Assert.assertNotNull( result );
+        Assert.assertTrue( "failedReponsesReceived: " + testRequestListener.failed.get(), //
+                           testRequestListener.failed.get() < 1 );
 
         HttpClient httpClient = new HttpClient();
         httpClient.start();
@@ -293,7 +294,7 @@ public class LoadGeneratorTest
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
-        LoadGeneratorResult result = LoadGenerator.Builder.builder() //
+        LoadGenerator.Builder.builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
@@ -318,14 +319,29 @@ public class LoadGeneratorTest
     static class TestRequestListener
         extends Request.Listener.Adapter
     {
-        AtomicLong onSuccessNumber = new AtomicLong();
+        AtomicLong committed = new AtomicLong( 0 );
+
+        AtomicLong success = new AtomicLong( 0 );
+
+        AtomicLong failed = new AtomicLong( 0 );
+
+        @Override
+        public void onCommit( Request request )
+        {
+            committed.incrementAndGet();
+        }
 
         @Override
         public void onSuccess( Request request )
         {
-            onSuccessNumber.incrementAndGet();
+            success.incrementAndGet();
         }
 
+        @Override
+        public void onFailure( Request request, Throwable failure )
+        {
+            failed.incrementAndGet();
+        }
     }
 
 
@@ -461,4 +477,5 @@ public class LoadGeneratorTest
             }
         }
     }
+
 }

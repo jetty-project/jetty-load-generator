@@ -65,6 +65,7 @@ public class LoadGeneratorRunner
     public void run()
     {
 
+        LOGGER.debug( "loadGenerator#run" );
         // FIXME populate loadGeneratorResult with statistics values
         try
         {
@@ -101,8 +102,6 @@ public class LoadGeneratorRunner
                                             Long.toString( System.nanoTime() ) );
                             request.send( loadGeneratorResultHandler );
                         }
-
-                        loadGeneratorResultHandler.getLoadGeneratorResult().getTotalRequest().incrementAndGet();
                     }
                 }
 

@@ -18,7 +18,6 @@
 
 package org.eclipse.jetty.load.generator;
 
-import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
@@ -29,7 +28,6 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  *
@@ -51,17 +49,13 @@ public class LoadGeneratorResultHandler
      */
     public static final String START_SEND_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Send-Time";
 
-    private final LoadGeneratorResult loadGeneratorResult;
-
     private List<LatencyListener> latencyListeners;
 
     private List<ResponseTimeListener> responseTimeListeners;
 
-    public LoadGeneratorResultHandler( LoadGeneratorResult loadGeneratorResult, //
-                                       List<ResponseTimeListener> responseTimeListeners, //
+    public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners, //
                                        List<LatencyListener> latencyListeners )
     {
-        this.loadGeneratorResult = loadGeneratorResult;
         this.responseTimeListeners =responseTimeListeners;
         this.latencyListeners = latencyListeners;
     }
@@ -93,16 +87,7 @@ public class LoadGeneratorResultHandler
     public void onComplete( Response response )
     {
         long end = System.nanoTime();
-        this.loadGeneratorResult.getTotalResponse().incrementAndGet();
 
-        if ( ( response.getStatus() / 100 ) == 2 )
-        {
-            this.loadGeneratorResult.getTotalSuccess().incrementAndGet();
-        }
-        else
-        {
-            this.loadGeneratorResult.getTotalFailure().incrementAndGet();
-        }
         String path = response.getRequest().getPath();
 
         String startTime = response.getRequest().getHeaders().get( START_SEND_TIME_HEADER );
@@ -110,14 +95,8 @@ public class LoadGeneratorResultHandler
         {
             long time = end - Long.parseLong( startTime );
             for (ResponseTimeListener responseTimeListener : responseTimeListeners) {
-                responseTimeListener.onResponseTimeValue( path, time);
+                responseTimeListener.onResponse( path, time);
             }
         }
-    }
-
-
-    public LoadGeneratorResult getLoadGeneratorResult()
-    {
-        return loadGeneratorResult;
     }
 }

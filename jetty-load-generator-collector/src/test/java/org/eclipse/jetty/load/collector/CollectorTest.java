@@ -18,10 +18,10 @@
 
 package org.eclipse.jetty.load.collector;
 
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.load.generator.CollectorServer;
 import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.load.generator.LoadGeneratorProfile;
-import org.eclipse.jetty.load.generator.LoadGeneratorResult;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -53,6 +53,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
 public class CollectorTest
@@ -114,7 +115,7 @@ public class CollectorTest
 
         List<LoadGenerator> loadGenerators = new ArrayList<>( serverNumbers );
         List<CollectorClient> collectorClients = new ArrayList<>( serverNumbers );
-        List<LoadGeneratorResult> results = new ArrayList<>( serverNumbers );
+        List<TestRequestListener> testRequestListeners = new ArrayList<>( serverNumbers );
 
         List<CollectorResultHandler> collectorResultHandlers = Arrays.asList(new LoggerCollectorResultHandler());
 
@@ -123,6 +124,11 @@ public class CollectorTest
             CollectorServer collectorServer = new CollectorServer( 0 ).start();
             Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
             int port = ( (ServerConnector) server.getConnectors()[0] ).getLocalPort();
+
+            TestRequestListener testRequestListener = new TestRequestListener();
+
+            testRequestListeners.add( testRequestListener );
+
             LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
                 .host( "localhost" ) //
                 .port( port ) //
@@ -133,11 +139,12 @@ public class CollectorTest
                 .loadProfile( profile ) //
                 .latencyListeners( Arrays.asList( collectorServer ) ) //
                 .responseTimeListeners( Arrays.asList( collectorServer ) ) //
+                .requestListeners( Arrays.asList( testRequestListener ) ) //
                 .build() //
                 .start();
 
-            LoadGeneratorResult result = loadGenerator.run();
-            results.add( result );
+            loadGenerator.run();
+
 
             loadGenerators.add( loadGenerator );
 
@@ -155,17 +162,15 @@ public class CollectorTest
 
         Thread.sleep( 3000 );
 
-        for ( LoadGeneratorResult result : results )
+        for ( TestRequestListener testRequestListener : testRequestListeners )
         {
-            Assert.assertTrue( "successReponsesReceived :" + result.getTotalSuccess().get(), //
-                               result.getTotalSuccess().get() > 1 );
+            Assert.assertTrue( "successReponsesReceived :" + testRequestListener.success.get(), //
+                               testRequestListener.success.get() > 1 );
 
-            logger.info( "successReponsesReceived: {}", result.getTotalSuccess().get() );
+            logger.info( "successReponsesReceived: {}", testRequestListener.success.get() );
 
-            Assert.assertTrue( "failedReponsesReceived: " + result.getTotalFailure().get(), //
-                               result.getTotalFailure().get() < 1 );
-
-            Assert.assertNotNull( result );
+            Assert.assertTrue( "failedReponsesReceived: " + testRequestListener.failed.get(), //
+                               testRequestListener.failed.get() < 1 );
         }
 
         for ( CollectorClient collectorClient : collectorClients )
@@ -228,6 +233,34 @@ public class CollectorTest
                           method, contentLength, httpSession.getId(), request.getPathInfo() );
 
 
+        }
+    }
+
+    static class TestRequestListener
+        extends Request.Listener.Adapter
+    {
+        AtomicLong committed = new AtomicLong( 0 );
+
+        AtomicLong success = new AtomicLong( 0 );
+
+        AtomicLong failed = new AtomicLong( 0 );
+
+        @Override
+        public void onCommit( Request request )
+        {
+            committed.incrementAndGet();
+        }
+
+        @Override
+        public void onSuccess( Request request )
+        {
+            success.incrementAndGet();
+        }
+
+        @Override
+        public void onFailure( Request request, Throwable failure )
+        {
+            failed.incrementAndGet();
         }
     }
 

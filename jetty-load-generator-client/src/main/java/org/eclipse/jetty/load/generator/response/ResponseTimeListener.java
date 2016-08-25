@@ -28,7 +28,7 @@ public interface ResponseTimeListener
      * @param path the http path
      * @param responseTime the response time value in nano seconds
      */
-    void onResponseTimeValue( String path, long responseTime );
+    void onResponse( String path, long responseTime );
 
     /**
      * triggered when the load generator is stopped

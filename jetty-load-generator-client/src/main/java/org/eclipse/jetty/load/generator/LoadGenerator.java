@@ -18,7 +18,6 @@
 
 package org.eclipse.jetty.load.generator;
 
-import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Request;
@@ -39,7 +38,6 @@ import org.eclipse.jetty.util.thread.Scheduler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -101,11 +99,8 @@ public class LoadGenerator
 
     private List<ResponseTimeListener> responseTimeListeners;
 
-    private LoadGeneratorResult loadGeneratorResult;
-
     private LoadGeneratorResultHandler _loadGeneratorResultHandler;
 
-    private Map<String, Recorder> _recorderPerPath;
 
     public enum Transport
     {
@@ -216,12 +211,12 @@ public class LoadGenerator
     {
         this.scheme = scheme( this.transport );
 
-        this.executorService = Executors.newWorkStealingPool( this.getUsers() );
+        int parallelism = Math.min( Runtime.getRuntime().availableProcessors(), getUsers() );
 
-        loadGeneratorResult = new LoadGeneratorResult();
+        this.executorService = Executors.newWorkStealingPool( parallelism );
 
         _loadGeneratorResultHandler =
-            new LoadGeneratorResultHandler( loadGeneratorResult, responseTimeListeners, latencyListeners );
+            new LoadGeneratorResultHandler( responseTimeListeners, latencyListeners );
 
         return this;
 
@@ -235,6 +230,13 @@ public class LoadGenerator
         this.stop.set( true );
         try
         {
+            this.executorService.shutdown();
+
+            // wait the end?
+            while( !executorService.isTerminated()) {
+                Thread.sleep( 2 );
+            }
+
             if ( latencyListeners != null )
             {
                 for ( LatencyListener latencyListener : latencyListeners )
@@ -269,16 +271,15 @@ public class LoadGenerator
     /**
      * run the defined load (users / request numbers)
      */
-    public LoadGeneratorResult run()
+    public void run()
         throws Exception
     {
 
-
-        List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
+        final List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
         listeners.add( _loadGeneratorResultHandler );
 
-        Executors.newWorkStealingPool( this.getUsers() ).submit( () -> //
+        executorService.submit( () -> //
         {
             HttpClientTransport httpClientTransport =
                 this.getHttpClientTransport() != null ?//
@@ -293,7 +294,6 @@ public class LoadGenerator
                     httpClient.setMaxRequestsQueuedPerDestination( 2048 );
                     httpClient.setSocketAddressResolver( this.getSocketAddressResolver() );
                     this.clients.add( httpClient );
-                    httpClient.getRequestListeners().add( _loadGeneratorResultHandler );
                     httpClient.getRequestListeners().addAll( listeners );
 
                     LoadGeneratorRunner loadGeneratorRunner = //
@@ -319,17 +319,15 @@ public class LoadGenerator
             {
                 LOGGER.warn( "ignore exception", e );
             }
+            LOGGER.debug( "exit run lambda" );
         } );
-
-        return loadGeneratorResult;
     }
 
-    public LoadGeneratorResult run( long time, TimeUnit timeUnit )
+    public void run( long time, TimeUnit timeUnit )
         throws Exception
     {
-        LoadGeneratorResult result = this.run();
+        this.run();
         PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
-        return result;
     }
 
 
