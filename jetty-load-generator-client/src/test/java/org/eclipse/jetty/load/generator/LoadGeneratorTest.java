@@ -102,10 +102,6 @@ public class LoadGeneratorTest
         List<LoadGenerator.Transport> transports = new ArrayList<>();
 
         transports.add( LoadGenerator.Transport.HTTP );
-
-        // FIXME LoadGenerator.Transport.H2, issue with ALPN
-        // FIXME other transports
-
         transports.add( LoadGenerator.Transport.HTTPS );
         transports.add( LoadGenerator.Transport.H2 );
         transports.add( LoadGenerator.Transport.H2C );
