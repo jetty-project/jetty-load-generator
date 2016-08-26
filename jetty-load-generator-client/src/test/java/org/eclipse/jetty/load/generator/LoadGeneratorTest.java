@@ -190,8 +190,7 @@ public class LoadGeneratorTest
             .loadProfile( profile ) //
             .latencyListeners( latencyListeners ) //
             .responseTimeListeners( responseTimeListeners ) //
-            .build() //
-            .start();
+            .build();
 
         loadGenerator.run( 10, TimeUnit.SECONDS );
 
@@ -228,8 +227,7 @@ public class LoadGeneratorTest
             .latencyListeners( latencyListeners ) //
             .responseTimeListeners( responseTimeListeners ) //
             .requestListeners( Arrays.asList( testRequestListener ) ) //
-            .build() //
-            .start();
+            .build();
 
         loadGenerator.run();
 
@@ -305,7 +303,6 @@ public class LoadGeneratorTest
             .latencyListeners( latencyListeners ) //
             .responseTimeListeners( responseTimeListeners ) //
             .build() //
-            .start() //
             .run( 5, TimeUnit.SECONDS );
 
         scheduler.stop();

@@ -140,8 +140,7 @@ public class CollectorTest
                 .latencyListeners( Arrays.asList( collectorServer ) ) //
                 .responseTimeListeners( Arrays.asList( collectorServer ) ) //
                 .requestListeners( Arrays.asList( testRequestListener ) ) //
-                .build() //
-                .start();
+                .build();
 
             loadGenerator.run();
 

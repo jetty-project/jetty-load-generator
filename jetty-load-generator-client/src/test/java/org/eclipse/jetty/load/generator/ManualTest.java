@@ -6,7 +6,6 @@ import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.junit.Test;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +33,7 @@ public class ManualTest
                                                    new SummaryResponseTimeListener() ) ) //
             .build();
 
-        load.start().run();
+        load.run();
 
         //In machine N+1:
 
@@ -49,7 +48,7 @@ public class ManualTest
                                               new LatencyDisplayListener( 2, 10, TimeUnit.SECONDS ) ) ) //
             .build();
 
-        loadLatency.start().run( 1, TimeUnit.MINUTES );
+        loadLatency.run( 1, TimeUnit.MINUTES );
 
 
         load.stop();

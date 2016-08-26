@@ -50,7 +50,7 @@ public class ResponseTimeDisplayListener
         this.runnable = new ValueListenerRunnable( recorderPerPath );
         // FIXME configurable or using a shared one
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        scheduledExecutorService.scheduleWithFixedDelay( runnable, initial, initial, timeUnit );
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, initial, delay, timeUnit );
     }
 
     public ResponseTimeDisplayListener()

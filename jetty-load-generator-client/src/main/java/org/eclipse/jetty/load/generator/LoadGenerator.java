@@ -209,7 +209,7 @@ public class LoadGenerator
     /**
      * start the generator lifecycle (this doesn't send any requests but just start few internal components)
      */
-    public LoadGenerator start()
+    private LoadGenerator start()
     {
         this.scheme = scheme( this.transport );
 
@@ -585,7 +585,7 @@ public class LoadGenerator
                 new SocketAddressResolver.Sync() : socketAddressResolver;
             loadGenerator.latencyListeners = latencyListeners;
             loadGenerator.responseTimeListeners = responseTimeListeners;
-            return loadGenerator;
+            return loadGenerator.start();
         }
 
         public void validate()
