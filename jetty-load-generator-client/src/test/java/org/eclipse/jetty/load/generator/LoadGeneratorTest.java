@@ -129,7 +129,7 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
+        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
             .resource( "/index.html" ).size( 1024 ) //
             //.resource( "" ).size( 1024 ) //
             .build();
@@ -144,7 +144,7 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
+        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
             .resource( "/index.html" ).size( 1024 ) //
             .resourceGroup() //
             .resource( "/foo.html" ) //
@@ -162,13 +162,13 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        LoadGeneratorProfile profile = LoadGeneratorProfile.Builder.builder() //
+        LoadGeneratorProfile profile = new LoadGeneratorProfile.Builder() //
             .resource( "/" ).size( 1024 ) //
             .build();
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
-        LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
+        LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "www.strava.comm" ) //
             .port( 80 ) //
             .users( this.usersNumber ) //
@@ -196,7 +196,7 @@ public class LoadGeneratorTest
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
-        LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
+        LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
@@ -257,7 +257,7 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
+        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
             .resource( "/index.html" ).size( 1024 ) //
             //.resource( "" ).size( 1024 ) //
             .build();
@@ -266,7 +266,7 @@ public class LoadGeneratorTest
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
-        LoadGenerator.Builder.builder() //
+        new LoadGenerator.Builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //

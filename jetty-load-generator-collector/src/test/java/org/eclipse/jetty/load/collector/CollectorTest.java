@@ -101,7 +101,7 @@ public class CollectorTest
     public void collect_informations()
         throws Exception
     {
-        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
+        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
             .resource( "/index.html" ).size( 1024 ) //
             //.resource( "" ).size( 1024 ) //
             .build();
@@ -129,7 +129,7 @@ public class CollectorTest
 
             testRequestListeners.add( testRequestListener );
 
-            LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
+            LoadGenerator loadGenerator = new LoadGenerator.Builder() //
                 .host( "localhost" ) //
                 .port( port ) //
                 .users( 2 ) //
@@ -147,7 +147,7 @@ public class CollectorTest
 
             loadGenerators.add( loadGenerator );
 
-            CollectorClient collectorClient = CollectorClient.Builder.builder() //
+            CollectorClient collectorClient = new CollectorClient.Builder() //
                 .addAddress( "localhost:" + collectorServer.getPort() ) //
                 .scheduleDelayInMillis( 500 ) //
                 .collectorResultHandlers(collectorResultHandlers) //

@@ -170,12 +170,7 @@ public class CollectorClient
 
         private List<CollectorResultHandler> collectorResultHandlers;
 
-        public static Builder builder()
-        {
-            return new Builder();
-        }
-
-        private Builder()
+        public Builder()
         {
             // no op
         }

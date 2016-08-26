@@ -74,12 +74,7 @@ public class LoadGeneratorProfile
 
         private boolean resourceGroup = false;
 
-        public static Builder builder()
-        {
-            return new Builder();
-        }
-
-        private Builder()
+        public Builder()
         {
             // no op
         }

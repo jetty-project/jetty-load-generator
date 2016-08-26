@@ -25,34 +25,40 @@ import org.junit.Test;
  */
 public class LoadGeneratorBuilderTest
 {
-    @Test(expected = IllegalArgumentException.class)
-    public void users_validation() {
-        LoadGenerator.Builder.builder().users( 0 ).build();
+    @Test( expected = IllegalArgumentException.class )
+    public void users_validation()
+    {
+        new LoadGenerator.Builder().users( 0 ).build();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void raterequest_validation() {
-        LoadGenerator.Builder.builder().requestRate( 0 ).build();
+    @Test( expected = IllegalArgumentException.class )
+    public void raterequest_validation()
+    {
+        new LoadGenerator.Builder().requestRate( 0 ).build();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void host_null_validation() {
-        LoadGenerator.Builder.builder().host( null ).build();
+    @Test( expected = IllegalArgumentException.class )
+    public void host_null_validation()
+    {
+        new LoadGenerator.Builder().host( null ).build();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void host_blank_validation() {
-        LoadGenerator.Builder.builder().host( " " ).build();
+    @Test( expected = IllegalArgumentException.class )
+    public void host_blank_validation()
+    {
+        new LoadGenerator.Builder().host( " " ).build();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void port_zero_validation() {
-        LoadGenerator.Builder.builder().port( 0 ).build();
+    @Test( expected = IllegalArgumentException.class )
+    public void port_zero_validation()
+    {
+        new LoadGenerator.Builder().port( 0 ).build();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void port_non_positive_validation() {
-        LoadGenerator.Builder.builder().port( -99 ).build();
+    @Test( expected = IllegalArgumentException.class )
+    public void port_non_positive_validation()
+    {
+        new LoadGenerator.Builder().port( -99 ).build();
     }
 
 }

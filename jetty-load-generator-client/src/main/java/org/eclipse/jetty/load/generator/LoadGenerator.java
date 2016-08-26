@@ -480,12 +480,7 @@ public class LoadGenerator
 
         private List<HttpProxy> httpProxies;
 
-        public static Builder builder()
-        {
-            return new Builder();
-        }
-
-        private Builder()
+        public Builder()
         {
             // no op
         }
