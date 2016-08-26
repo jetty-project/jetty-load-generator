@@ -20,6 +20,7 @@ package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
+import org.eclipse.jetty.client.HttpProxy;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.fcgi.client.http.HttpClientTransportOverFCGI;
@@ -103,6 +104,8 @@ public class LoadGenerator
     private List<ResponseTimeListener> responseTimeListeners;
 
     private LoadGeneratorResultHandler _loadGeneratorResultHandler;
+
+    private List<HttpProxy> httpProxies;
 
 
     public enum Transport
@@ -293,22 +296,25 @@ public class LoadGenerator
         executorService.submit( () ->
             {
                 HttpClientTransport httpClientTransport =
-                    LoadGenerator.this.getHttpClientTransport() != null ?//
-                        LoadGenerator.this.getHttpClientTransport() : provideClientTransport( LoadGenerator.this.getTransport() );
+                    getHttpClientTransport() != null ?//
+                        getHttpClientTransport() : provideClientTransport( getTransport() );
 
-                for ( int i = LoadGenerator.this.getUsers(); i > 0; i-- )
+                for ( int i = getUsers(); i > 0; i-- )
                 {
                     try
                     {
                         HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
                         // TODO dynamic depending on the rate??
                         httpClient.setMaxRequestsQueuedPerDestination( 2048 );
-                        httpClient.setSocketAddressResolver( LoadGenerator.this.getSocketAddressResolver() );
-                        LoadGenerator.this.clients.add( httpClient );
+                        httpClient.setSocketAddressResolver( getSocketAddressResolver() );
                         httpClient.getRequestListeners().addAll( listeners );
+                        if (this.httpProxies != null) {
+                            httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
+                        }
+                        clients.add( httpClient );
 
                         LoadGeneratorRunner loadGeneratorRunner = //
-                            new LoadGeneratorRunner( httpClient, LoadGenerator.this, _loadGeneratorResultHandler );
+                            new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler );
 
                         LoadGenerator.this.runnersExecutorService.submit( loadGeneratorRunner );
                     }
@@ -340,6 +346,7 @@ public class LoadGenerator
     {
         this.run();
         PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
+        this.interrupt();
     }
 
 
@@ -471,6 +478,7 @@ public class LoadGenerator
 
         private List<ResponseTimeListener> responseTimeListeners;
 
+        private List<HttpProxy> httpProxies;
 
         public static Builder builder()
         {
@@ -570,6 +578,12 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder httpProxies( HttpProxy... httpProxies )
+        {
+            this.httpProxies = new ArrayList<>( Arrays.asList( httpProxies ) );
+            return this;
+        }
+
         public LoadGenerator build()
         {
             this.validate();
@@ -586,6 +600,7 @@ public class LoadGenerator
                 new SocketAddressResolver.Sync() : socketAddressResolver;
             loadGenerator.latencyListeners = latencyListeners;
             loadGenerator.responseTimeListeners = responseTimeListeners;
+            loadGenerator.httpProxies = httpProxies;
             return loadGenerator.start();
         }
 
