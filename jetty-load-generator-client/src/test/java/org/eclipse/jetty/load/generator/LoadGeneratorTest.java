@@ -168,12 +168,6 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        List<LatencyListener> latencyListeners =
-            Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
-
-        List<ResponseTimeListener> responseTimeListeners =
-            Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
-
         LoadGeneratorProfile profile = LoadGeneratorProfile.Builder.builder() //
             .resource( "/" ).size( 1024 ) //
             .build();
@@ -188,8 +182,8 @@ public class LoadGeneratorTest
             .transport( this.transport ) //
             .scheduler( scheduler ) //
             .loadProfile( profile ) //
-            .latencyListeners( latencyListeners ) //
-            .responseTimeListeners( responseTimeListeners ) //
+            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
+            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
             .build();
 
         loadGenerator.run( 10, TimeUnit.SECONDS );
@@ -202,12 +196,6 @@ public class LoadGeneratorTest
 
         CollectorServer collectorServer = new CollectorServer( 0 ).start();
 
-        List<LatencyListener> latencyListeners =
-            Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener(), collectorServer );
-
-        List<ResponseTimeListener> responseTimeListeners =
-            Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener(), collectorServer );
-
         TestRequestListener testRequestListener = new TestRequestListener();
 
         startServer( new LoadHandler() );
@@ -219,14 +207,13 @@ public class LoadGeneratorTest
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
             .requestRate( 1 ) //
-            .requestListeners( Arrays.asList( testRequestListener ) ) //
             .transport( this.transport ) //
             .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
-            .latencyListeners( latencyListeners ) //
-            .responseTimeListeners( responseTimeListeners ) //
-            .requestListeners( Arrays.asList( testRequestListener ) ) //
+            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener(), collectorServer ) //
+            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener(), collectorServer ) //
+            .requestListeners( testRequestListener ) //
             .build();
 
         loadGenerator.run();
@@ -276,13 +263,6 @@ public class LoadGeneratorTest
         throws Exception
     {
 
-        List<LatencyListener> latencyListeners =
-            Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
-
-
-        List<ResponseTimeListener> responseTimeListeners =
-            Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
-
         LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
             .resource( "/index.html" ).size( 1024 ) //
             //.resource( "" ).size( 1024 ) //
@@ -300,8 +280,8 @@ public class LoadGeneratorTest
             .requestRate( 1 ) //
             .transport( this.transport ) //
             .loadProfile( loadGeneratorProfile ) //
-            .latencyListeners( latencyListeners ) //
-            .responseTimeListeners( responseTimeListeners ) //
+            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
+            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
             .build() //
             .run( 5, TimeUnit.SECONDS );
 

@@ -29,8 +29,7 @@ public class ManualTest
             .transport( LoadGenerator.Transport.HTTP ) //
             .users(10) //
             .loadProfile( profile ) //
-            .responseTimeListeners( Arrays.asList( new ResponseTimeDisplayListener(2, 10, TimeUnit.SECONDS), //
-                                                   new SummaryResponseTimeListener() ) ) //
+            .responseTimeListeners( new ResponseTimeDisplayListener(2, 10, TimeUnit.SECONDS),new SummaryResponseTimeListener() )  //
             .build();
 
         load.run();
@@ -44,8 +43,7 @@ public class ManualTest
             .transport( LoadGenerator.Transport.HTTP ) //
             .users(10) //
             .loadProfile( profile ) //
-            .latencyListeners( Arrays.asList( new SummaryLatencyListener(), //
-                                              new LatencyDisplayListener( 2, 10, TimeUnit.SECONDS ) ) ) //
+            .latencyListeners( new SummaryLatencyListener(), new LatencyDisplayListener( 2, 10, TimeUnit.SECONDS ) ) //
             .build();
 
         loadLatency.run( 1, TimeUnit.MINUTES );

@@ -55,7 +55,7 @@ public class ResponseTimeDisplayListener
 
     public ResponseTimeDisplayListener()
     {
-        this(0, 1, TimeUnit.SECONDS);
+        this(0, 5, TimeUnit.SECONDS);
     }
 
     private static class ValueListenerRunnable

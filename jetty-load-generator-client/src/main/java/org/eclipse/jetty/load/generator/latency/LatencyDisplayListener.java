@@ -57,7 +57,7 @@ public class LatencyDisplayListener
 
     public LatencyDisplayListener( )
     {
-       this( 0, 1, TimeUnit.SECONDS );
+       this( 0, 5, TimeUnit.SECONDS );
     }
 
     private static class ValueListenerRunnable

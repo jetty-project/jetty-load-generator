@@ -137,9 +137,9 @@ public class CollectorTest
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .scheduler( scheduler ) //
                 .loadProfile( profile ) //
-                .latencyListeners( Arrays.asList( collectorServer ) ) //
-                .responseTimeListeners( Arrays.asList( collectorServer ) ) //
-                .requestListeners( Arrays.asList( testRequestListener ) ) //
+                .latencyListeners( collectorServer ) //
+                .responseTimeListeners( collectorServer ) //
+                .requestListeners( testRequestListener ) //
                 .build();
 
             loadGenerator.run();

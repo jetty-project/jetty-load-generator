@@ -37,6 +37,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -533,9 +534,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder requestListeners( List<Request.Listener> requestListeners )
+        public Builder requestListeners( Request.Listener... requestListeners )
         {
-            this.requestListeners = requestListeners;
+            this.requestListeners = new ArrayList<>( Arrays.asList( requestListeners ) );
             return this;
         }
 
@@ -557,15 +558,15 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder latencyListeners( List<LatencyListener> latencyListeners )
+        public Builder latencyListeners( LatencyListener... latencyListeners )
         {
-            this.latencyListeners = latencyListeners;
+            this.latencyListeners = new ArrayList<>( Arrays.asList( latencyListeners ) );
             return this;
         }
 
-        public Builder responseTimeListeners( List<ResponseTimeListener> responseTimeListeners )
+        public Builder responseTimeListeners( ResponseTimeListener... responseTimeListeners )
         {
-            this.responseTimeListeners = responseTimeListeners;
+            this.responseTimeListeners = new ArrayList<>( Arrays.asList( responseTimeListeners ));
             return this;
         }
 
