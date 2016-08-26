@@ -29,9 +29,7 @@ import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
-import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
-import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.server.ConnectionFactory;
@@ -250,7 +248,7 @@ public class LoadGeneratorTest
 
         logger.info( "resp response times: {}", response.getContentAsString() );
 
-        loadGenerator.stop();
+        loadGenerator.interrupt();
 
         httpClient.stop();
 

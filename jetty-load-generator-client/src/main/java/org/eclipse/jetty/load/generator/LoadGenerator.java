@@ -228,9 +228,9 @@ public class LoadGenerator
     }
 
     /**
-     * stop (clear resources) the generator lifecycle
+     * interrupt (clear resources) the generator lifecycle
      */
-    public LoadGenerator stop()
+    public LoadGenerator interrupt()
     {
         this.stop.set( true );
         try

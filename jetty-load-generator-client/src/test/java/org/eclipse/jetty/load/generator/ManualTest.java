@@ -6,7 +6,6 @@ import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,7 +48,7 @@ public class ManualTest
         loadLatency.run( 1, TimeUnit.MINUTES );
 
 
-        load.stop();
+        load.interrupt();
 
     }
 

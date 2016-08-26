@@ -179,7 +179,7 @@ public class CollectorTest
 
         for ( LoadGenerator loadGenerator : loadGenerators )
         {
-            loadGenerator.stop();
+            loadGenerator.interrupt();
         }
 
 
