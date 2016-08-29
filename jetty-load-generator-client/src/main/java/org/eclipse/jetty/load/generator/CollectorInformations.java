@@ -42,6 +42,10 @@ public class CollectorInformations
 
     private long maxValue;
 
+    private long value50;
+
+    private long value90;
+
     private double mean;
 
     private double stdDeviation;
@@ -62,6 +66,8 @@ public class CollectorInformations
         this.minValue = TimeUnit.NANOSECONDS.toMillis( histogram.getMinValue() );
         this.maxValue = TimeUnit.NANOSECONDS.toMillis( histogram.getMaxValue() );
         this.mean = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getMean() ) );
+        this.value50 = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getValueAtPercentile( 50D ) ) );
+        this.value90 = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getValueAtPercentile( 90D ) ) );
         this.startTimeStamp = histogram.getStartTimeStamp();
         this.endTimeStamp = histogram.getEndTimeStamp();
         this.stdDeviation = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getStdDeviation() ) );
@@ -147,6 +153,26 @@ public class CollectorInformations
         this.informationType = informationType;
     }
 
+    public long getValue50()
+    {
+        return value50;
+    }
+
+    public void setValue50( long value50 )
+    {
+        this.value50 = value50;
+    }
+
+    public long getValue90()
+    {
+        return value90;
+    }
+
+    public void setValue90( long value90 )
+    {
+        this.value90 = value90;
+    }
+
     @Override
     public String toString()
     {
@@ -163,20 +189,10 @@ public class CollectorInformations
             + ", maxValue=" + maxValue +  ( ls ?  System.lineSeparator() : "" ) //
             + ", mean=" + mean + ( ls ?  System.lineSeparator() : "" ) //
             + ", stdDeviation=" + stdDeviation + ( ls ?  System.lineSeparator() : "" ) //
+            + ", value 50%=" + value50 + ( ls ?  System.lineSeparator() : "" ) //
+            + ", value 90%=" + value90 + ( ls ?  System.lineSeparator() : "" ) //
             + ", startTimeStamp=" + simpleDateFormat.format( startTimeStamp ) + ( ls ?  System.lineSeparator() : "" ) //
             + ", endTimeStamp=" + simpleDateFormat.format(endTimeStamp ) + '}';
-    }
-
-
-    public static String toString( Histogram histogram )
-    {
-        return "CollectorInformations{" + "totalCount=" + histogram.getTotalCount() //
-            + ", minValue=" + histogram.getMinNonZeroValue() //
-            + ", maxValue=" + histogram.getMaxValue() //
-            + ", mean=" + histogram.getMean() //
-            + ", stdDeviation=" + histogram.getStdDeviation() //
-            + ", startTimeStamp=" + histogram.getStartTimeStamp() //
-            + ", endTimeStamp=" + histogram.getEndTimeStamp() + '}';
     }
 
 }
