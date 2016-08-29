@@ -22,11 +22,7 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.HttpProxy;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
-import org.eclipse.jetty.fcgi.client.http.HttpClientTransportOverFCGI;
 import org.eclipse.jetty.http.HttpScheme;
-import org.eclipse.jetty.http2.client.HTTP2Client;
-import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
@@ -45,6 +41,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.eclipse.jetty.load.generator.LoadGenerator.Transport.*;
 
 /**
  *
@@ -79,8 +77,6 @@ public class LoadGenerator
 
     private LoadGeneratorProfile profile;
 
-    private Transport transport;
-
     private HttpClientTransport httpClientTransport;
 
     private SslContextFactory sslContextFactory;
@@ -107,6 +103,7 @@ public class LoadGenerator
 
     private List<HttpProxy> httpProxies;
 
+    private Transport transport;
 
     public enum Transport
     {
@@ -154,11 +151,6 @@ public class LoadGenerator
     public int getPort()
     {
         return port;
-    }
-
-    public Transport getTransport()
-    {
-        return transport;
     }
 
     public HttpClientTransport getHttpClientTransport()
@@ -295,9 +287,7 @@ public class LoadGenerator
 
         executorService.submit( () ->
             {
-                HttpClientTransport httpClientTransport =
-                    getHttpClientTransport() != null ?//
-                        getHttpClientTransport() : provideClientTransport( getTransport() );
+                HttpClientTransport httpClientTransport = getHttpClientTransport();
 
                 for ( int i = getUsers(); i > 0; i-- )
                 {
@@ -350,11 +340,11 @@ public class LoadGenerator
     }
 
 
-    protected HttpClient newHttpClient( HttpClientTransport transport, SslContextFactory sslContextFactory )
+    protected HttpClient newHttpClient( HttpClientTransport httpClientTransport, SslContextFactory sslContextFactory )
         throws Exception
     {
-        HttpClient httpClient = new HttpClient( transport, sslContextFactory );
-        switch ( this.getTransport() )
+        HttpClient httpClient = new HttpClient( httpClientTransport, sslContextFactory );
+        switch ( this.transport )
         {
             case HTTP:
             case HTTPS:
@@ -367,7 +357,7 @@ public class LoadGenerator
                 httpClient.setMaxConnectionsPerDestination( 1 );
             }
             /*
-            TODO
+            no op
             case FCGI:
             {
 
@@ -380,8 +370,7 @@ public class LoadGenerator
 
         }
 
-        // FIXME weird circularity
-        transport.setHttpClient( httpClient );
+        httpClientTransport.setHttpClient( httpClient );
         httpClient.start();
 
         if ( this.getScheduler() != null )
@@ -392,31 +381,6 @@ public class LoadGenerator
         return httpClient;
     }
 
-    protected HttpClientTransport provideClientTransport( Transport transport )
-    {
-        switch ( transport )
-        {
-            case HTTP:
-            case HTTPS:
-            {
-                return new HttpClientTransportOverHTTP( getSelectors() );
-            }
-            case H2C:
-            case H2:
-            {
-                HTTP2Client http2Client = newHTTP2Client();
-                return new HttpClientTransportOverHTTP2( http2Client );
-            }
-            case FCGI:
-            {
-                return new HttpClientTransportOverFCGI( selectors, false, "");
-            }
-            default:
-            {
-                throw new IllegalArgumentException();
-            }
-        }
-    }
 
     static String scheme( LoadGenerator.Transport transport)
     {
@@ -436,13 +400,6 @@ public class LoadGenerator
     }
 
 
-    protected HTTP2Client newHTTP2Client()
-    {
-        HTTP2Client http2Client = new HTTP2Client();
-        http2Client.setSelectors( getSelectors() );
-        return http2Client;
-    }
-
     //--------------------------------------------------------------
     //  Builder
     //--------------------------------------------------------------
@@ -457,8 +414,6 @@ public class LoadGenerator
         private String host;
 
         private int port;
-
-        private Transport transport;
 
         private HttpClientTransport httpClientTransport;
 
@@ -479,6 +434,8 @@ public class LoadGenerator
         private List<ResponseTimeListener> responseTimeListeners;
 
         private List<HttpProxy> httpProxies;
+
+        private Transport transport;
 
         public Builder()
         {
@@ -510,12 +467,6 @@ public class LoadGenerator
         public Builder port( int port )
         {
             this.port = port;
-            return this;
-        }
-
-        public Builder transport( Transport transport )
-        {
-            this.transport = transport;
             return this;
         }
 
@@ -579,12 +530,17 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder transport( Transport transport )
+        {
+            this.transport = transport;
+            return this;
+        }
+
         public LoadGenerator build()
         {
             this.validate();
             LoadGenerator loadGenerator =
                 new LoadGenerator( users, requestRate, host, port, this.profile );
-            loadGenerator.transport = this.transport;
             loadGenerator.requestListeners = this.requestListeners == null ? new ArrayList<>() // //
                 : this.requestListeners;
             loadGenerator.httpClientTransport = httpClientTransport;
@@ -596,6 +552,7 @@ public class LoadGenerator
             loadGenerator.latencyListeners = latencyListeners;
             loadGenerator.responseTimeListeners = responseTimeListeners;
             loadGenerator.httpProxies = httpProxies;
+            loadGenerator.transport = transport;
             return loadGenerator.start();
         }
 
@@ -624,6 +581,11 @@ public class LoadGenerator
             if ( this.profile == null )
             {
                 throw new IllegalArgumentException( "a profile is mandatory" );
+            }
+
+            if (this.httpClientTransport == null)
+            {
+                throw new IllegalArgumentException( "httpClientTransport cannot be null" );
             }
 
         }

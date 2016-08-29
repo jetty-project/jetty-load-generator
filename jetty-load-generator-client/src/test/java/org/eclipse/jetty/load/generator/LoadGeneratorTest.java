@@ -21,6 +21,7 @@ package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.fcgi.server.ServerFCGIConnectionFactory;
@@ -124,6 +125,33 @@ public class LoadGeneratorTest
         return parameters;
     }
 
+    private HttpClientTransport transport() {
+        switch ( this.transport )
+        {
+            case HTTP:
+            case HTTPS:
+            {
+               return new HttpTransportBuilder().build();
+            }
+            case H2C:
+            case H2:
+            {
+                return new Http2TransportBuilder().build();
+            }
+            case FCGI:
+            {
+                return new HttpFCGITransportBuilder().build();
+            }
+
+            default:
+            {
+                // nothing this weird case already handled by #provideClientTransport
+            }
+
+        }
+        throw new IllegalArgumentException( "unknow transport" );
+    }
+
     @Test
     public void simple_test()
         throws Exception
@@ -157,33 +185,6 @@ public class LoadGeneratorTest
 
     }
 
-    @Ignore
-    public void manual_test()
-        throws Exception
-    {
-
-        LoadGeneratorProfile profile = new LoadGeneratorProfile.Builder() //
-            .resource( "/" ).size( 1024 ) //
-            .build();
-
-        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
-
-        LoadGenerator loadGenerator = new LoadGenerator.Builder() //
-            .host( "www.strava.comm" ) //
-            .port( 80 ) //
-            .users( this.usersNumber ) //
-            .requestRate( 2 ) //
-            .transport( this.transport ) //
-            .scheduler( scheduler ) //
-            .loadProfile( profile ) //
-            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
-            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
-            .build();
-
-        loadGenerator.run( 10, TimeUnit.SECONDS );
-
-    }
-
     protected void runProfile( LoadGeneratorProfile profile )
         throws Exception
     {
@@ -202,6 +203,7 @@ public class LoadGeneratorTest
             .users( this.usersNumber ) //
             .requestRate( 1 ) //
             .transport( this.transport ) //
+            .httpClientTransport( this.transport() ) //
             .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
@@ -273,6 +275,7 @@ public class LoadGeneratorTest
             .scheduler( scheduler ) //
             .requestRate( 1 ) //
             .transport( this.transport ) //
+            .httpClientTransport( this.transport() ) //
             .loadProfile( loadGeneratorProfile ) //
             .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
             .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //

@@ -20,6 +20,7 @@ package org.eclipse.jetty.load.collector;
 
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.load.generator.CollectorServer;
+import org.eclipse.jetty.load.generator.HttpTransportBuilder;
 import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.load.generator.LoadGeneratorProfile;
 import org.eclipse.jetty.server.Handler;
@@ -135,6 +136,7 @@ public class CollectorTest
                 .users( 2 ) //
                 .requestRate( 5 ) //
                 .transport( LoadGenerator.Transport.HTTP ) //
+                .httpClientTransport( new HttpTransportBuilder().build() ) //
                 .scheduler( scheduler ) //
                 .loadProfile( profile ) //
                 .latencyListeners( collectorServer ) //
