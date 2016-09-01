@@ -201,6 +201,7 @@ public class LoadGeneratorTest
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
+            .selectors( this.usersNumber ) //
             .requestRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.transport() ) //
@@ -276,6 +277,7 @@ public class LoadGeneratorTest
             .requestRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.transport() ) //
+            .selectors( this.usersNumber ) //
             .loadProfile( loadGeneratorProfile ) //
             .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
             .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //

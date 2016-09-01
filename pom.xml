@@ -163,6 +163,9 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.19.1</version>
+          <configuration>
+            <argLine>-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=duration=120s,filename=${project.build.directory}/myrecording.jfr -XX:+PrintGCDetails</argLine>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

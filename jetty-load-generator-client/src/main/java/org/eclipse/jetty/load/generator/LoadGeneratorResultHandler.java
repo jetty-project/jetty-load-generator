@@ -57,7 +57,7 @@ public class LoadGeneratorResultHandler
     public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners, //
                                        List<LatencyListener> latencyListeners )
     {
-        this.responseTimeListeners =responseTimeListeners == null ? Collections.emptyList() : responseTimeListeners;
+        this.responseTimeListeners = responseTimeListeners == null ? Collections.emptyList() : responseTimeListeners;
         this.latencyListeners = latencyListeners == null ? Collections.emptyList() : latencyListeners;
     }
 
@@ -66,7 +66,7 @@ public class LoadGeneratorResultHandler
     {
         // latency since queued
         String sendCallTime = request.getHeaders().get( AFTER_SEND_TIME_HEADER );
-        if ( StringUtil.isNotBlank( sendCallTime ) && latencyListeners != null )
+        if ( sendCallTime != null )
         {
             long latencyValue = System.nanoTime() - Long.parseLong( sendCallTime );
             for ( LatencyListener latencyListener : latencyListeners )
