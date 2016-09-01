@@ -74,7 +74,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
-public class LoadGeneratorTest
+public abstract class AbstractLoadGeneratorTest
 {
     SslContextFactory sslContextFactory;
 
@@ -90,7 +90,7 @@ public class LoadGeneratorTest
 
     StatisticsHandler statisticsHandler = new StatisticsHandler();
 
-    public LoadGeneratorTest( LoadGenerator.Transport transport, int usersNumber )
+    public AbstractLoadGeneratorTest( LoadGenerator.Transport transport, int usersNumber )
     {
         this.transport = transport;
         this.usersNumber = usersNumber;
@@ -110,7 +110,7 @@ public class LoadGeneratorTest
 
 
         // number of users
-        List<Integer> users = Arrays.asList( 1, 2 );//, 2, 4 );
+        List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
@@ -125,7 +125,7 @@ public class LoadGeneratorTest
         return parameters;
     }
 
-    private HttpClientTransport transport() {
+    protected HttpClientTransport transport() {
         switch ( this.transport )
         {
             case HTTP:
@@ -152,38 +152,6 @@ public class LoadGeneratorTest
         throw new IllegalArgumentException( "unknow transport" );
     }
 
-    @Test
-    public void simple_test()
-        throws Exception
-    {
-
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            //.resource( "" ).size( 1024 ) //
-            .build();
-
-        runProfile( loadGeneratorProfile );
-
-    }
-
-
-    @Test
-    public void simple_with_group()
-        throws Exception
-    {
-
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            .resourceGroup() //
-            .resource( "/foo.html" ) //
-            .resource( "/beer.html" ) //
-            .then() //
-            .resource( "/wine.html" ) //
-            .build();
-
-        runProfile( loadGeneratorProfile );
-
-    }
 
     protected void runProfile( LoadGeneratorProfile profile )
         throws Exception
@@ -250,39 +218,6 @@ public class LoadGeneratorTest
         loadGenerator.interrupt();
 
         httpClient.stop();
-
-        scheduler.stop();
-    }
-
-
-    @Test
-    public void simple_test_limited_time_run()
-        throws Exception
-    {
-
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            //.resource( "" ).size( 1024 ) //
-            .build();
-
-        startServer( new LoadHandler() );
-
-        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
-
-        new LoadGenerator.Builder() //
-            .host( "localhost" ) //
-            .port( connector.getLocalPort() ) //
-            .users( this.usersNumber ) //
-            .scheduler( scheduler ) //
-            .requestRate( 1 ) //
-            .transport( this.transport ) //
-            .httpClientTransport( this.transport() ) //
-            .selectors( this.usersNumber ) //
-            .loadProfile( loadGeneratorProfile ) //
-            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
-            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
-            .build() //
-            .run( 5, TimeUnit.SECONDS );
 
         scheduler.stop();
     }
@@ -407,7 +342,7 @@ public class LoadGeneratorTest
         return result.toArray( new ConnectionFactory[result.size()] );
     }
 
-    private class LoadHandler
+    static class LoadHandler
         extends HttpServlet
     {
 
