@@ -94,6 +94,8 @@ public abstract class AbstractLoadGeneratorTest
     {
         this.transport = transport;
         this.usersNumber = usersNumber;
+
+        logger.info( "starting test with transport {} for {} users", this.transport, this.usersNumber );
     }
 
     @Parameterized.Parameters( name = "transport/users: {0},{1}" )
