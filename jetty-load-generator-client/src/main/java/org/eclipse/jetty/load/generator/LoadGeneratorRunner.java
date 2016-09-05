@@ -88,18 +88,16 @@ public class LoadGeneratorRunner
                         resourceNumber++;
                         lastResource = resourceNumber == step.getResources().size();
                         Request request = buildRequest( resource );
+                        request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
+                                        Long.toString( System.nanoTime() ) );
 
                         if ( step.isWait() && lastResource )
                         {
-                            request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
-                                            Long.toString( System.nanoTime() ) );
                             ContentResponse contentResponse = request.send();
                             loadGeneratorResultHandler.onComplete( contentResponse );
                         }
                         else
                         {
-                            request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
-                                            Long.toString( System.nanoTime() ) );
                             request.send( loadGeneratorResultHandler );
                         }
                     }
