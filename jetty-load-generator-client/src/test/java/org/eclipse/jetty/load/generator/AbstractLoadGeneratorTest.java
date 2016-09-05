@@ -159,7 +159,6 @@ public abstract class AbstractLoadGeneratorTest
         throws Exception
     {
 
-        CollectorServer collectorServer = new CollectorServer( 0 ).start();
 
         TestRequestListener testRequestListener = new TestRequestListener();
 
@@ -178,8 +177,8 @@ public abstract class AbstractLoadGeneratorTest
             .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
-            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener(), collectorServer ) //
-            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener(), collectorServer ) //
+            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
+            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
             .requestListeners( testRequestListener ) //
             .build();
 
@@ -190,38 +189,21 @@ public abstract class AbstractLoadGeneratorTest
         loadGenerator.setRequestRate( 10 );
 
         Thread.sleep( 4000 );
+        loadGenerator.interrupt();
+
+        scheduler.stop();
+
 
         Assert.assertTrue( "successReponsesReceived :" + testRequestListener.success.get(), //
                            testRequestListener.success.get() > 1 );
+
+        Assert.assertEquals( testRequestListener.committed.get(), testRequestListener.success.get() );
 
         logger.info( "successReponsesReceived: {}", testRequestListener.success.get() );
 
         Assert.assertTrue( "failedReponsesReceived: " + testRequestListener.failed.get(), //
                            testRequestListener.failed.get() < 1 );
 
-        HttpClient httpClient = new HttpClient();
-        httpClient.start();
-        Request request = httpClient.newRequest(
-            "http://localhost:" + collectorServer.getPort() + "/collector/client-latency" );
-        ContentResponse response = request.method( HttpMethod.GET.asString() ).send();
-
-        Assert.assertEquals( 200, response.getStatus() );
-
-        logger.info( "resp client latency: {}", response.getContentAsString() );
-
-        request = httpClient.newRequest(
-            "http://localhost:" + collectorServer.getPort() + "/collector/response-times" );
-        response = request.method( HttpMethod.GET.asString() ).send();
-
-        Assert.assertEquals( 200, response.getStatus() );
-
-        logger.info( "resp response times: {}", response.getContentAsString() );
-
-        loadGenerator.interrupt();
-
-        httpClient.stop();
-
-        scheduler.stop();
     }
 
 
