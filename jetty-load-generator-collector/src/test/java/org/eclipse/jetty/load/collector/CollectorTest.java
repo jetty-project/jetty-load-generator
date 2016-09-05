@@ -54,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
@@ -115,7 +116,7 @@ public class CollectorTest
     {
 
         List<LoadGenerator> loadGenerators = new ArrayList<>( serverNumbers );
-        List<CollectorClient> collectorClients = new ArrayList<>( serverNumbers );
+        List<CollectorClient> collectorClients = new CopyOnWriteArrayList<>( );
         List<TestRequestListener> testRequestListeners = new ArrayList<>( serverNumbers );
 
         List<CollectorResultHandler> collectorResultHandlers = Arrays.asList(new LoggerCollectorResultHandler());
