@@ -112,7 +112,7 @@ public abstract class AbstractLoadGeneratorTest
 
 
         // number of users
-        List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
+        List<Integer> users = Arrays.asList( 1, 2 , 4 );//, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
