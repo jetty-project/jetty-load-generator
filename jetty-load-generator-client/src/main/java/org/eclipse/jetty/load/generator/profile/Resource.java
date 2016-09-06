@@ -34,6 +34,19 @@ public class Resource
 
     private String method = HttpMethod.GET.asString();
 
+    public Resource()
+    {
+        // no op
+    }
+
+    public Resource( int responseSize, String path, int size, String method )
+    {
+        this.responseSize = responseSize;
+        this.path = path;
+        this.size = size;
+        this.method = method;
+    }
+
     public Resource( String path )
     {
         this.path = path;

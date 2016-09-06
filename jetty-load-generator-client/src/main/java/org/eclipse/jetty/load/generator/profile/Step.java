@@ -45,8 +45,7 @@ public class Step
         this.resources.add( resource );
     }
 
-
-    private Step( List<Resource> resources )
+    public Step( List<Resource> resources )
     {
         this.resources = resources;
     }
@@ -54,6 +53,15 @@ public class Step
     public List<Resource> getResources()
     {
         return resources;
+    }
+
+    public void addResource( Resource resource )
+    {
+        if ( this.resources == null )
+        {
+            this.resources = new ArrayList<>();
+        }
+        this.resources.add( resource );
     }
 
     public boolean isWait()
