@@ -102,11 +102,10 @@ public abstract class AbstractLoadGeneratorTest
         transports.add( LoadGenerator.Transport.HTTPS );
         transports.add( LoadGenerator.Transport.H2 );
         transports.add( LoadGenerator.Transport.H2C );
-        transports.add( LoadGenerator.Transport.FCGI);
-
+        transports.add( LoadGenerator.Transport.FCGI );
 
         // number of users
-        List<Integer> users = Arrays.asList( 1, 2 , 4 );//, 2, 4 );
+        List<Integer> users = Arrays.asList( 1, 2, 4 );//, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
@@ -121,13 +120,14 @@ public abstract class AbstractLoadGeneratorTest
         return parameters;
     }
 
-    protected HttpClientTransport transport() {
+    protected HttpClientTransport transport()
+    {
         switch ( this.transport )
         {
             case HTTP:
             case HTTPS:
             {
-               return new HttpTransportBuilder().build();
+                return new HttpTransportBuilder().build();
             }
             case H2C:
             case H2:
@@ -153,8 +153,7 @@ public abstract class AbstractLoadGeneratorTest
         throws Exception
     {
 
-
-        TestRequestListener testRequestListener = new TestRequestListener();
+        TestRequestListener testRequestListener = new TestRequestListener( logger );
 
         startServer( new LoadHandler() );
 
@@ -187,19 +186,23 @@ public abstract class AbstractLoadGeneratorTest
 
         scheduler.stop();
 
-
-        Assert.assertTrue( "successReponsesReceived :" + testRequestListener.success.get(), //
+        Assert.assertTrue( currentTestRunInfos() + ",successReponsesReceived :" + testRequestListener.success.get(), //
                            testRequestListener.success.get() > 1 );
 
-        Assert.assertEquals( testRequestListener.committed.get(), testRequestListener.success.get() );
+        Assert.assertEquals( currentTestRunInfos(), testRequestListener.committed.get(),
+                             testRequestListener.success.get() );
 
         logger.info( "successReponsesReceived: {}", testRequestListener.success.get() );
 
-        Assert.assertTrue( "failedReponsesReceived: " + testRequestListener.failed.get(), //
+        Assert.assertTrue( currentTestRunInfos() + ", failedReponsesReceived: " + testRequestListener.failed.get(), //
                            testRequestListener.failed.get() < 1 );
 
     }
 
+    public String currentTestRunInfos()
+    {
+        return "users:" + this.usersNumber + ", transport: " + this.transport;
+    }
 
     //---------------------------------------------------
     // utilities
@@ -213,6 +216,13 @@ public abstract class AbstractLoadGeneratorTest
         AtomicLong success = new AtomicLong( 0 );
 
         AtomicLong failed = new AtomicLong( 0 );
+
+        Logger logger;
+
+        public TestRequestListener( Logger logger )
+        {
+            this.logger = logger;
+        }
 
         @Override
         public void onCommit( Request request )
@@ -230,6 +240,7 @@ public abstract class AbstractLoadGeneratorTest
         public void onFailure( Request request, Throwable failure )
         {
             failed.incrementAndGet();
+            logger.info( "failure", failure );
         }
     }
 
@@ -338,7 +349,7 @@ public abstract class AbstractLoadGeneratorTest
             int contentLength = request.getIntHeader( "X-Download" );
 
             LOGGER.debug( "method: {}, contentLength: {}, id: {}, pathInfo: {}", //
-                         method, contentLength, httpSession.getId(), request.getPathInfo() );
+                          method, contentLength, httpSession.getId(), request.getPathInfo() );
 
             switch ( method )
 

@@ -100,4 +100,14 @@ public class LoadGeneratorResultHandler
             }
         }
     }
+
+    @Override
+    public void onFailure( Request request, Throwable failure )
+    {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug( "request failure" + request, failure );
+        }
+    }
+
+
 }
