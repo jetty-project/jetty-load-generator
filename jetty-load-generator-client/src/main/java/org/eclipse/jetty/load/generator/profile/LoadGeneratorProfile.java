@@ -70,8 +70,6 @@ public class LoadGeneratorProfile
 
         private Stack<Step> steps = new Stack<>();
 
-        private boolean resourceGroup = false;
-
         public Builder()
         {
             // no op
@@ -89,15 +87,10 @@ public class LoadGeneratorProfile
                 path = "";
             }
             Resource resource = new Resource( path );
-            if ( resourceGroup )
-            {
-                steps.peek().getResources().add( resource );
-            }
-            else
-            {
-                Step current = new Step( resource );
-                steps.push( current );
-            }
+
+            Step current = new Step( resource );
+            steps.push( current );
+
             return this;
         }
 
@@ -142,14 +135,12 @@ public class LoadGeneratorProfile
                 throw new IllegalArgumentException( "not step defined" );
             }
             step.wait = true;
-            resourceGroup = false;
             return this;
         }
 
-        public Builder resourceGroup()
+        public Builder resourceGroup( ResourceGroup resourceGroup )
         {
-            resourceGroup = true;
-            this.steps.add( new Step() );
+            this.steps.add( resourceGroup.getStep() );
             return this;
         }
 

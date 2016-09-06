@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.eclipse.jetty.load.generator;
+package org.eclipse.jetty.load.generator.profile;
 
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
@@ -76,10 +76,12 @@ public class LoadGeneratorProfileBuilderTest
     {
         LoadGeneratorProfile loadGeneratorProfile = //
             new LoadGeneratorProfile.Builder() //
-                .resourceGroup() //
-                .resource( "/index.html" ).size( 1024 ) //
-                .resource( "/beer.html" ).size( 2048 ).method( "POST" ) //
-                .resource( "/wine.html" ).size( 4096 ) //
+                .resourceGroup( new ResourceGroup.Builder()
+                                    .resource( "/index.html" ).size( 1024 ) //
+                                    .resource( "/beer.html" ).size( 2048 ).method( "POST" ) //
+                                    .resource( "/wine.html" ).size( 4096 ) //
+                                    .build()
+                                )
                 .build();
 
         Assert.assertEquals( 1, loadGeneratorProfile.getSteps().size() );
@@ -108,10 +110,12 @@ public class LoadGeneratorProfileBuilderTest
             new LoadGeneratorProfile.Builder() //
                 .resource( "/cheese.html" ).size( 8192 ) //
                 .then() //
-                .resourceGroup() //
-                .resource( "/index.html" ).size( 1024 ) //
-                .resource( "/beer.html" ).size( 2048 ).method( "POST" ) //
-                .resource( "/wine.html" ).size( 4096 ) //
+                .resourceGroup( new ResourceGroup.Builder() //
+                            .resource( "/index.html" ).size( 1024 ) //
+                            .resource( "/beer.html" ).size( 2048 ).method( "POST" ) //
+                            .resource( "/wine.html" ).size( 4096 ) //
+                            .build()
+                            )
                 .then().resource( "/coffee.html" ).size( 35292 ) //
                 .build();
 

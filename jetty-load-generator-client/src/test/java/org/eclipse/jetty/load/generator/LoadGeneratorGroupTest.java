@@ -20,6 +20,7 @@ package org.eclipse.jetty.load.generator;
 
 
 import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.ResourceGroup;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -42,9 +43,11 @@ public class LoadGeneratorGroupTest
 
         LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
             .resource( "/index.html" ).size( 1024 ) //
-            .resourceGroup() //
-            .resource( "/foo.html" ) //
-            .resource( "/beer.html" ) //
+            .resourceGroup( new ResourceGroup.Builder() //
+                                .resource( "/foo.html" ) //
+                                .resource( "/beer.html" ) //
+                                .build()
+                        )
             .then() //
             .resource( "/wine.html" ) //
             .build();
