@@ -30,7 +30,7 @@ public class ResourceGroup
         public Builder()
         {
             this.step = new Step();
-            this.step.wait = true;
+            this.step.setWait( true );
         }
 
         public ResourceGroup build()
@@ -49,6 +49,14 @@ public class ResourceGroup
             this.step.getResources().get( this.step.getResources().size() - 1 ).size( size );
             return this;
         }
+
+        public Builder timeout( long timeout )
+        {
+            this.step.setTimeout( timeout );
+            return this;
+        }
+
+
 
         public Builder method( String method )
         {

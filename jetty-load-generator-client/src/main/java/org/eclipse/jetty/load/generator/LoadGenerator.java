@@ -338,7 +338,6 @@ public class LoadGenerator
         this.interrupt();
     }
 
-
     protected HttpClient newHttpClient( HttpClientTransport httpClientTransport, SslContextFactory sslContextFactory )
         throws Exception
     {

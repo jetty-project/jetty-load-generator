@@ -134,7 +134,7 @@ public class LoadGeneratorProfile
             {
                 throw new IllegalArgumentException( "not step defined" );
             }
-            step.wait = true;
+            step.setWait( true );
             return this;
         }
 

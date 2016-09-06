@@ -20,6 +20,7 @@ package org.eclipse.jetty.load.generator.profile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -32,7 +33,13 @@ public class Step
     /**
      * wait the response before requesting the next step
      */
-    protected boolean wait;
+    private boolean wait;
+
+    /**
+     * timeout in ms
+     */
+    private long timeout = 30000;
+
 
     public Step()
     {
@@ -67,6 +74,21 @@ public class Step
     public boolean isWait()
     {
         return wait;
+    }
+
+    public void setWait( boolean wait )
+    {
+        this.wait = wait;
+    }
+
+    public void setTimeout( long timeout )
+    {
+        this.timeout = timeout;
+    }
+
+    public long getTimeout()
+    {
+        return timeout;
     }
 
     protected Step clone()

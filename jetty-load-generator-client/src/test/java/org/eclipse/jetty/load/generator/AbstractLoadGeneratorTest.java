@@ -183,6 +183,7 @@ public abstract class AbstractLoadGeneratorTest
         loadGenerator.setRequestRate( 10 );
 
         Thread.sleep( 4000 );
+
         loadGenerator.interrupt();
 
         scheduler.stop();

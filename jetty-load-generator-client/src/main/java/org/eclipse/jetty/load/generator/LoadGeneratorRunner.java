@@ -30,6 +30,8 @@ import org.eclipse.jetty.util.log.Logger;
 
 import java.net.HttpCookie;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -82,27 +84,46 @@ public class LoadGeneratorRunner
 
                 for ( Step step : steps )
                 {
-                    boolean lastResource = false;
-                    int resourceNumber = 0;
-
-                    for ( Resource resource : step.getResources() )
-                    {
-                        resourceNumber++;
-                        lastResource = resourceNumber == step.getResources().size();
-                        Request request = buildRequest( resource );
-                        request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
-                                        Long.toString( System.nanoTime() ) );
-
-                        if ( step.isWait() && lastResource )
+                    if (!step.isWait()) {
+                        for ( Resource resource : step.getResources() )
                         {
-                            ContentResponse contentResponse = request.send();
-                            loadGeneratorResultHandler.onComplete( contentResponse );
-                        }
-                        else
-                        {
+                            Request request = buildRequest( resource );
+                            request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
+                                            Long.toString( System.nanoTime() ) );
                             request.send( loadGeneratorResultHandler );
                         }
+                    } else {
+                        // it's a group so we can request in parallel but wait all responses before next step
+                        ExecutorService executorService = Executors.newWorkStealingPool();
+
+                        for ( Resource resource : step.getResources() )
+                        {
+                            executorService.execute( () -> {
+                                try
+                                {
+                                    Request request = buildRequest( resource );
+                                    request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
+                                                    Long.toString( System.nanoTime() ) );
+
+                                    ContentResponse contentResponse = request.send();
+                                    loadGeneratorResultHandler.onComplete( contentResponse );
+                                }
+                                catch ( Exception e )
+                                {
+                                    LOGGER.debug( e.getMessage(), e );
+                                }
+                            } );
+                        }
+
+                        executorService.shutdown();
+
+                        // TODO make this configurable??
+                        boolean finished = executorService.awaitTermination( step.getTimeout(), TimeUnit.MILLISECONDS );
+                        if (!finished) {
+                            LOGGER.warn( "resourceGroup request not all completed" );
+                        }
                     }
+
                 }
 
                 long waitTime = 1000 / loadGenerator.getRequestRate();
