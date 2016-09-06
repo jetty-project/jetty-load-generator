@@ -22,6 +22,8 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.eclipse.jetty.load.generator.profile.Resource;
+import org.eclipse.jetty.load.generator.profile.Step;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
@@ -76,14 +78,14 @@ public class LoadGeneratorRunner
                     break;
                 }
 
-                List<LoadGeneratorProfile.Step> steps = loadGenerator.getProfile().getSteps();
+                List<Step> steps = loadGenerator.getProfile().getSteps();
 
-                for ( LoadGeneratorProfile.Step step : steps )
+                for ( Step step : steps )
                 {
                     boolean lastResource = false;
                     int resourceNumber = 0;
 
-                    for ( LoadGeneratorProfile.Resource resource : step.getResources() )
+                    for ( Resource resource : step.getResources() )
                     {
                         resourceNumber++;
                         lastResource = resourceNumber == step.getResources().size();
@@ -122,7 +124,7 @@ public class LoadGeneratorRunner
     }
 
 
-    private Request buildRequest( LoadGeneratorProfile.Resource resource )
+    private Request buildRequest( Resource resource )
     {
         final String url = //
             loadGenerator.getScheme() + "://" //

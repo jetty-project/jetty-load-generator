@@ -21,6 +21,7 @@ package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
+import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
 import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;

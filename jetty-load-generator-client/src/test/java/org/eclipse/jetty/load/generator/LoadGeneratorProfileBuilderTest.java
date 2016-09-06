@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -22,7 +22,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.load.generator.CollectorServer;
 import org.eclipse.jetty.load.generator.HttpTransportBuilder;
 import org.eclipse.jetty.load.generator.LoadGenerator;
-import org.eclipse.jetty.load.generator.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
