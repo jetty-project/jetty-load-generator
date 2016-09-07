@@ -53,11 +53,11 @@ public class LoadGenerator
 
     private int users;
 
-    private volatile int requestRate;
+    private volatile int transactionRate;
 
     private AtomicBoolean stop;
 
-    private int selectors = 1;
+    private int selectors = -1;
 
     /**
      * target host scheme
@@ -113,10 +113,10 @@ public class LoadGenerator
         FCGI
     }
 
-    LoadGenerator( int users, int requestRate, String host, int port, LoadGeneratorProfile profile )
+    LoadGenerator( int users, int transactionRate, String host, int port, LoadGeneratorProfile profile )
     {
         this.users = users;
-        this.requestRate = requestRate;
+        this.transactionRate = transactionRate;
         this.host = host;
         this.port = port;
         this.stop = new AtomicBoolean( false );
@@ -132,14 +132,14 @@ public class LoadGenerator
         return users;
     }
 
-    public int getRequestRate()
+    public int getTransactionRate()
     {
-        return requestRate;
+        return transactionRate;
     }
 
-    public void setRequestRate( int requestRate )
+    public void setTransactionRate( int transactionRate )
     {
-        this.requestRate = requestRate;
+        this.transactionRate = transactionRate;
     }
 
     public String getHost()
@@ -407,7 +407,7 @@ public class LoadGenerator
 
         private int users;
 
-        private int requestRate;
+        private int transactionRate;
 
         private String host;
 
@@ -417,7 +417,7 @@ public class LoadGenerator
 
         private SslContextFactory sslContextFactory;
 
-        private int selectors = 1;
+        private int selectors = -1;
 
         private List<Request.Listener> requestListeners;
 
@@ -447,12 +447,12 @@ public class LoadGenerator
         }
 
         /**
-         * @param requestRate number of requests per second
+         * @param transactionRate number of transaction per second (transaction means the whole profile)
          * @return {@link Builder}
          */
-        public Builder requestRate( int requestRate )
+        public Builder transactionRate( int transactionRate )
         {
-            this.requestRate = requestRate;
+            this.transactionRate = transactionRate;
             return this;
         }
 
@@ -538,7 +538,7 @@ public class LoadGenerator
         {
             this.validate();
             LoadGenerator loadGenerator =
-                new LoadGenerator( users, requestRate, host, port, this.profile );
+                new LoadGenerator( users, transactionRate, host, port, this.profile );
             loadGenerator.requestListeners = this.requestListeners == null ? new ArrayList<>() // //
                 : this.requestListeners;
             loadGenerator.httpClientTransport = httpClientTransport;
@@ -561,7 +561,7 @@ public class LoadGenerator
                 throw new IllegalArgumentException( "users number must be at least 1" );
             }
 
-            if ( requestRate < 0 )
+            if ( transactionRate < 0 )
             {
                 throw new IllegalArgumentException( "users number must be at least 0" );
             }

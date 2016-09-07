@@ -62,7 +62,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
             .scheduler( scheduler ) //
-            .requestRate( 1 ) //
+            .transactionRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.transport() ) //
             .selectors( this.usersNumber ) //

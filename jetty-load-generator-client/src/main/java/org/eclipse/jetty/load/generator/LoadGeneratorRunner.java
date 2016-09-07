@@ -126,7 +126,7 @@ public class LoadGeneratorRunner
 
                 }
 
-                long waitTime = 1000 / loadGenerator.getRequestRate();
+                long waitTime = 1000 / loadGenerator.getTransactionRate();
 
                 PLATFORM_TIMER.sleep( TimeUnit.MILLISECONDS.toMicros( waitTime ) );
 

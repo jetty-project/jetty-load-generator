@@ -34,7 +34,7 @@ public class LoadGeneratorBuilderTest
     @Test( expected = IllegalArgumentException.class )
     public void raterequest_validation()
     {
-        new LoadGenerator.Builder().requestRate( 0 ).build();
+        new LoadGenerator.Builder().transactionRate( 0 ).build();
     }
 
     @Test( expected = IllegalArgumentException.class )

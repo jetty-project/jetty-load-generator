@@ -164,8 +164,7 @@ public abstract class AbstractLoadGeneratorTest
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
-            .selectors( this.usersNumber ) //
-            .requestRate( 1 ) //
+            .transactionRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.transport() ) //
             .scheduler( scheduler ) //
@@ -180,7 +179,7 @@ public abstract class AbstractLoadGeneratorTest
 
         Thread.sleep( 5000 );
 
-        loadGenerator.setRequestRate( 10 );
+        loadGenerator.setTransactionRate( 10 );
 
         Thread.sleep( 4000 );
 

@@ -135,7 +135,7 @@ public class CollectorTest
                 .host( "localhost" ) //
                 .port( port ) //
                 .users( 2 ) //
-                .requestRate( 5 ) //
+                .transactionRate( 5 ) //
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .httpClientTransport( new HttpTransportBuilder().build() ) //
                 .scheduler( scheduler ) //
