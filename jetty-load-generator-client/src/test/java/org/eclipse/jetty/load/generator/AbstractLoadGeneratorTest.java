@@ -160,11 +160,16 @@ public abstract class AbstractLoadGeneratorTest
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
+        // FIXME values with jmx?
+
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
             .users( this.usersNumber ) //
+            // FIXME better default or core number (-1 as default)
             .selectors( this.usersNumber ) //
+            // FIXME change transaction to transactionRate
+            // FIXME use jmx to change that
             .requestRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.transport() ) //

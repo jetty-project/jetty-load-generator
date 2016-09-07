@@ -153,5 +153,55 @@ public class LoadGeneratorProfileBuilderTest
 
     }
 
+    @Test
+    public void website_profile() throws Exception
+    {
+
+        /*
+        GET index.html
+                style.css
+                    logo.gif
+                    spacer.png
+                fancy.css
+                script.js
+                    library.js
+                    morestuff.js
+                anotherScript.js
+                iframeContents.html
+                moreIframeContents.html
+                favicon.ico
+        */
+
+        LoadGeneratorProfile sample =
+            new LoadGeneratorProfile.Builder()
+                .resource("/index.html")
+                .then()
+                .resourceGroup(new ResourceGroup.Builder()
+                                        .resource("/style.css")
+                                        .then()
+                                        .resourceGroup(new ResourceGroup.Builder()
+                                                                 .resource( "/logo.gif" )
+                                                                 .resource( "/spacer.png" )
+                                                                 .build())
+                                        .resource( "/fancy.css" )
+                                        .resourceGroup(new ResourceGroup.Builder()
+                                                      .resource( "/script.js" )
+                                                      .then()
+                                                      .resourceGroup(new ResourceGroup.Builder()
+                                                                         .resource( "/library.js" )
+                                                                         .resource( "/morestuff.js" )
+                                                                         .build())
+                                                      .build())
+                                        .resource( "/anotherScript.js" )
+                                        .resource( "/iframeContents.html" )
+                                        .resource( "/moreIframeContents.html" )
+                                        .resource( "/favicon.ico" )
+                                        .build())
+                .build();
+
+
+            Assert.assertEquals( 2, sample.getSteps().size() );
+
+    }
 
 }

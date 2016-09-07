@@ -165,6 +165,8 @@ public class LoadGeneratorRunner
             request.content( new BytesContentProvider( new byte[resource.getSize()] ) );
         }
 
+        request.onResponseContentAsync( loadGeneratorResultHandler );
+
         return request;
     }
 
