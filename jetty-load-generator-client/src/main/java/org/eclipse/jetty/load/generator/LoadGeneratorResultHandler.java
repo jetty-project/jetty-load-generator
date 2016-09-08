@@ -174,7 +174,7 @@ public class LoadGeneratorResultHandler
     @Override
     public void onBegin( Response response )
     {
-        here add header with nano timestamp
+        //here add header with nano timestamp
         response.getHeaders().add( "foo", "beer" );
     }
 }
