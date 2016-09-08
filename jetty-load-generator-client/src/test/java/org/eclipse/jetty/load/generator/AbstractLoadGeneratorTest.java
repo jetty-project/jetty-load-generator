@@ -115,7 +115,7 @@ public abstract class AbstractLoadGeneratorTest
 
 
         // number of users
-        List<Integer> users = Arrays.asList( 1, 2, 4 );//, 2, 4 );
+        List<Integer> users = Arrays.asList( 1, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
@@ -398,6 +398,9 @@ public abstract class AbstractLoadGeneratorTest
                     {
                         response.setHeader( "X-Content", String.valueOf( contentLength ) );
                         response.getOutputStream().write( new byte[contentLength] );
+                    } else {
+                        response.getOutputStream().write( "Hey mate howzagoing??".getBytes() );
+                        response.flushBuffer();
                     }
                     break;
                 }

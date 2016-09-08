@@ -18,6 +18,7 @@
 
 package org.eclipse.jetty.load.generator;
 
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
@@ -80,7 +81,6 @@ public class LoadGeneratorResultHandler
     }
 
 
-
     @Override
     public void onComplete( Result result )
     {
@@ -89,6 +89,23 @@ public class LoadGeneratorResultHandler
 
     public void onComplete( Response response )
     {
+        // we need to consume content!
+        if (response instanceof ContentResponse ) {
+            try
+            {
+                byte[] thecontent = ( (ContentResponse) response ).getContent();
+                if ( LOGGER.isDebugEnabled() )
+                {
+                    LOGGER.debug( "response content: {}", thecontent );
+                }
+                onContentSize( thecontent.length );
+            }
+            catch ( Throwable e )
+            {
+                LOGGER.warn( "skip fail to get content size", e );
+            }
+        }
+
         long end = System.nanoTime();
 
         String path = response.getRequest().getPath();
@@ -113,9 +130,34 @@ public class LoadGeneratorResultHandler
 
 
     @Override
-    public void onContent( Response response, ByteBuffer content, Callback callback )
+    public void onContent( Response response, ByteBuffer buffer, Callback callback )
     {
-        int size = content.position();
-        LOGGER.debug( "size: {}", size );
+        try
+        {
+            byte[] bytes;
+            if ( buffer.hasArray() )
+            {
+                bytes = buffer.array();
+            }
+            else
+            {
+                bytes = new byte[buffer.remaining()];
+                buffer.get( bytes );
+            }
+
+            int size = bytes.length;
+            LOGGER.debug( "size: {}", size );
+            onContentSize( size );
+        }
+        catch ( Throwable e )
+        {
+            LOGGER.warn( "skip fail to get content size", e );
+        }
+        callback.succeeded();
+    }
+
+
+    protected void onContentSize(int size) {
+        // TODO store this bandwith approx
     }
 }
