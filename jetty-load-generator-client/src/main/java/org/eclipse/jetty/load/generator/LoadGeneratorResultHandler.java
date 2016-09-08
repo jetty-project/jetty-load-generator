@@ -23,10 +23,12 @@ import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
@@ -35,7 +37,7 @@ import java.util.List;
  */
 public class LoadGeneratorResultHandler
     extends Request.Listener.Adapter
-    implements Response.CompleteListener, Request.BeginListener
+    implements Response.CompleteListener, Request.BeginListener, Response.AsyncContentListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
@@ -110,4 +112,10 @@ public class LoadGeneratorResultHandler
     }
 
 
+    @Override
+    public void onContent( Response response, ByteBuffer content, Callback callback )
+    {
+        int size = content.position();
+        LOGGER.debug( "size: {}", size );
+    }
 }

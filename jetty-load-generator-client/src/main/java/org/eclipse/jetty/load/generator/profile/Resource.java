@@ -104,4 +104,10 @@ public class Resource
         return resource;
     }
 
+    @Override
+    public String toString()
+    {
+        return "Resource{" + "responseSize=" + responseSize + ", path='" + path + '\'' + ", size=" + size + ", method='"
+            + method + '\'' + '}';
+    }
 }

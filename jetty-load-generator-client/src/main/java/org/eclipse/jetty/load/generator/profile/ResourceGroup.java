@@ -23,6 +23,12 @@ public class ResourceGroup
         return step;
     }
 
+    @Override
+    public String toString()
+    {
+        return "ResourceGroup{" + "step=" + step + '}';
+    }
+
     public static class Builder
     {
         private Step step;
@@ -44,6 +50,18 @@ public class ResourceGroup
             return this;
         }
 
+        public Builder then()
+        {
+            this.step.setWait( true );
+            return this;
+        }
+
+        public Builder resourceGroup( ResourceGroup resourceGroup )
+        {
+            this.step.addStep( resourceGroup.getStep() );
+            return this;
+        }
+
         public Builder size( int size )
         {
             this.step.getResources().get( this.step.getResources().size() - 1 ).size( size );
@@ -55,7 +73,6 @@ public class ResourceGroup
             this.step.setTimeout( timeout );
             return this;
         }
-
 
 
         public Builder method( String method )

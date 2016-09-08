@@ -28,6 +28,7 @@ public interface ResponseTimeListener
      * @param path the http path
      * @param responseTime the response time value in nano seconds
      */
+    // FIXME add HTTP method, size (a bean with values)
     void onResponse( String path, long responseTime );
 
     /**

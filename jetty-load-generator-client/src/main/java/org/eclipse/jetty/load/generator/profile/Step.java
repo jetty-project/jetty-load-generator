@@ -20,7 +20,6 @@ package org.eclipse.jetty.load.generator.profile;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -29,6 +28,9 @@ public class Step
 {
 
     private List<Resource> resources;
+
+    // we have a three model here
+    private List<Step> steps;
 
     /**
      * wait the response before requesting the next step
@@ -89,6 +91,25 @@ public class Step
     public long getTimeout()
     {
         return timeout;
+    }
+
+    public List<Step> getSteps()
+    {
+        return steps;
+    }
+
+    public void setSteps( List<Step> steps )
+    {
+        this.steps = steps;
+    }
+
+    public void addStep( Step step )
+    {
+        if ( this.steps == null )
+        {
+            this.steps = new ArrayList<>();
+        }
+        this.steps.add( step );
     }
 
     protected Step clone()

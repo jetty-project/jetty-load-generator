@@ -160,6 +160,8 @@ public abstract class AbstractLoadGeneratorTest
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
+        // FIXME values with jmx?
+
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //

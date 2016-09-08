@@ -41,6 +41,8 @@ public class LoadGeneratorGroupTest
         throws Exception
     {
 
+        // TODO size only for upload PUT / POST
+
         LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
             .resource( "/index.html" ).size( 1024 ) //
             .resourceGroup( new ResourceGroup.Builder() //
@@ -48,8 +50,9 @@ public class LoadGeneratorGroupTest
                                 .resource( "/beer.html" ) //
                                 .build()
                         )
-            .then() //
             .resource( "/wine.html" ) //
+            .then() //
+            .resource( "/beer.html" ) //
             .build();
 
         runProfile( loadGeneratorProfile );
