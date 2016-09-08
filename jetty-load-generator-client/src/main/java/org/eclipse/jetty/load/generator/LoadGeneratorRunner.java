@@ -68,7 +68,6 @@ public class LoadGeneratorRunner
     {
 
         LOGGER.debug( "loadGenerator#run" );
-        // FIXME populate loadGeneratorResult with statistics values
         try
         {
             while ( true )

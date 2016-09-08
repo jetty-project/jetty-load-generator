@@ -41,8 +41,10 @@ public class SummaryResponseTimeListener
     }
 
     @Override
-    public void onResponse( String path, long responseTime )
+    public void onResponse( ResponseValues responseValues  )
     {
+        String path = responseValues.getPath();
+        long responseTime = responseValues.getResponseTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {

@@ -24,16 +24,113 @@ package org.eclipse.jetty.load.generator.response;
 public interface ResponseTimeListener
 {
     /**
-     * triggered with an response time value
-     * @param path the http path
-     * @param responseTime the response time value in nano seconds
+     * triggered with some informations on the response see {@link ResponseValues}
+     *
+     * @param responseValues
      */
-    // FIXME add HTTP method, size (a bean with values)
-    void onResponse( String path, long responseTime );
+    void onResponse( ResponseValues responseValues );
 
     /**
      * triggered when the load generator is stopped
      */
     void onLoadGeneratorStop();
+
+    class ResponseValues
+    {
+        private String path;
+
+        private long responseTime;
+
+        private String method;
+
+        private long size;
+
+        private int status;
+
+        public ResponseValues()
+        {
+            // no op
+        }
+
+        public String getPath()
+        {
+            return path;
+        }
+
+        public void setPath( String path )
+        {
+            this.path = path;
+        }
+
+        public ResponseValues path( String path )
+        {
+            this.path = path;
+            return this;
+        }
+
+        public long getResponseTime()
+        {
+            return responseTime;
+        }
+
+        public void setResponseTime( long responseTime )
+        {
+            this.responseTime = responseTime;
+        }
+
+        public ResponseValues responseTime( long responseTime )
+        {
+            this.responseTime = responseTime;
+            return this;
+        }
+
+        public String getMethod()
+        {
+            return method;
+        }
+
+        public void setMethod( String method )
+        {
+            this.method = method;
+        }
+
+        public ResponseValues method( String method )
+        {
+            this.method = method;
+            return this;
+        }
+
+        public long getSize()
+        {
+            return size;
+        }
+
+        public void setSize( long size )
+        {
+            this.size = size;
+        }
+
+        public ResponseValues size( long size )
+        {
+            this.size = size;
+            return this;
+        }
+
+        public int getStatus()
+        {
+            return status;
+        }
+
+        public void setStatus( int status )
+        {
+            this.status = status;
+        }
+
+        public ResponseValues status( int status )
+        {
+            this.status = status;
+            return this;
+        }
+    }
 
 }

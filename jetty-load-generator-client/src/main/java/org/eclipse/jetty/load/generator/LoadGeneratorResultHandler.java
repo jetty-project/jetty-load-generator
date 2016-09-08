@@ -89,6 +89,7 @@ public class LoadGeneratorResultHandler
 
     public void onComplete( Response response )
     {
+        int size = 0;
         // we need to consume content!
         if (response instanceof ContentResponse ) {
             try
@@ -98,7 +99,8 @@ public class LoadGeneratorResultHandler
                 {
                     LOGGER.debug( "response content: {}", thecontent );
                 }
-                onContentSize( thecontent.length );
+                size = thecontent.length;
+                onContentSize( size );
             }
             catch ( Throwable e )
             {
@@ -115,7 +117,14 @@ public class LoadGeneratorResultHandler
         {
             long time = end - Long.parseLong( startTime );
             for (ResponseTimeListener responseTimeListener : responseTimeListeners) {
-                responseTimeListener.onResponse( path, time);
+                responseTimeListener.onResponse(
+                    new ResponseTimeListener.ResponseValues() //
+                        .path( path ) //
+                        .responseTime( time ) //
+                        .method( response.getRequest().getMethod() ) //
+                        .status( response.getStatus() ) //
+                        .size( size )
+                );
             }
         }
     }
