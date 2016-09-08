@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator.profile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -57,6 +58,11 @@ public class Step
     public Step( List<Resource> resources )
     {
         this.resources = resources;
+    }
+
+    public Step( Resource... resources )
+    {
+        this.resources = resources == null ? new ArrayList<>() : Arrays.asList( resources );
     }
 
     public List<Resource> getResources()

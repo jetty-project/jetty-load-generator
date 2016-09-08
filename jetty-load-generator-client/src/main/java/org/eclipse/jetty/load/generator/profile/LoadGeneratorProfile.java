@@ -19,8 +19,8 @@
 package org.eclipse.jetty.load.generator.profile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Stack;
 
 /**
  *
@@ -30,10 +30,19 @@ public class LoadGeneratorProfile
 
     private List<Step> steps = new ArrayList<>();
 
+    public LoadGeneratorProfile()
+    {
+        // no op
+    }
 
     public LoadGeneratorProfile( List<Step> steps )
     {
         this.steps = steps;
+    }
+
+    public LoadGeneratorProfile( Step... steps )
+    {
+        this.steps = steps == null ? new ArrayList<>() : Arrays.asList( steps );
     }
 
     public List<Step> getSteps()
@@ -41,109 +50,17 @@ public class LoadGeneratorProfile
         return steps;
     }
 
-    //--------------------------------------------------------------
-    //  Builder
-    //--------------------------------------------------------------
-
-    public static class Builder
+    public void setSteps( List<Step> steps )
     {
-
-        /*
-
-        resource("/index.html").size(1024)
-            .then()
-                .resourceGroup()
-                    .resource("/styles.css").size(512)
-                    .resource("/script.js").size(2048)
-            .then()
-                .resource("/foo.html").size(1024)
-            .then()
-                .resource("/beer.html)
-            .then()
-
-
-
-        with the idea that you can specify whether to wait for a resource
-        (using then()), or to ask for them in parallel (via resourceGroup above).
-
-        */
-
-        private Stack<Step> steps = new Stack<>();
-
-        public Builder()
-        {
-            // no op
-        }
-
-        public LoadGeneratorProfile build()
-        {
-            return new LoadGeneratorProfile( steps );
-        }
-
-        public Builder resource( String path )
-        {
-            if ( path == null )
-            {
-                path = "";
-            }
-            Resource resource = new Resource( path );
-
-            Step current = new Step( resource );
-            steps.push( current );
-
-            return this;
-        }
-
-        private Resource getCurrent()
-        {
-            Step current = steps.peek();
-            if ( current == null )
-            {
-                return null;
-            }
-            Resource resource = current.getResources().get( current.getResources().size() - 1 );
-            return resource;
-        }
-
-        public Builder size( int size )
-        {
-            Resource resource = getCurrent();
-            if ( resource == null )
-            {
-                throw new IllegalArgumentException( "not resource defined" );
-            }
-            resource.size( size );
-            return this;
-        }
-
-        public Builder method( String method )
-        {
-            Resource resource = getCurrent();
-            if ( resource == null )
-            {
-                throw new IllegalArgumentException( "not resource defined" );
-            }
-            resource.method( method );
-            return this;
-        }
-
-        public Builder then()
-        {
-            Step step = steps.peek();
-            if ( step == null )
-            {
-                throw new IllegalArgumentException( "not step defined" );
-            }
-            step.setWait( true );
-            return this;
-        }
-
-        public Builder resourceGroup( ResourceGroup resourceGroup )
-        {
-            this.steps.add( resourceGroup.getStep() );
-            return this;
-        }
-
+        this.steps = steps;
     }
 
+    public void addStep( Step step )
+    {
+        if ( this.steps == null )
+        {
+            this.steps = new ArrayList<>();
+        }
+        this.steps.add( step );
+    }
 }

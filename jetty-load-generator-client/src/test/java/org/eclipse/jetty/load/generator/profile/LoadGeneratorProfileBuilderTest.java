@@ -173,34 +173,29 @@ public class LoadGeneratorProfileBuilderTest
         */
 
         LoadGeneratorProfile sample =
-            new LoadGeneratorProfile.Builder()
-                .resource("/index.html")
-                .then()
-                .resourceGroup(new ResourceGroup.Builder()
-                                        .resource("/style.css")
-                                        .then()
-                                        .resourceGroup(new ResourceGroup.Builder()
-                                                                 .resource( "/logo.gif" )
-                                                                 .resource( "/spacer.png" )
-                                                                 .build())
-                                        .resource( "/fancy.css" )
-                                        .resourceGroup(new ResourceGroup.Builder()
-                                                      .resource( "/script.js" )
-                                                      .then()
-                                                      .resourceGroup(new ResourceGroup.Builder()
-                                                                         .resource( "/library.js" )
-                                                                         .resource( "/morestuff.js" )
-                                                                         .build())
-                                                      .build())
-                                        .resource( "/anotherScript.js" )
-                                        .resource( "/iframeContents.html" )
-                                        .resource( "/moreIframeContents.html" )
-                                        .resource( "/favicon.ico" )
-                                        .build())
-                .build();
+            new LoadGeneratorProfile(
+               new Step( new Resource( "index.html" ) ),
+               new Step(
+                   new Resource( "/style.css" ),
+
+                   new Resource( "/fancy.css" ),
+                   new Resource( "/script.js" ),
+
+                   new Resource( "/anotherScript.js" ),
+                   new Resource( "/iframeContents.html" ),
+                   new Resource( "/moreIframeContents.html" ),
+                   new Resource( "/favicon.ico" )
+               )
+
+
+            );
+
 
 
             Assert.assertEquals( 2, sample.getSteps().size() );
+
+
+
 
     }
 
