@@ -19,7 +19,6 @@
 package org.eclipse.jetty.load.generator.profile;
 
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,17 +32,16 @@ public class LoadGeneratorProfileBuilderTest
     public void simple_build()
         throws Exception
     {
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            .build();
+        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile( //
+            new Resource( "/index.html" ).size( 1024 ) //
+            );
 
-        Assert.assertEquals( 1, loadGeneratorProfile.getSteps().size() );
-        Assert.assertEquals( 1, loadGeneratorProfile.getSteps().get( 0 ).getResources().size() );
+        Assert.assertEquals( 1, loadGeneratorProfile.getResources().size() );
 
         Assert.assertEquals( "/index.html",
-                             loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 1024, loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getMethod() );
+                             loadGeneratorProfile.getResources().get( 0 ).getPath() );
+        Assert.assertEquals( 1024, loadGeneratorProfile.getResources().get( 0 ).getSize() );
+        Assert.assertEquals( "GET", loadGeneratorProfile.getResources().get( 0 ).getMethod() );
     }
 
     @Test
@@ -51,106 +49,21 @@ public class LoadGeneratorProfileBuilderTest
         throws Exception
     {
         LoadGeneratorProfile loadGeneratorProfile = //
-            new LoadGeneratorProfile.Builder() //
-                .resource( "/index.html" ).size( 1024 ) //
-                .resource( "/beer.html" ).size( 2048 ).method( HttpMethod.POST.asString() ) //
-                .build();
+            new LoadGeneratorProfile( //
+                new Resource( "/index.html" ).size( 1024 ), //
+                new Resource( "/beer.html" ).size( 2048 ).method( HttpMethod.POST.asString())  //
+        );
 
-        Assert.assertEquals( 2, loadGeneratorProfile.getSteps().size() );
-        Assert.assertEquals( 1, loadGeneratorProfile.getSteps().get( 0 ).getResources().size() );
-        Assert.assertEquals( 1, loadGeneratorProfile.getSteps().get( 1 ).getResources().size() );
+        Assert.assertEquals( 2, loadGeneratorProfile.getResources().size() );
 
         Assert.assertEquals( "/index.html",
-                             loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 1024, loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getMethod() );
+                             loadGeneratorProfile.getResources().get( 0 ).getPath() );
+        Assert.assertEquals( 1024, loadGeneratorProfile.getResources().get( 0 ).getSize() );
+        Assert.assertEquals( "GET", loadGeneratorProfile.getResources().get( 0 ).getMethod() );
 
-        Assert.assertEquals( "/beer.html", loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 2048, loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "POST", loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 0 ).getMethod() );
-    }
-
-    @Test
-    public void simple_resource_group()
-        throws Exception
-    {
-        LoadGeneratorProfile loadGeneratorProfile = //
-            new LoadGeneratorProfile.Builder() //
-                .resourceGroup( new ResourceGroup.Builder()
-                                    .resource( "/index.html" ).size( 1024 ) //
-                                    .resource( "/beer.html" ).size( 2048 ).method( "POST" ) //
-                                    .resource( "/wine.html" ).size( 4096 ) //
-                                    .build()
-                                )
-                .build();
-
-        Assert.assertEquals( 1, loadGeneratorProfile.getSteps().size() );
-        Assert.assertEquals( 3, loadGeneratorProfile.getSteps().get( 0 ).getResources().size() );
-
-        Assert.assertEquals( "/index.html",
-                             loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 1024, loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getMethod() );
-
-        Assert.assertEquals( "/beer.html", loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 1 ).getPath() );
-        Assert.assertEquals( 2048, loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 1 ).getSize() );
-        Assert.assertEquals( "POST", loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 1 ).getMethod() );
-
-        Assert.assertEquals( "/wine.html", loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 2 ).getPath() );
-        Assert.assertEquals( 4096, loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 2 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 2 ).getMethod() );
-
-    }
-
-    @Test
-    public void mix_resource_with_resource_group()
-        throws Exception
-    {
-        LoadGeneratorProfile loadGeneratorProfile = //
-            new LoadGeneratorProfile.Builder() //
-                .resource( "/cheese.html" ).size( 8192 ) //
-                .then() //
-                .resourceGroup( new ResourceGroup.Builder() //
-                            .resource( "/index.html" ).size( 1024 ) //
-                            .resource( "/beer.html" ).size( 2048 ).method( "POST" ) //
-                            .resource( "/wine.html" ).size( 4096 ) //
-                            .build()
-                            )
-                .then().resource( "/coffee.html" ).size( 35292 ) //
-                .build();
-
-        Assert.assertEquals( 3, loadGeneratorProfile.getSteps().size() );
-        Assert.assertEquals( 1, loadGeneratorProfile.getSteps().get( 0 ).getResources().size() );
-        Assert.assertEquals( 3, loadGeneratorProfile.getSteps().get( 1 ).getResources().size() );
-        Assert.assertEquals( 1, loadGeneratorProfile.getSteps().get( 2 ).getResources().size() );
-
-        Assert.assertTrue( loadGeneratorProfile.getSteps().get( 0 ).isWait() );
-        Assert.assertTrue( loadGeneratorProfile.getSteps().get( 1 ).isWait() );
-        Assert.assertFalse( loadGeneratorProfile.getSteps().get( 2 ).isWait() );
-
-        Assert.assertEquals( "/cheese.html",
-                             loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 8192, loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getSteps().get( 0 ).getResources().get( 0 ).getMethod() );
-
-        Assert.assertEquals( "/index.html",
-                             loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 1024, loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 0 ).getMethod() );
-
-        Assert.assertEquals( "/beer.html", loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 1 ).getPath() );
-        Assert.assertEquals( 2048, loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 1 ).getSize() );
-        Assert.assertEquals( "POST", loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 1 ).getMethod() );
-
-        Assert.assertEquals( "/wine.html", loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 2 ).getPath() );
-        Assert.assertEquals( 4096, loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 2 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getSteps().get( 1 ).getResources().get( 2 ).getMethod() );
-
-        Assert.assertEquals( "/coffee.html",
-                             loadGeneratorProfile.getSteps().get( 2 ).getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 35292, loadGeneratorProfile.getSteps().get( 2 ).getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getSteps().get( 2 ).getResources().get( 0 ).getMethod() );
-
+        Assert.assertEquals( "/beer.html", loadGeneratorProfile.getResources().get( 1 ).getPath() );
+        Assert.assertEquals( 2048, loadGeneratorProfile.getResources().get( 1 ).getSize() );
+        Assert.assertEquals( "POST", loadGeneratorProfile.getResources().get( 1 ).getMethod() );
     }
 
     @Test
@@ -172,29 +85,30 @@ public class LoadGeneratorProfileBuilderTest
                 favicon.ico
         */
 
-        LoadGeneratorProfile sample =
-            new LoadGeneratorProfile(
-               new Step( new Resource( "index.html" ) ),
-               new Step(
-                   new Resource( "/style.css" ),
-
-                   new Resource( "/fancy.css" ),
-                   new Resource( "/script.js" ),
-
-                   new Resource( "/anotherScript.js" ),
-                   new Resource( "/iframeContents.html" ),
-                   new Resource( "/moreIframeContents.html" ),
-                   new Resource( "/favicon.ico" )
+        LoadGeneratorProfile sample = //
+            new LoadGeneratorProfile( //
+               new Resource( "index.html" , //
+                   new Resource( "/style.css", //
+                        new Resource( "/logo.gif"), //
+                        new Resource( "/spacer.png") //
+                   ), //
+                   new Resource( "/fancy.css" ), //
+                   new Resource( "/script.js", //
+                        new Resource( "/library.js"), //
+                        new Resource( "/morestuff.js") //
+                   ), //
+                   new Resource( "/anotherScript.js" ), //
+                   new Resource( "/iframeContents.html" ), //
+                   new Resource( "/moreIframeContents.html" ), //
+                   new Resource( "/favicon.ico" ) //
                )
+             );
 
+        Assert.assertEquals( 1, sample.getResources().size() );
 
-            );
+        Assert.assertEquals( 7, sample.getResources().get( 0 ).getResources().size() );
 
-
-
-            Assert.assertEquals( 2, sample.getSteps().size() );
-
-
+        // FIXME more testing here!!!
 
 
     }

@@ -23,7 +23,6 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.load.generator.profile.Resource;
-import org.eclipse.jetty.load.generator.profile.Step;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
@@ -80,50 +79,11 @@ public class LoadGeneratorRunner
                     break;
                 }
 
-                List<Step> steps = loadGenerator.getProfile().getSteps();
+                List<Resource> resources = loadGenerator.getProfile().getResources();
 
-                for ( Step step : steps )
+                for ( Resource main : resources )
                 {
-                    if (!step.isWait()) {
-                        for ( Resource resource : step.getResources() )
-                        {
-                            Request request = buildRequest( resource );
-                            request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
-                                            Long.toString( System.nanoTime() ) );
-                            request.send( loadGeneratorResultHandler );
-                        }
-                    } else {
-                        // it's a group so we can request in parallel but wait all responses before next step
-                        ExecutorService executorService = Executors.newWorkStealingPool();
-
-                        for ( Resource resource : step.getResources() )
-                        {
-                            executorService.execute( () -> {
-                                try
-                                {
-                                    Request request = buildRequest( resource );
-                                    request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
-                                                    Long.toString( System.nanoTime() ) );
-
-                                    ContentResponse contentResponse = request.send();
-                                    loadGeneratorResultHandler.onComplete( contentResponse );
-                                }
-                                catch ( Exception e )
-                                {
-                                    LOGGER.debug( e.getMessage(), e );
-                                }
-                            } );
-                        }
-
-                        executorService.shutdown();
-
-                        // TODO make this configurable??
-                        boolean finished = executorService.awaitTermination( step.getTimeout(), TimeUnit.MILLISECONDS );
-                        if (!finished) {
-                            LOGGER.warn( "resourceGroup request not all completed" );
-                        }
-                    }
-
+                    handleResource( main );
                 }
 
                 long waitTime = 1000 / loadGenerator.getTransactionRate();
@@ -141,6 +101,50 @@ public class LoadGeneratorRunner
         {
             LOGGER.warn( "ignoring exception", e );
             // TODO record error in generator report
+        }
+    }
+
+    private void handleResource( Resource resource ) throws Exception {
+        // so we have sync call if we have children but not if resource marked as no wait
+        if ( resource.getResources().isEmpty() || resource.isWait() )
+        {
+
+            Request request = buildRequest( resource );
+            request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
+                            Long.toString( System.nanoTime() ) );
+            request.send( loadGeneratorResultHandler );
+
+        }
+
+
+        if (!resource.getResources().isEmpty())
+        {
+            // it's a group so we can request in parallel but wait all responses before next step
+            ExecutorService executorService = Executors.newWorkStealingPool();
+
+            for ( Resource children : resource.getResources() )
+            {
+                executorService.execute( () ->
+                                         {
+                                             try
+                                             {
+                                                 handleResource( children );
+                                             }
+                                             catch ( Exception e )
+                                             {
+                                                 LOGGER.debug( e.getMessage(), e );
+                                             }
+                                         } );
+            }
+
+            executorService.shutdown();
+
+            // TODO make this configurable??
+            boolean finished = executorService.awaitTermination( resource.getChildrenTimeout(), TimeUnit.MILLISECONDS );
+            if ( !finished )
+            {
+                LOGGER.warn( "resourceGroup request not all completed" );
+            }
         }
     }
 

@@ -20,6 +20,11 @@ package org.eclipse.jetty.load.generator.profile;
 
 import org.eclipse.jetty.http.HttpMethod;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  *
  */
@@ -33,6 +38,20 @@ public class Resource
     private int size;
 
     private String method = HttpMethod.GET.asString();
+
+
+    /**
+     * wait the responses for the provided {{@link #resources} before going to next resource
+     * default to <code>false</code>
+     */
+    private boolean wait = false;
+
+    /**
+     * timeout in ms to wait to load all children {@link Resource} if any
+     */
+    private long childrenTimeout = 30000;
+
+    private List<Resource> resources;
 
     public Resource()
     {
@@ -50,6 +69,18 @@ public class Resource
     public Resource( String path )
     {
         this.path = path;
+    }
+
+    public Resource( String path, Resource... then )
+    {
+        this.path = path;
+        this.resources = then == null ? new ArrayList<>(  ) : Arrays.asList( then );
+    }
+
+    public Resource( String path, List<Resource> then )
+    {
+        this.path = path;
+        this.resources = then;
     }
 
     public Resource path( String path )
@@ -96,12 +127,48 @@ public class Resource
         return responseSize;
     }
 
-    protected Resource clone()
+    /**
+     * cannot be used to add Resource, you must use {@link #addResource(Resource)}
+     * @return the children {@link Resource} or an empty list
+     */
+    public List<Resource> getResources()
     {
-        Resource resource = new Resource( this.path );
-        resource.size = this.size;
-        resource.responseSize = this.responseSize;
-        return resource;
+        return resources == null ? Collections.emptyList() : resources;
+    }
+
+    public void setResources( List<Resource> resources )
+    {
+        this.resources = resources;
+    }
+
+    public void addResource( Resource resource )
+    {
+        if ( this.resources == null )
+        {
+            this.resources = new ArrayList<>();
+        }
+        this.resources.add( resource );
+    }
+
+    public boolean isWait()
+    {
+        return wait;
+    }
+
+    public void setWait( boolean wait )
+    {
+        this.wait = wait;
+    }
+
+    public Resource wait( boolean wait )
+    {
+        this.wait = wait;
+        return this;
+    }
+
+    public long getChildrenTimeout()
+    {
+        return childrenTimeout;
     }
 
     @Override

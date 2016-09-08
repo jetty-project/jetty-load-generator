@@ -23,6 +23,7 @@ import org.eclipse.jetty.load.generator.CollectorServer;
 import org.eclipse.jetty.load.generator.HttpTransportBuilder;
 import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -103,10 +104,9 @@ public class CollectorTest
     public void collect_informations()
         throws Exception
     {
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            //.resource( "" ).size( 1024 ) //
-            .build();
+        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile( //
+            new Resource( "/index.html" )
+        );
 
         runProfile( loadGeneratorProfile );
     }

@@ -22,6 +22,7 @@ package org.eclipse.jetty.load.generator;
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
 import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
@@ -48,10 +49,11 @@ public class LoadGeneratorSimpleRunTimeTest
         throws Exception
     {
 
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            //.resource( "" ).size( 1024 ) //
-            .build();
+        LoadGeneratorProfile loadGeneratorProfile = //
+            new LoadGeneratorProfile(  //
+                       new Resource( "/index.html" ).size( 1024 )//
+                       //.resource( "" ).size( 1024 ) //
+            );
 
         startServer( new LoadHandler() );
 

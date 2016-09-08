@@ -100,13 +100,15 @@ public abstract class AbstractLoadGeneratorTest
         List<LoadGenerator.Transport> transports = new ArrayList<>();
 
         transports.add( LoadGenerator.Transport.HTTP );
+        /*
         transports.add( LoadGenerator.Transport.HTTPS );
         transports.add( LoadGenerator.Transport.H2 );
         transports.add( LoadGenerator.Transport.H2C );
         transports.add( LoadGenerator.Transport.FCGI );
+        */
 
         // number of users
-        List<Integer> users = Arrays.asList( 1, 2, 4 );//, 2, 4 );
+        List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 

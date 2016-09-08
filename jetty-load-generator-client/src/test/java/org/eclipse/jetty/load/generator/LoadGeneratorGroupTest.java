@@ -20,7 +20,7 @@ package org.eclipse.jetty.load.generator;
 
 
 import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
-import org.eclipse.jetty.load.generator.profile.ResourceGroup;
+import org.eclipse.jetty.load.generator.profile.Resource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -43,17 +43,15 @@ public class LoadGeneratorGroupTest
 
         // TODO size only for upload PUT / POST
 
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            .resourceGroup( new ResourceGroup.Builder() //
-                                .resource( "/foo.html" ) //
-                                .resource( "/beer.html" ) //
-                                .build()
-                        )
-            .resource( "/wine.html" ) //
-            .then() //
-            .resource( "/beer.html" ) //
-            .build();
+        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile( //
+            new Resource( "/index.html",
+                              new Resource( "/foo.html" ), //
+                              new Resource( "/beer.html" ) //
+
+            ).size( 1024 ), //
+            new Resource( "/wine.html" ), //
+            new Resource( "/beer.html" )
+            );
 
         runProfile( loadGeneratorProfile );
 

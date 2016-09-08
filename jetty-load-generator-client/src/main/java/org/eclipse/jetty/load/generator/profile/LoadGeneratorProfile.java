@@ -28,39 +28,39 @@ import java.util.List;
 public class LoadGeneratorProfile
 {
 
-    private List<Step> steps = new ArrayList<>();
+    private List<Resource> resources = new ArrayList<>();
 
     public LoadGeneratorProfile()
     {
         // no op
     }
 
-    public LoadGeneratorProfile( List<Step> steps )
+    public LoadGeneratorProfile( List<Resource> resources )
     {
-        this.steps = steps;
+        this.resources = resources;
     }
 
-    public LoadGeneratorProfile( Step... steps )
+    public LoadGeneratorProfile( Resource... resources )
     {
-        this.steps = steps == null ? new ArrayList<>() : Arrays.asList( steps );
+        this.resources = resources == null ? new ArrayList<>() : Arrays.asList( resources );
     }
 
-    public List<Step> getSteps()
+    public List<Resource> getResources()
     {
-        return steps;
+        return resources;
     }
 
-    public void setSteps( List<Step> steps )
+    public void setResources( List<Resource> resources )
     {
-        this.steps = steps;
+        this.resources = resources;
     }
 
-    public void addStep( Step step )
+    public void addResource( Resource resource )
     {
-        if ( this.steps == null )
+        if ( this.resources == null )
         {
-            this.steps = new ArrayList<>();
+            this.resources = new ArrayList<>();
         }
-        this.steps.add( step );
+        this.resources.add( resource );
     }
 }

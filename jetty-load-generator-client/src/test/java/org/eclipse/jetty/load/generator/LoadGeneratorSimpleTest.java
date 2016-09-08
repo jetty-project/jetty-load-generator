@@ -20,6 +20,7 @@ package org.eclipse.jetty.load.generator;
 
 
 import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.Resource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -34,15 +35,17 @@ public class LoadGeneratorSimpleTest
         super( transport, usersNumber );
     }
 
+
+
     @Test
     public void simple_test()
         throws Exception
     {
 
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile.Builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            //.resource( "" ).size( 1024 ) //
-            .build();
+        LoadGeneratorProfile loadGeneratorProfile =
+            new LoadGeneratorProfile( //
+              new Resource( "/index.html" ) //
+            );
 
         runProfile( loadGeneratorProfile );
 
