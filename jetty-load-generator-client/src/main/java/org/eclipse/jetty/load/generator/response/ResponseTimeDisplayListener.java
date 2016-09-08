@@ -85,10 +85,10 @@ public class ResponseTimeDisplayListener
 
 
     @Override
-    public void onResponse( ResponseValues responseValues  )
+    public void onResponse( Values values )
     {
-        String path = responseValues.getPath();
-        long responseTime = responseValues.getResponseTime();
+        String path = values.getPath();
+        long responseTime = values.getResponseTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {

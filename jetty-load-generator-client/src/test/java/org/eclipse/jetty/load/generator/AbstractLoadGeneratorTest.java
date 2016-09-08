@@ -424,10 +424,10 @@ public abstract class AbstractLoadGeneratorTest
         private final Map<String, AtomicLong> recorderPerPath = new ConcurrentHashMap<>(  );
 
         @Override
-        public void onResponse( ResponseValues responseValues  )
+        public void onResponse( Values values )
         {
-            String path = responseValues.getPath();
-            long responseTime = responseValues.getResponseTime();
+            String path = values.getPath();
+            long responseTime = values.getResponseTime();
             AtomicLong response = recorderPerPath.get( path );
             if (response == null) {
                 response = new AtomicLong( 1 );

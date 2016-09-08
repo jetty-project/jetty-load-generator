@@ -118,7 +118,7 @@ public class LoadGeneratorResultHandler
             long time = end - Long.parseLong( startTime );
             for (ResponseTimeListener responseTimeListener : responseTimeListeners) {
                 responseTimeListener.onResponse(
-                    new ResponseTimeListener.ResponseValues() //
+                    new ResponseTimeListener.Values() //
                         .path( path ) //
                         .responseTime( time ) //
                         .method( response.getRequest().getMethod() ) //

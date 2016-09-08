@@ -24,18 +24,18 @@ package org.eclipse.jetty.load.generator.response;
 public interface ResponseTimeListener
 {
     /**
-     * triggered with some informations on the response see {@link ResponseValues}
+     * triggered with some informations on the response see {@link Values}
      *
-     * @param responseValues
+     * @param values
      */
-    void onResponse( ResponseValues responseValues );
+    void onResponse( Values values );
 
     /**
      * triggered when the load generator is stopped
      */
     void onLoadGeneratorStop();
 
-    class ResponseValues
+    class Values
     {
         private String path;
 
@@ -47,7 +47,7 @@ public interface ResponseTimeListener
 
         private int status;
 
-        public ResponseValues()
+        public Values()
         {
             // no op
         }
@@ -62,7 +62,7 @@ public interface ResponseTimeListener
             this.path = path;
         }
 
-        public ResponseValues path( String path )
+        public Values path( String path )
         {
             this.path = path;
             return this;
@@ -78,7 +78,7 @@ public interface ResponseTimeListener
             this.responseTime = responseTime;
         }
 
-        public ResponseValues responseTime( long responseTime )
+        public Values responseTime( long responseTime )
         {
             this.responseTime = responseTime;
             return this;
@@ -94,7 +94,7 @@ public interface ResponseTimeListener
             this.method = method;
         }
 
-        public ResponseValues method( String method )
+        public Values method( String method )
         {
             this.method = method;
             return this;
@@ -110,7 +110,7 @@ public interface ResponseTimeListener
             this.size = size;
         }
 
-        public ResponseValues size( long size )
+        public Values size( long size )
         {
             this.size = size;
             return this;
@@ -126,7 +126,7 @@ public interface ResponseTimeListener
             this.status = status;
         }
 
-        public ResponseValues status( int status )
+        public Values status( int status )
         {
             this.status = status;
             return this;

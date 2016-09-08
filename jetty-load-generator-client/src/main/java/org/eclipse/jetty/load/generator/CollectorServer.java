@@ -40,7 +40,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -181,10 +180,10 @@ public class CollectorServer
     }
 
     @Override
-    public void onResponse( ResponseValues responseValues  )
+    public void onResponse( Values values )
     {
-        String path = responseValues.getPath();
-        long responseTime = responseValues.getResponseTime();
+        String path = values.getPath();
+        long responseTime = values.getResponseTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
