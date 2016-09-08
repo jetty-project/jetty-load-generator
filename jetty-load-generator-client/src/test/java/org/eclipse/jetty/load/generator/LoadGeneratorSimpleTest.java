@@ -19,7 +19,7 @@
 package org.eclipse.jetty.load.generator;
 
 
-import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,12 +42,12 @@ public class LoadGeneratorSimpleTest
         throws Exception
     {
 
-        LoadGeneratorProfile loadGeneratorProfile =
-            new LoadGeneratorProfile( //
-              new Resource( "/index.html" ) //
+        ResourceProfile resourceProfile =
+            new ResourceProfile( //
+                                 new Resource( "/index.html" ) //
             );
 
-        runProfile( loadGeneratorProfile );
+        runProfile( resourceProfile );
 
     }
 

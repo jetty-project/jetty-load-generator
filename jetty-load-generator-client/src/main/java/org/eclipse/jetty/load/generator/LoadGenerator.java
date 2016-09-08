@@ -24,7 +24,7 @@ import org.eclipse.jetty.client.HttpProxy;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
-import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
@@ -74,7 +74,7 @@ public class LoadGenerator
      */
     private int port;
 
-    private LoadGeneratorProfile profile;
+    private ResourceProfile profile;
 
     private HttpClientTransport httpClientTransport;
 
@@ -113,7 +113,7 @@ public class LoadGenerator
         FCGI
     }
 
-    LoadGenerator( int users, int transactionRate, String host, int port, LoadGeneratorProfile profile )
+    LoadGenerator( int users, int transactionRate, String host, int port, ResourceProfile profile )
     {
         this.users = users;
         this.transactionRate = transactionRate;
@@ -187,7 +187,7 @@ public class LoadGenerator
         return socketAddressResolver;
     }
 
-    public LoadGeneratorProfile getProfile()
+    public ResourceProfile getProfile()
     {
         return profile;
     }
@@ -425,7 +425,7 @@ public class LoadGenerator
 
         private SocketAddressResolver socketAddressResolver;
 
-        private LoadGeneratorProfile profile;
+        private ResourceProfile profile;
 
         private List<LatencyListener> latencyListeners;
 
@@ -504,9 +504,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder loadProfile( LoadGeneratorProfile loadGeneratorProfile )
+        public Builder loadProfile( ResourceProfile resourceProfile )
         {
-            this.profile = loadGeneratorProfile;
+            this.profile = resourceProfile;
             return this;
         }
 

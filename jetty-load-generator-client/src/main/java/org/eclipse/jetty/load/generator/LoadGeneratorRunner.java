@@ -163,6 +163,8 @@ public class LoadGeneratorRunner
 
         request.onResponseContentAsync( loadGeneratorResultHandler );
 
+        request.onResponseBegin( loadGeneratorResultHandler );
+
         request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
                         Long.toString( System.nanoTime() ) );
 

@@ -19,7 +19,6 @@
 package org.eclipse.jetty.load.generator;
 
 
-import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Request;
@@ -29,7 +28,7 @@ import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
-import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
@@ -159,7 +158,7 @@ public abstract class AbstractLoadGeneratorTest
     }
 
 
-    protected void runProfile( LoadGeneratorProfile profile )
+    protected void runProfile( ResourceProfile profile )
         throws Exception
     {
 
@@ -217,7 +216,7 @@ public abstract class AbstractLoadGeneratorTest
 
     }
 
-    private Collection<String> paths(LoadGeneratorProfile profile) {
+    private Collection<String> paths(ResourceProfile profile) {
         Set<String> paths = new HashSet<>(  );
 
         for(Resource resource : profile.getResources()) {

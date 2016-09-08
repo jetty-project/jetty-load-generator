@@ -25,22 +25,22 @@ import java.util.List;
 /**
  *
  */
-public class LoadGeneratorProfile
+public class ResourceProfile
 {
 
     private List<Resource> resources = new ArrayList<>();
 
-    public LoadGeneratorProfile()
+    public ResourceProfile()
     {
         // no op
     }
 
-    public LoadGeneratorProfile( List<Resource> resources )
+    public ResourceProfile( List<Resource> resources )
     {
         this.resources = resources;
     }
 
-    public LoadGeneratorProfile( Resource... resources )
+    public ResourceProfile( Resource... resources )
     {
         this.resources = resources == null ? new ArrayList<>() : Arrays.asList( resources );
     }

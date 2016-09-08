@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class LoadGeneratorResultHandler
     extends Request.Listener.Adapter
-    implements Response.CompleteListener, Request.BeginListener, Response.AsyncContentListener
+    implements Response.CompleteListener, Request.BeginListener, Response.AsyncContentListener, Response.BeginListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
@@ -138,6 +138,7 @@ public class LoadGeneratorResultHandler
     }
 
 
+
     @Override
     public void onContent( Response response, ByteBuffer buffer, Callback callback )
     {
@@ -168,5 +169,12 @@ public class LoadGeneratorResultHandler
 
     protected void onContentSize(int size) {
         // TODO store this bandwith approx
+    }
+
+    @Override
+    public void onBegin( Response response )
+    {
+        here add header with nano timestamp
+        response.getHeaders().add( "foo", "beer" );
     }
 }

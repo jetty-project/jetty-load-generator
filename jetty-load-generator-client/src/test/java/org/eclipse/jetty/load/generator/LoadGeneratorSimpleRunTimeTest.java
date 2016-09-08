@@ -21,7 +21,7 @@ package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
-import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
@@ -49,10 +49,10 @@ public class LoadGeneratorSimpleRunTimeTest
         throws Exception
     {
 
-        LoadGeneratorProfile loadGeneratorProfile = //
-            new LoadGeneratorProfile(  //
-                       new Resource( "/index.html" ).size( 1024 )//
-                       //.resource( "" ).size( 1024 ) //
+        ResourceProfile resourceProfile = //
+            new ResourceProfile(  //
+                                  new Resource( "/index.html" ).size( 1024 )//
+                                  //.resource( "" ).size( 1024 ) //
             );
 
         startServer( new LoadHandler() );
@@ -68,7 +68,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .transport( this.transport ) //
             .httpClientTransport( this.transport() ) //
             .selectors( this.usersNumber ) //
-            .loadProfile( loadGeneratorProfile ) //
+            .loadProfile( resourceProfile ) //
             .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
             .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
             .build() //

@@ -25,45 +25,45 @@ import org.junit.Test;
 /**
  *
  */
-public class LoadGeneratorProfileBuildTest
+public class ResourceProfileBuildTest
 {
 
     @Test
     public void simple_build()
         throws Exception
     {
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile( //
-            new Resource( "/index.html" ).size( 1024 ) //
+        ResourceProfile resourceProfile = new ResourceProfile( //
+                                                               new Resource( "/index.html" ).size( 1024 ) //
             );
 
-        Assert.assertEquals( 1, loadGeneratorProfile.getResources().size() );
+        Assert.assertEquals( 1, resourceProfile.getResources().size() );
 
         Assert.assertEquals( "/index.html",
-                             loadGeneratorProfile.getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 1024, loadGeneratorProfile.getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getResources().get( 0 ).getMethod() );
+                             resourceProfile.getResources().get( 0 ).getPath() );
+        Assert.assertEquals( 1024, resourceProfile.getResources().get( 0 ).getSize() );
+        Assert.assertEquals( "GET", resourceProfile.getResources().get( 0 ).getMethod() );
     }
 
     @Test
     public void simple_two_resources()
         throws Exception
     {
-        LoadGeneratorProfile loadGeneratorProfile = //
-            new LoadGeneratorProfile( //
-                new Resource( "/index.html" ).size( 1024 ), //
-                new Resource( "/beer.html" ).size( 2048 ).method( HttpMethod.POST.asString())  //
+        ResourceProfile resourceProfile = //
+            new ResourceProfile( //
+                                 new Resource( "/index.html" ).size( 1024 ), //
+                                 new Resource( "/beer.html" ).size( 2048 ).method( HttpMethod.POST.asString())  //
         );
 
-        Assert.assertEquals( 2, loadGeneratorProfile.getResources().size() );
+        Assert.assertEquals( 2, resourceProfile.getResources().size() );
 
         Assert.assertEquals( "/index.html",
-                             loadGeneratorProfile.getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 1024, loadGeneratorProfile.getResources().get( 0 ).getSize() );
-        Assert.assertEquals( "GET", loadGeneratorProfile.getResources().get( 0 ).getMethod() );
+                             resourceProfile.getResources().get( 0 ).getPath() );
+        Assert.assertEquals( 1024, resourceProfile.getResources().get( 0 ).getSize() );
+        Assert.assertEquals( "GET", resourceProfile.getResources().get( 0 ).getMethod() );
 
-        Assert.assertEquals( "/beer.html", loadGeneratorProfile.getResources().get( 1 ).getPath() );
-        Assert.assertEquals( 2048, loadGeneratorProfile.getResources().get( 1 ).getSize() );
-        Assert.assertEquals( "POST", loadGeneratorProfile.getResources().get( 1 ).getMethod() );
+        Assert.assertEquals( "/beer.html", resourceProfile.getResources().get( 1 ).getPath() );
+        Assert.assertEquals( 2048, resourceProfile.getResources().get( 1 ).getSize() );
+        Assert.assertEquals( "POST", resourceProfile.getResources().get( 1 ).getMethod() );
     }
 
     @Test
@@ -85,9 +85,9 @@ public class LoadGeneratorProfileBuildTest
                 favicon.ico
         */
 
-        LoadGeneratorProfile sample = //
-            new LoadGeneratorProfile( //
-               new Resource( "index.html" , //
+        ResourceProfile sample = //
+            new ResourceProfile( //
+                                 new Resource( "index.html" , //
                    new Resource( "/style.css", //
                         new Resource( "/logo.gif"), //
                         new Resource( "/spacer.png") //

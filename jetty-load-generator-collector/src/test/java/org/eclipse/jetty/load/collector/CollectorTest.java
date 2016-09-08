@@ -22,7 +22,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.load.generator.CollectorServer;
 import org.eclipse.jetty.load.generator.HttpTransportBuilder;
 import org.eclipse.jetty.load.generator.LoadGenerator;
-import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -104,14 +104,14 @@ public class CollectorTest
     public void collect_informations()
         throws Exception
     {
-        LoadGeneratorProfile loadGeneratorProfile = new LoadGeneratorProfile( //
-            new Resource( "/index.html" )
+        ResourceProfile resourceProfile = new ResourceProfile( //
+                                                               new Resource( "/index.html" )
         );
 
-        runProfile( loadGeneratorProfile );
+        runProfile( resourceProfile );
     }
 
-    protected void runProfile( LoadGeneratorProfile profile )
+    protected void runProfile( ResourceProfile profile )
         throws Exception
     {
 
