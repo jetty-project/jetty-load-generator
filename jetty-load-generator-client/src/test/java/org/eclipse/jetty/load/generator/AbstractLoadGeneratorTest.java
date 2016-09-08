@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator;
 
 
+import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Request;
@@ -29,7 +30,9 @@ import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
 import org.eclipse.jetty.load.generator.profile.LoadGeneratorProfile;
+import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
+import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
@@ -64,8 +67,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
@@ -100,15 +107,15 @@ public abstract class AbstractLoadGeneratorTest
         List<LoadGenerator.Transport> transports = new ArrayList<>();
 
         transports.add( LoadGenerator.Transport.HTTP );
-        /*
+
         transports.add( LoadGenerator.Transport.HTTPS );
         transports.add( LoadGenerator.Transport.H2 );
         transports.add( LoadGenerator.Transport.H2C );
         transports.add( LoadGenerator.Transport.FCGI );
-        */
+
 
         // number of users
-        List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
+        List<Integer> users = Arrays.asList( 1, 2, 4 );//, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
@@ -156,6 +163,8 @@ public abstract class AbstractLoadGeneratorTest
         throws Exception
     {
 
+        ResponsePerPath responsePerPath = new ResponsePerPath();
+
         TestRequestListener testRequestListener = new TestRequestListener( logger );
 
         startServer( new LoadHandler() );
@@ -175,7 +184,7 @@ public abstract class AbstractLoadGeneratorTest
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
             .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
-            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
+            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener(), responsePerPath ) //
             .requestListeners( testRequestListener ) //
             .build();
 
@@ -202,7 +211,31 @@ public abstract class AbstractLoadGeneratorTest
         Assert.assertTrue( currentTestRunInfos() + ", failedReponsesReceived: " + testRequestListener.failed.get(), //
                            testRequestListener.failed.get() < 1 );
 
+        Collection<String> paths = paths( profile );
+
+        Assert.assertEquals( paths.size(), responsePerPath.recorderPerPath.keySet().size() );
+
     }
+
+    private Collection<String> paths(LoadGeneratorProfile profile) {
+        Set<String> paths = new HashSet<>(  );
+
+        for(Resource resource : profile.getResources()) {
+            paths.addAll( paths( resource ) );
+        }
+
+        return paths;
+    }
+
+    private Collection<String> paths( Resource resource) {
+        Set<String> paths = new HashSet<>(  );
+        paths.add( resource.getPath() );
+        for(Resource child : resource.getResources()) {
+            paths.addAll( paths( child ) );
+        }
+        return paths;
+    }
+
 
     public String currentTestRunInfos()
     {
@@ -380,6 +413,31 @@ public abstract class AbstractLoadGeneratorTest
             {
                 response.setHeader( "Connection", "close" );
             }
+        }
+    }
+
+
+    public static class ResponsePerPath implements ResponseTimeListener {
+
+        private final Map<String, AtomicLong> recorderPerPath = new ConcurrentHashMap<>(  );
+
+        @Override
+        public void onResponse( String path, long responseTime )
+        {
+            AtomicLong response = recorderPerPath.get( path );
+            if (response == null) {
+                response = new AtomicLong( 1 );
+                recorderPerPath.put( path, response );
+            } else {
+                response.incrementAndGet();
+            }
+
+        }
+
+        @Override
+        public void onLoadGeneratorStop()
+        {
+
         }
     }
 

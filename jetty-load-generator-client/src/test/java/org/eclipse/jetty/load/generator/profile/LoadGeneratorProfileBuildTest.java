@@ -25,7 +25,7 @@ import org.junit.Test;
 /**
  *
  */
-public class LoadGeneratorProfileBuilderTest
+public class LoadGeneratorProfileBuildTest
 {
 
     @Test

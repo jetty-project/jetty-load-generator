@@ -19,6 +19,7 @@
 package org.eclipse.jetty.load.generator.profile;
 
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,35 +59,41 @@ public class Resource
         // no op
     }
 
+    public Resource( String path )
+    {
+        this.path( path );
+    }
+
     public Resource( int responseSize, String path, int size, String method )
     {
+        this( path );
         this.responseSize = responseSize;
-        this.path = path;
         this.size = size;
         this.method = method;
     }
 
-    public Resource( String path )
-    {
-        this.path = path;
-    }
 
     public Resource( String path, Resource... then )
     {
-        this.path = path;
+        this( path );
         this.resources = then == null ? new ArrayList<>(  ) : Arrays.asList( then );
     }
 
     public Resource( String path, List<Resource> then )
     {
-        this.path = path;
+        this( path );
         this.resources = then;
     }
 
     public Resource path( String path )
     {
-        this.path = path;
+        this.path = StringUtil.startsWithIgnoreCase( path, "/" ) ? path : "/" + path;
         return this;
+    }
+
+    public void setPath( String path )
+    {
+        this.path(path);
     }
 
     public Resource size( int size )

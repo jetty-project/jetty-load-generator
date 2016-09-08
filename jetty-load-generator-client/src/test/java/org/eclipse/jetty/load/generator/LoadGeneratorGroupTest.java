@@ -57,4 +57,30 @@ public class LoadGeneratorGroupTest
 
     }
 
+    @Test
+    public void website_like() throws Exception {
+        LoadGeneratorProfile sample = //
+            new LoadGeneratorProfile( //
+                    new Resource( "index.html", //
+                        new Resource( "/style.css", //
+                        new Resource( "/logo.gif" ), //
+                        new Resource( "/spacer.png" ) //
+                    ), //
+                    new Resource( "/fancy.css" ), //
+                        new Resource( "/script.js", //
+                        new Resource( "/library.js" ), //
+                        new Resource( "/morestuff.js" ) //
+                    ), //
+                    new Resource( "/anotherScript.js" ), //
+                    new Resource( "/iframeContents.html" ), //
+                    new Resource( "/moreIframeContents.html" ), //
+                    new Resource( "/favicon.ico" ) //
+                    )
+            );
+
+
+        runProfile( sample );
+
+    }
+
 }

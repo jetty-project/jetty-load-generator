@@ -92,28 +92,22 @@ public class LoadGeneratorRunner
 
             }
         }
-        catch ( RejectedExecutionException e )
-        {
-            // can happen if the client has been stopped
-            LOGGER.debug( "ignore RejectedExecutionException", e );
-        }
         catch ( Throwable e )
         {
-            LOGGER.warn( "ignoring exception", e );
+            LOGGER.warn( "ignoring exception:" + e.getMessage(), e );
             // TODO record error in generator report
         }
     }
 
     private void handleResource( Resource resource ) throws Exception {
-        // so we have sync call if we have children but not if resource marked as no wait
-        if ( resource.getResources().isEmpty() || resource.isWait() )
+        Request request = buildRequest( resource );
+        // so we have sync call if we have children or resource marked as wait
+        if ( !resource.getResources().isEmpty() || resource.isWait() )
         {
-
-            Request request = buildRequest( resource );
-            request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
-                            Long.toString( System.nanoTime() ) );
+            ContentResponse contentResponse = request.send();
+            loadGeneratorResultHandler.onComplete( contentResponse );
+        } else {
             request.send( loadGeneratorResultHandler );
-
         }
 
 
@@ -170,6 +164,9 @@ public class LoadGeneratorRunner
         }
 
         request.onResponseContentAsync( loadGeneratorResultHandler );
+
+        request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
+                        Long.toString( System.nanoTime() ) );
 
         return request;
     }
