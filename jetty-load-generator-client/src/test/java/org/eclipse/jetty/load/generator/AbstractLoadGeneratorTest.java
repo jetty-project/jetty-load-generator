@@ -31,9 +31,6 @@ import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
-import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
-import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
-import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -52,8 +49,6 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
-import org.eclipse.jetty.util.thread.Scheduler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -176,11 +171,6 @@ public abstract class AbstractLoadGeneratorTest
         throw new IllegalArgumentException( "unknow httpClientTransport" );
     }
 
-    protected List<ResponseTimeListener> getResponseTimeListeners()
-        throws Exception
-    {
-        return Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
-    }
 
     protected List<LatencyListener> getLatencyListeners()
     {
@@ -193,11 +183,9 @@ public abstract class AbstractLoadGeneratorTest
 
         testRequestListener = new TestRequestListener( logger );
 
-        List<ResponseTimeListener> responseTimeListeners = new ArrayList<>( getResponseTimeListeners() );
-        responseTimeListeners.add( responsePerPath );
-
         List<LatencyListener> latencyListeners = new ArrayList<>( getLatencyListeners() );
 
+        latencyListeners.add( responsePerPath );
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
@@ -209,7 +197,6 @@ public abstract class AbstractLoadGeneratorTest
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
             .latencyListeners( latencyListeners.toArray(new LatencyListener[latencyListeners.size()]) ) //
-            .responseTimeListeners( responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()]) ) //
             .requestListeners( testRequestListener ) //
             .build();
 
@@ -458,15 +445,15 @@ public abstract class AbstractLoadGeneratorTest
     }
 
 
-    public static class ResponsePerPath implements ResponseTimeListener {
+    public static class ResponsePerPath implements LatencyListener {
 
         private final Map<String, AtomicLong> recorderPerPath = new ConcurrentHashMap<>(  );
 
         @Override
-        public void onResponse( Values values )
+        public void onLatencyValue( Values values )
         {
             String path = values.getPath();
-            long responseTime = values.getResponseTime();
+            long latencyTime = values.getLatencyTime();
             AtomicLong response = recorderPerPath.get( path );
             if (response == null) {
                 response = new AtomicLong( 1 );
@@ -474,8 +461,8 @@ public abstract class AbstractLoadGeneratorTest
             } else {
                 response.incrementAndGet();
             }
-
         }
+
 
         @Override
         public void onLoadGeneratorStop()

@@ -20,9 +20,9 @@ package org.eclipse.jetty.load.generator.latency;
 
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.CollectorInformations;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,28 +34,47 @@ public class SummaryLatencyListener
 
     //private static final Logger LOGGER = Log.getLogger( SummaryLatencyListener.class );
 
-    private final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                                           TimeUnit.MINUTES.toNanos( 1 ), //
-                                                           3 );
+    private Map<String, Recorder> recorderPerPath;
+
+    public SummaryLatencyListener( )
+    {
+        this.recorderPerPath = new ConcurrentHashMap<>(  );
+    }
 
     @Override
-    public void onLatencyValue( Values latencyValue )
+    public void onLatencyValue( Values values )
     {
-        latencyRecorder.recordValue( latencyValue.getLatencyValue() );
+        String path = values.getPath();
+        long responseTime = values.getLatencyTime();
+        Recorder recorder = recorderPerPath.get( path );
+        if ( recorder == null )
+        {
+            recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                     TimeUnit.MINUTES.toNanos( 1 ), //
+                                     3 );
+            recorderPerPath.put( path, recorder );
+        }
+        recorder.recordValue( responseTime );
     }
 
     @Override
     public void onLoadGeneratorStop()
     {
         StringBuilder message =  //
-            new StringBuilder(System.lineSeparator() ) //
+            new StringBuilder( System.lineSeparator()) //
                 .append( "--------------------------------------" ).append( System.lineSeparator() ) //
-                .append( "   Latency Summary    " ).append( System.lineSeparator() ) //
-                .append( "--------------------------------------" ).append( System.lineSeparator() ) //
-                .append( new CollectorInformations( latencyRecorder.getIntervalHistogram(), //
-                                                    CollectorInformations.InformationType.LATENCY ).toString(true) );
+                .append( "   Response Time Summary    " ).append( System.lineSeparator() ) //
+                .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
-        //LOGGER.info( message.toString(), );
-        System.out.print( message );
+        for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
+        {
+            message.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
+            message.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                       CollectorInformations.InformationType.REQUEST ) //
+                                .toString( true ) ) //
+                .append( System.lineSeparator() );
+
+        }
+        System.out.println( message.toString() );
     }
 }

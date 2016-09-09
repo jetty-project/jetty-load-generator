@@ -103,7 +103,7 @@ public class LoadGeneratorRunner
         if ( !resource.getResources().isEmpty() || resource.isWait() )
         {
             ContentResponse contentResponse = request.send();
-            loadGeneratorResultHandler.onComplete( contentResponse );
+            //loadGeneratorResultHandler.onComplete( contentResponse );
         } else {
             request.send( loadGeneratorResultHandler );
         }
@@ -163,9 +163,10 @@ public class LoadGeneratorRunner
 
         request.onResponseContentAsync( loadGeneratorResultHandler );
 
-        request.onResponseBegin( loadGeneratorResultHandler );
+        //request.onResponseBegin( loadGeneratorResultHandler );
+        request.onComplete( loadGeneratorResultHandler );
 
-        request.header( LoadGeneratorResultHandler.AFTER_SEND_TIME_HEADER, //
+        request.header( LoadGeneratorResultHandler.START_SEND_TIME_HEADER, //
                         Long.toString( System.nanoTime() ) );
 
         return request;

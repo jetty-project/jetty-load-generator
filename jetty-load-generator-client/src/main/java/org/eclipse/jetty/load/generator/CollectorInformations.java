@@ -28,7 +28,6 @@ public class CollectorInformations
 
     public static enum InformationType
     {
-        LATENCY,
         REQUEST,
         MONITORING;
     }

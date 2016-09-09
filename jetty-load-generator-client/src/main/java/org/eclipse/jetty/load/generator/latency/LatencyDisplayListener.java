@@ -20,10 +20,11 @@ package org.eclipse.jetty.load.generator.latency;
 
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.CollectorInformations;
-import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,53 +38,68 @@ public class LatencyDisplayListener
 
     private static final Logger LOGGER = Log.getLogger( LatencyDisplayListener.class );
 
-    private final Recorder latencyRecorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                                           TimeUnit.MINUTES.toNanos( 1 ), //
-                                                           3 );
+    private final Map<String, Recorder> recorderPerPath;
 
     private ScheduledExecutorService scheduledExecutorService;
 
     private ValueListenerRunnable runnable;
 
-    public LatencyDisplayListener( long initialDelay, long delay, TimeUnit timeUnit )
+    public LatencyDisplayListener( long initial, long delay, TimeUnit timeUnit )
     {
-
-        runnable = new ValueListenerRunnable( this.latencyRecorder );
-
+        this.recorderPerPath = new ConcurrentHashMap<>();
+        this.runnable = new ValueListenerRunnable( recorderPerPath );
         // FIXME configurable or using a shared one
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        scheduledExecutorService.scheduleWithFixedDelay( runnable, initialDelay, delay, timeUnit );
+        scheduledExecutorService.scheduleWithFixedDelay( runnable, initial, delay, timeUnit );
     }
 
-    public LatencyDisplayListener( )
+    public LatencyDisplayListener()
     {
-       this( 0, 5, TimeUnit.SECONDS );
+        this( 0, 5, TimeUnit.SECONDS );
     }
 
     private static class ValueListenerRunnable
         implements Runnable
     {
-        private final Recorder latencyRecorder;
+        private final Map<String, Recorder> recorderPerPath;
 
-        private ValueListenerRunnable( Recorder latencyRecorder )
+        private ValueListenerRunnable( Map<String, Recorder> recorderPerPath )
         {
-            this.latencyRecorder = latencyRecorder;
+            this.recorderPerPath = recorderPerPath;
         }
 
         @Override
         public void run()
         {
-            LOGGER.info( "latency value: {}", new CollectorInformations( this.latencyRecorder.getIntervalHistogram(), //
-                                                                         CollectorInformations.InformationType.LATENCY ) );
+            for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
+            {
+                StringBuilder message =
+                    new StringBuilder( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
+                message.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                           CollectorInformations.InformationType.REQUEST ) //
+                                    .toString( true ) ) //
+                    .append( System.lineSeparator() );
+                LOGGER.info( message.toString() );
+            }
         }
     }
 
-    @Override
-    public void onLatencyValue( Values latencyValue )
-    {
-        this.latencyRecorder.recordValue( latencyValue.getLatencyValue() );
-    }
 
+    @Override
+    public void onLatencyValue( Values values )
+    {
+        String path = values.getPath();
+        long responseTime = values.getLatencyTime();
+        Recorder recorder = recorderPerPath.get( path );
+        if ( recorder == null )
+        {
+            recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+                                     TimeUnit.MINUTES.toNanos( 1 ), //
+                                     3 );
+            recorderPerPath.put( path, recorder );
+        }
+        recorder.recordValue( responseTime );
+    }
 
     @Override
     public void onLoadGeneratorStop()

@@ -30,7 +30,6 @@ Then you run the load generator with this profile
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
             .latencyListeners( some listeners you can build your own or use existing one ) // some listeners you can build your own
-            .responseTimeListeners( some listeners you can build your own or use existing one ) //
             .requestListeners( some listeners you can build your own or use existing one ) //
             .build();
 

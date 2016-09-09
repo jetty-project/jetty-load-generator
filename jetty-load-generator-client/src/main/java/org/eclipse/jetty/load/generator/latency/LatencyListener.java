@@ -18,6 +18,7 @@
 
 package org.eclipse.jetty.load.generator.latency;
 
+
 /**
  *
  */
@@ -39,11 +40,15 @@ public interface LatencyListener
         private String path;
 
         /**
-         * the latency value in nano seconds
+         * the latency time in nano seconds
          */
-        private long latencyValue;
+        private long latencyTime;
 
         private String method;
+
+        private long size;
+
+        private int status;
 
         public Values()
         {
@@ -66,19 +71,19 @@ public interface LatencyListener
             return this;
         }
 
-        public long getLatencyValue()
+        public long getLatencyTime()
         {
-            return latencyValue;
+            return latencyTime;
         }
 
-        public void setLatencyValue( long latencyValue )
+        public void setLatencyTime( long latencyTime )
         {
-            this.latencyValue = latencyValue;
+            this.latencyTime = latencyTime;
         }
 
-        public Values latencyValue( long latencyValue )
+        public Values latencyTime( long latencyTime )
         {
-            this.latencyValue = latencyValue;
+            this.latencyTime = latencyTime;
             return this;
         }
 
@@ -98,11 +103,43 @@ public interface LatencyListener
             return this;
         }
 
+        public long getSize()
+        {
+            return size;
+        }
+
+        public void setSize( long size )
+        {
+            this.size = size;
+        }
+
+        public Values size( long size )
+        {
+            this.size = size;
+            return this;
+        }
+
+        public int getStatus()
+        {
+            return status;
+        }
+
+        public void setStatus( int status )
+        {
+            this.status = status;
+        }
+
+        public Values status( int status )
+        {
+            this.status = status;
+            return this;
+        }
+
         @Override
         public String toString()
         {
-            return "Values{" + "path='" + path + '\'' + ", latencyValue=" + latencyValue + ", method='" + method + '\''
-                + '}';
+            return "Values{" + "path='" + path + '\'' + ", latencyTime=" + latencyTime + ", method='" + method + '\''
+                + ", size=" + size + ", status=" + status + '}';
         }
     }
 

@@ -1,4 +1,4 @@
-package org.eclipse.jetty.load.generator.response;
+package org.eclipse.jetty.load.generator.latency;
 
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.Server;
@@ -14,7 +14,7 @@ import java.lang.management.ManagementFactory;
  *
  */
 public class JMXResponseTimeListener
-    implements ResponseTimeListener
+    implements LatencyListener
 {
 
     private static final Logger LOGGER = Log.getLogger( JMXResponseTimeListener.class );
@@ -60,13 +60,13 @@ public class JMXResponseTimeListener
 
     }
 
-
     @Override
-    public void onResponse( Values values )
+    public void onLatencyValue( Values values )
     {
-        this._jmxJmxValues.setLastResponseTime( values.getResponseTime() );
+        this._jmxJmxValues.setLastLatencyValue( values.getLatencyTime() );
         this._jmxJmxValues.setPath( values.getPath() );
     }
+
 
     @Override
     public void onLoadGeneratorStop()
@@ -95,19 +95,19 @@ public class JMXResponseTimeListener
     public static class JMXValues
         extends ContainerLifeCycle
     {
-        private long _lastResponseTime;
+        private long _lastLatencyValue;
 
         private String _path;
 
-        @ManagedAttribute( "Some value that can be set and got from" )
-        public long getLastResponseTime()
+        @ManagedAttribute( "last since latency value" )
+        public long getLastLatencyValue()
         {
-            return _lastResponseTime;
+            return _lastLatencyValue;
         }
 
-        public void setLastResponseTime( long lastResponseTime )
+        public void setLastLatencyValue( long _lastLatencyValue )
         {
-            this._lastResponseTime = lastResponseTime;
+            this._lastLatencyValue = _lastLatencyValue;
         }
 
         @ManagedAttribute( "Some value that can be set and got from" )

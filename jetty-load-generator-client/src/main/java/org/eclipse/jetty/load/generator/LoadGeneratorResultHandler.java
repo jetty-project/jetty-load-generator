@@ -23,7 +23,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
-import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
@@ -38,15 +37,10 @@ import java.util.List;
  */
 public class LoadGeneratorResultHandler
     extends Request.Listener.Adapter
-    implements Response.CompleteListener, Request.BeginListener, Response.AsyncContentListener, Response.BeginListener
+    implements Response.CompleteListener, Response.AsyncContentListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
-
-    /**
-     * time of the send method call
-     */
-    public static final String AFTER_SEND_TIME_HEADER = "X-Jetty-LoadGenerator-After-Send-Time";
 
     /**
      * time of the start sending datas
@@ -55,33 +49,15 @@ public class LoadGeneratorResultHandler
 
     private List<LatencyListener> latencyListeners;
 
-    private List<ResponseTimeListener> responseTimeListeners;
-
-    public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners, //
-                                       List<LatencyListener> latencyListeners )
+    public LoadGeneratorResultHandler( List<LatencyListener> latencyListeners )
     {
-        this.responseTimeListeners = responseTimeListeners == null ? Collections.emptyList() : responseTimeListeners;
         this.latencyListeners = latencyListeners == null ? Collections.emptyList() : latencyListeners;
     }
 
     @Override
     public void onBegin( Request request )
     {
-        // latency since queued
-        String sendCallTime = request.getHeaders().get( AFTER_SEND_TIME_HEADER );
-        if ( sendCallTime != null )
-        {
-            long latencyValue = System.nanoTime() - Long.parseLong( sendCallTime );
-            for ( LatencyListener latencyListener : latencyListeners )
-            {
-                latencyListener.onLatencyValue( new LatencyListener.Values() //
-                                                    .latencyValue( latencyValue ) //
-                                                    .path( request.getPath() ) //
-                                                    .method( request.getMethod() )
-                );
-            }
-        }
-        request.header( START_SEND_TIME_HEADER, Long.toString( System.nanoTime() ) );
+        //
     }
 
 
@@ -114,20 +90,16 @@ public class LoadGeneratorResultHandler
 
         long end = System.nanoTime();
 
-        String path = response.getRequest().getPath();
-
         String startTime = response.getRequest().getHeaders().get( START_SEND_TIME_HEADER );
         if ( !StringUtil.isBlank( startTime ) )
         {
             long time = end - Long.parseLong( startTime );
-            for (ResponseTimeListener responseTimeListener : responseTimeListeners) {
-                responseTimeListener.onResponse(
-                    new ResponseTimeListener.Values() //
-                        .path( path ) //
-                        .responseTime( time ) //
-                        .method( response.getRequest().getMethod() ) //
-                        .status( response.getStatus() ) //
-                        .size( size )
+            for ( LatencyListener latencyListener : latencyListeners )
+            {
+                latencyListener.onLatencyValue( new LatencyListener.Values() //
+                                                    .latencyTime( time ) //
+                                                    .path( response.getRequest().getPath() ) //
+                                                    .method( response.getRequest().getMethod() )
                 );
             }
         }
@@ -175,10 +147,4 @@ public class LoadGeneratorResultHandler
         // TODO store this bandwith approx
     }
 
-    @Override
-    public void onBegin( Response response )
-    {
-        //here add header with nano timestamp
-        response.getHeaders().add( "foo", "beer" );
-    }
 }
