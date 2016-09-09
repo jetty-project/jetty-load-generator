@@ -96,10 +96,10 @@ public abstract class AbstractLoadGeneratorTest
         this.transport = transport;
         this.usersNumber = usersNumber;
 
-        logger.info( "starting test with transport {} for {} users", this.transport, this.usersNumber );
+        logger.info( "starting test with httpClientTransport {} for {} users", this.transport, this.usersNumber );
     }
 
-    @Parameterized.Parameters( name = "transport/users: {0},{1}" )
+    @Parameterized.Parameters( name = "httpClientTransport/users: {0},{1}" )
     public static Collection<Object[]> data()
     {
 
@@ -129,7 +129,7 @@ public abstract class AbstractLoadGeneratorTest
         return parameters;
     }
 
-    protected HttpClientTransport transport()
+    protected HttpClientTransport httpClientTransport()
     {
         switch ( this.transport )
         {
@@ -154,7 +154,7 @@ public abstract class AbstractLoadGeneratorTest
             }
 
         }
-        throw new IllegalArgumentException( "unknow transport" );
+        throw new IllegalArgumentException( "unknow httpClientTransport" );
     }
 
 
@@ -178,7 +178,7 @@ public abstract class AbstractLoadGeneratorTest
             .users( this.usersNumber ) //
             .transactionRate( 1 ) //
             .transport( this.transport ) //
-            .httpClientTransport( this.transport() ) //
+            .httpClientTransport( this.httpClientTransport() ) //
             .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
@@ -238,7 +238,7 @@ public abstract class AbstractLoadGeneratorTest
 
     public String currentTestRunInfos()
     {
-        return "users:" + this.usersNumber + ", transport: " + this.transport;
+        return "users:" + this.usersNumber + ", httpClientTransport: " + this.transport;
     }
 
     //---------------------------------------------------

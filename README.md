@@ -9,50 +9,53 @@ LoadGenerator will generate some load on an http server using the Jetty HttpClie
 You can use the API to define a running profile (steps with url to hit)
 
 ```java
-        LoadGeneratorProfile loadGeneratorProfile = LoadGeneratorProfile.Builder.builder() //
-            .resource( "/index.html" ).size( 1024 ) //
-            //.resource( "" ).size( 1024 ) //
-            .build();  
+        ResourceProfile resourceProfile =
+            new ResourceProfile( //
+                new Resource( "/index.html" ) //
+            ); 
 ```
 
 ### Load Generator 
 Then you run the load generator with this profile
 
 ```java
-        LoadGenerator loadGenerator = LoadGenerator.Builder.builder() //
-            .host( "localhost" ) //
-            .port( port ) //
-            .users( parallel users ) //
-            .requestRate( 1 ) // request/rate per second
-            .scheme( scheme() ) //
-            .requestListeners( ) // some listeners you maybe want to use
-            .transport( transport ) // the transport HTTP, HTTPS, H2 etcc
-            .httpClientScheduler( scheduler ) //
-            .loadGeneratorWorkflow( profile ) //
-            .collectorPort( 0 ) // if port < 0 the collector will not be started and information display in log
-            .build() //
-            .start();
+        LoadGenerator loadGenerator = new LoadGenerator.Builder() //
+            .host( your host ) //
+            .port( the port ) //
+            .users( a users number ) //
+            .transactionRate( 1 ) // number of transaction per second. Transaction means all the request from the ResourceProfile
+            .transport( transport ) // the type of transport.
+            .httpClientTransport( HttpClientTransport instance have a look at the various builder ) //
+            .scheduler( scheduler ) //
+            .sslContextFactory( sslContextFactory ) //
+            .loadProfile( profile ) //
+            .latencyListeners( some listeners you can build your own or use existing one ) // some listeners you can build your own
+            .responseTimeListeners( some listeners you can build your own or use existing one ) //
+            .requestListeners( some listeners you can build your own or use existing one ) //
+            .build();
 
         LoadGeneratorResult result = loadGenerator.run();
         
         Now you generator is running
         
-        you can now modify the request rate
+        you can now modify the transaction rate
         
-        loadGenerator.stop();
+        loadGenerator.interrupt();
         
 ```
 
 ### Exposed results
 The LoadGenerator start a collector server you can query to get some informations as: 
 
-* totalCount;
-* minValue;
-* maxValue;
-* mean;
-* stdDeviation;
-* startTimeStamp;
-* endTimeStamp;
+* totalCount: number of request part of the result
+* minValue: the minimum value
+* maxValue: the maximum value
+* value50: the value at 50 percentile.
+* value90: the value at 90 percentile.
+* mean: the mean value
+* stdDeviation: the computed standard deviation
+* startTimeStamp: the start time for the values
+* endTimeStamp: the end time for the values
 
 You can get those information trough Json result via GET request
 

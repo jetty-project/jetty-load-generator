@@ -66,7 +66,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .scheduler( scheduler ) //
             .transactionRate( 1 ) //
             .transport( this.transport ) //
-            .httpClientTransport( this.transport() ) //
+            .httpClientTransport( this.httpClientTransport() ) //
             .selectors( this.usersNumber ) //
             .loadProfile( resourceProfile ) //
             .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
