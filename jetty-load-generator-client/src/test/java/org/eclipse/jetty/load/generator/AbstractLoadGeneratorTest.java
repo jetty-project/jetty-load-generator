@@ -27,6 +27,7 @@ import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
+import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.profile.Resource;
@@ -157,6 +158,13 @@ public abstract class AbstractLoadGeneratorTest
         throw new IllegalArgumentException( "unknow httpClientTransport" );
     }
 
+    protected List<ResponseTimeListener> getResponseTimeListeners() {
+        return Arrays.asList(  new ResponseTimeDisplayListener(), new SummaryResponseTimeListener());
+    }
+
+    protected List<LatencyListener> getLatencyListeners() {
+        return Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
+    }
 
     protected void runProfile( ResourceProfile profile )
         throws Exception
@@ -165,6 +173,11 @@ public abstract class AbstractLoadGeneratorTest
         ResponsePerPath responsePerPath = new ResponsePerPath();
 
         TestRequestListener testRequestListener = new TestRequestListener( logger );
+
+        List<ResponseTimeListener> responseTimeListeners = new ArrayList<>( getResponseTimeListeners() );
+        responseTimeListeners.add( responsePerPath );
+
+        List<LatencyListener> latencyListeners = new ArrayList<>( getLatencyListeners() );
 
         startServer( new LoadHandler() );
 
@@ -182,8 +195,8 @@ public abstract class AbstractLoadGeneratorTest
             .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
-            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
-            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener(), responsePerPath ) //
+            .latencyListeners( latencyListeners.toArray(new LatencyListener[latencyListeners.size()]) ) //
+            .responseTimeListeners( responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()]) ) //
             .requestListeners( testRequestListener ) //
             .build();
 
