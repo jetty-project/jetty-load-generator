@@ -141,7 +141,6 @@ public class CollectorTest
                 .scheduler( scheduler ) //
                 .loadProfile( profile ) //
                 .latencyListeners( collectorServer ) //
-                .responseTimeListeners( collectorServer ) //
                 .requestListeners( testRequestListener ) //
                 .build();
 
