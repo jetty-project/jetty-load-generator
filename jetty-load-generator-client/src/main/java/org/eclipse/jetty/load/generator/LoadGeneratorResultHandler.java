@@ -74,7 +74,11 @@ public class LoadGeneratorResultHandler
             long latencyValue = System.nanoTime() - Long.parseLong( sendCallTime );
             for ( LatencyListener latencyListener : latencyListeners )
             {
-                latencyListener.onLatencyValue( latencyValue );
+                latencyListener.onLatencyValue( new LatencyListener.Values() //
+                                                    .latencyValue( latencyValue ) //
+                                                    .path( request.getPath() ) //
+                                                    .method( request.getMethod() )
+                );
             }
         }
         request.header( START_SEND_TIME_HEADER, Long.toString( System.nanoTime() ) );

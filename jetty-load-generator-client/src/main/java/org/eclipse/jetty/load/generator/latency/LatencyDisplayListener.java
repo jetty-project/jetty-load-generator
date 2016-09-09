@@ -79,9 +79,9 @@ public class LatencyDisplayListener
     }
 
     @Override
-    public void onLatencyValue( long latencyValue )
+    public void onLatencyValue( Values latencyValue )
     {
-        this.latencyRecorder.recordValue( latencyValue );
+        this.latencyRecorder.recordValue( latencyValue.getLatencyValue() );
     }
 
 

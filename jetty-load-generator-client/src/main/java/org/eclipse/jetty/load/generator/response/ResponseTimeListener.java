@@ -39,6 +39,9 @@ public interface ResponseTimeListener
     {
         private String path;
 
+        /**
+         * the response time in nano seconds
+         */
         private long responseTime;
 
         private String method;
@@ -130,6 +133,13 @@ public interface ResponseTimeListener
         {
             this.status = status;
             return this;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "Values{" + "path='" + path + '\'' + ", responseTime=" + responseTime + ", method='" + method + '\''
+                + ", size=" + size + ", status=" + status + '}';
         }
     }
 

@@ -25,12 +25,85 @@ public interface LatencyListener
 {
     /**
      * triggered with an http client latency value value
-     * @param latencyValue the latency value in nano seconds
+     * @param values the latency values
      */
-    void onLatencyValue( long latencyValue );
+    void onLatencyValue( Values values );
 
     /**
      * triggered when the load generator is stopped
      */
     void onLoadGeneratorStop();
+
+    class Values
+    {
+        private String path;
+
+        /**
+         * the latency value in nano seconds
+         */
+        private long latencyValue;
+
+        private String method;
+
+        public Values()
+        {
+            // no op
+        }
+
+        public String getPath()
+        {
+            return path;
+        }
+
+        public void setPath( String path )
+        {
+            this.path = path;
+        }
+
+        public Values path( String path )
+        {
+            this.path = path;
+            return this;
+        }
+
+        public long getLatencyValue()
+        {
+            return latencyValue;
+        }
+
+        public void setLatencyValue( long latencyValue )
+        {
+            this.latencyValue = latencyValue;
+        }
+
+        public Values latencyValue( long latencyValue )
+        {
+            this.latencyValue = latencyValue;
+            return this;
+        }
+
+        public String getMethod()
+        {
+            return method;
+        }
+
+        public void setMethod( String method )
+        {
+            this.method = method;
+        }
+
+        public Values method( String method )
+        {
+            this.method = method;
+            return this;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "Values{" + "path='" + path + '\'' + ", latencyValue=" + latencyValue + ", method='" + method + '\''
+                + '}';
+        }
+    }
+
 }

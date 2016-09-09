@@ -39,9 +39,9 @@ public class SummaryLatencyListener
                                                            3 );
 
     @Override
-    public void onLatencyValue( long latencyValue )
+    public void onLatencyValue( Values latencyValue )
     {
-        latencyRecorder.recordValue( latencyValue );
+        latencyRecorder.recordValue( latencyValue.getLatencyValue() );
     }
 
     @Override

@@ -174,13 +174,13 @@ public class CollectorServer
     }
 
     @Override
-    public void onLatencyValue( long latencyValue )
+    public void onLatencyValue( LatencyListener.Values latencyValue )
     {
-        latencyRecorder.recordValue( latencyValue );
+        latencyRecorder.recordValue( latencyValue.getLatencyValue() );
     }
 
     @Override
-    public void onResponse( Values values )
+    public void onResponse( ResponseTimeListener.Values values )
     {
         String path = values.getPath();
         long responseTime = values.getResponseTime();
