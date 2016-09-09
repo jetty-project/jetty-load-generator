@@ -29,6 +29,9 @@ import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
+import org.eclipse.jetty.util.annotation.ManagedObject;
+import org.eclipse.jetty.util.annotation.ManagedOperation;
+import org.eclipse.jetty.util.component.ContainerLifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -46,7 +49,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  *
  */
+@ManagedObject("this is the Jetty LoadGenerator")
 public class LoadGenerator
+    extends ContainerLifeCycle
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGenerator.class );
@@ -92,8 +97,6 @@ public class LoadGenerator
 
     private SocketAddressResolver socketAddressResolver;
 
-    private CollectorServer collectorServer;
-
     private List<LatencyListener> latencyListeners;
 
     private List<ResponseTimeListener> responseTimeListeners;
@@ -137,6 +140,7 @@ public class LoadGenerator
         return transactionRate;
     }
 
+    @ManagedOperation
     public void setTransactionRate( int transactionRate )
     {
         this.transactionRate = transactionRate;
@@ -204,7 +208,7 @@ public class LoadGenerator
     /**
      * start the generator lifecycle (this doesn't send any requests but just start few internal components)
      */
-    private LoadGenerator start()
+    private LoadGenerator startIt()
     {
         this.scheme = scheme( this.transport );
 
@@ -224,7 +228,8 @@ public class LoadGenerator
     /**
      * interrupt (clear resources) the generator lifecycle
      */
-    public LoadGenerator interrupt()
+    @ManagedOperation
+    public void interrupt()
     {
         this.stop.set( true );
         try
@@ -256,10 +261,6 @@ public class LoadGenerator
                     responseTimeListener.onLoadGeneratorStop();
                 }
             }
-            if ( collectorServer != null )
-            {
-                collectorServer.stop();
-            }
             for ( HttpClient httpClient : this.clients )
             {
                 httpClient.stop();
@@ -270,7 +271,6 @@ public class LoadGenerator
             LOGGER.warn( e.getMessage(), e );
             throw new RuntimeException( e.getMessage(), e.getCause() );
         }
-        return this;
     }
 
     /**
@@ -551,7 +551,7 @@ public class LoadGenerator
             loadGenerator.responseTimeListeners = responseTimeListeners;
             loadGenerator.httpProxies = httpProxies;
             loadGenerator.transport = transport;
-            return loadGenerator.start();
+            return loadGenerator.startIt();
         }
 
         public void validate()

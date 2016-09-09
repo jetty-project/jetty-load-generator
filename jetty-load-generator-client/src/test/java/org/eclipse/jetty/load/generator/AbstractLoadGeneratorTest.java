@@ -94,6 +94,10 @@ public abstract class AbstractLoadGeneratorTest
 
     StatisticsHandler statisticsHandler = new StatisticsHandler();
 
+    TestRequestListener testRequestListener;
+
+    ResponsePerPath responsePerPath;
+
     public AbstractLoadGeneratorTest( LoadGenerator.Transport transport, int usersNumber )
     {
         this.transport = transport;
@@ -183,22 +187,17 @@ public abstract class AbstractLoadGeneratorTest
         return Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
     }
 
-    protected void runProfile( ResourceProfile profile )
-        throws Exception
-    {
+    protected LoadGenerator buid(ResourceProfile profile ) throws Exception {
 
-        ResponsePerPath responsePerPath = new ResponsePerPath();
+        responsePerPath = new ResponsePerPath();
 
-        TestRequestListener testRequestListener = new TestRequestListener( logger );
+        testRequestListener = new TestRequestListener( logger );
 
         List<ResponseTimeListener> responseTimeListeners = new ArrayList<>( getResponseTimeListeners() );
         responseTimeListeners.add( responsePerPath );
 
         List<LatencyListener> latencyListeners = new ArrayList<>( getLatencyListeners() );
 
-        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
-
-        // FIXME values with jmx?
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
@@ -207,13 +206,27 @@ public abstract class AbstractLoadGeneratorTest
             .transactionRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
-            .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
             .latencyListeners( latencyListeners.toArray(new LatencyListener[latencyListeners.size()]) ) //
             .responseTimeListeners( responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()]) ) //
             .requestListeners( testRequestListener ) //
             .build();
+
+        enhanceLoadGenerator( loadGenerator );
+
+        return loadGenerator;
+    }
+
+    protected void enhanceLoadGenerator( LoadGenerator loadGenerator ) throws Exception {
+        // no op
+    }
+
+    protected void runProfile( ResourceProfile profile )
+        throws Exception
+    {
+
+        LoadGenerator loadGenerator = buid( profile );
 
         loadGenerator.run();
 
@@ -224,8 +237,6 @@ public abstract class AbstractLoadGeneratorTest
         Thread.sleep( 4000 );
 
         loadGenerator.interrupt();
-
-        scheduler.stop();
 
         Assert.assertTrue( currentTestRunInfos() + ",successReponsesReceived :" + testRequestListener.success.get(), //
                            testRequestListener.success.get() > 1 );

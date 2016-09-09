@@ -19,14 +19,17 @@
 package org.eclipse.jetty.load.generator;
 
 
+import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.response.JMXResponseTimeListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
+import org.eclipse.jetty.util.log.Log;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,14 +52,24 @@ public class LoadGeneratorJmxSimpleTest
         return listeners;
     }
 
+    @Override
+    protected void enhanceLoadGenerator( LoadGenerator loadGenerator ) throws Exception
+    {
+        MBeanContainer mbeanContainer = new MBeanContainer( ManagementFactory.getPlatformMBeanServer() );
+        loadGenerator.addBean( mbeanContainer );
+        loadGenerator.start();
+
+        server.addBean(mbeanContainer);
+
+        server.addBean( Log.getLog());
+    }
+
     @Test
     public void simple_test()
         throws Exception
     {
 
-        ResourceProfile resourceProfile = new ResourceProfile( //
-                                                               new Resource( "/index.html" ) //
-        );
+        ResourceProfile resourceProfile = new ResourceProfile( new Resource( "/index.html" ) );
 
         runProfile( resourceProfile );
 
