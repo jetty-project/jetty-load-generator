@@ -50,12 +50,7 @@ public class LoadGeneratorSimpleRunTimeTest
     {
 
         ResourceProfile resourceProfile = //
-            new ResourceProfile(  //
-                                  new Resource( "/index.html" ).size( 1024 )//
-                                  //.resource( "" ).size( 1024 ) //
-            );
-
-        startServer( new LoadHandler() );
+            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ));
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 

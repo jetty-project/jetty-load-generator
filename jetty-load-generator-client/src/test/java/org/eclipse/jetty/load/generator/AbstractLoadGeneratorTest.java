@@ -29,8 +29,8 @@ import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
 import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
-import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.profile.Resource;
+import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.response.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.response.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.response.SummaryResponseTimeListener;
@@ -54,7 +54,9 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -98,6 +100,18 @@ public abstract class AbstractLoadGeneratorTest
         this.usersNumber = usersNumber;
 
         logger.info( "starting test with httpClientTransport {} for {} users", this.transport, this.usersNumber );
+    }
+
+    @Before
+    public void start() throws Exception
+    {
+        startServer( new LoadHandler() );
+    }
+
+    @After
+    public void stop() throws Exception
+    {
+        server.stop();
     }
 
     @Parameterized.Parameters( name = "httpClientTransport/users: {0},{1}" )
@@ -158,11 +172,14 @@ public abstract class AbstractLoadGeneratorTest
         throw new IllegalArgumentException( "unknow httpClientTransport" );
     }
 
-    protected List<ResponseTimeListener> getResponseTimeListeners() {
-        return Arrays.asList(  new ResponseTimeDisplayListener(), new SummaryResponseTimeListener());
+    protected List<ResponseTimeListener> getResponseTimeListeners()
+        throws Exception
+    {
+        return Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
     }
 
-    protected List<LatencyListener> getLatencyListeners() {
+    protected List<LatencyListener> getLatencyListeners()
+    {
         return Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
     }
 
@@ -178,8 +195,6 @@ public abstract class AbstractLoadGeneratorTest
         responseTimeListeners.add( responsePerPath );
 
         List<LatencyListener> latencyListeners = new ArrayList<>( getLatencyListeners() );
-
-        startServer( new LoadHandler() );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -295,7 +310,7 @@ public abstract class AbstractLoadGeneratorTest
     }
 
 
-    protected void startServer( HttpServlet handler )
+    private void startServer( HttpServlet handler )
         throws Exception
     {
         sslContextFactory = new SslContextFactory();

@@ -85,6 +85,11 @@
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-jmx</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.eclipse.jetty.http2</groupId>
         <artifactId>http2-http-client-transport</artifactId>
         <version>${jetty.version}</version>
@@ -164,7 +169,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.19.1</version>
           <configuration>
-            <argLine>-XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=duration=120s,filename=${project.build.directory}/myrecording.jfr -XX:+PrintGCDetails</argLine>
+            <argLine>-Dcom.sun.management.jmxremote -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=duration=120s,filename=${project.build.directory}/myrecording.jfr -XX:+PrintGCDetails</argLine>
           </configuration>
         </plugin>
       </plugins>
