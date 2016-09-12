@@ -106,6 +106,11 @@ public class LoadGenerator
 
     private Transport transport;
 
+    /**
+     * path of the {@link org.eclipse.jetty.servlet.StatisticsServlet} on server side
+     */
+    private String statisticsPath = "/stats";
+
     public enum Transport
     {
         HTTP,
@@ -344,7 +349,7 @@ public class LoadGenerator
         try
         {
             httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
-            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + "/stats?statsReset=true";
+            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?statsReset=true";
             Request request = httpClient.newRequest( uri );
             ContentResponse contentResponse = request.send();
             if (LOGGER.isDebugEnabled())
@@ -374,7 +379,7 @@ public class LoadGenerator
         try
         {
             httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
-            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + "/stats?xml=true";
+            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?xml=true";
             Request request = httpClient.newRequest( uri );
             ContentResponse contentResponse = request.send();
             LOGGER.info( "content response xml: {}", contentResponse.getContentAsString() );
@@ -499,6 +504,8 @@ public class LoadGenerator
 
         private Transport transport;
 
+        private String statisticsPath = "/stats";
+
         public Builder()
         {
             // no op
@@ -593,6 +600,12 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder statisticsPath( String statisticsPath )
+        {
+            this.statisticsPath = statisticsPath;
+            return this;
+        }
+
         public LoadGenerator build()
         {
             this.validate();
@@ -609,6 +622,7 @@ public class LoadGenerator
             loadGenerator.latencyListeners = latencyListeners;
             loadGenerator.httpProxies = httpProxies;
             loadGenerator.transport = transport;
+            loadGenerator.statisticsPath = statisticsPath;
             return loadGenerator.startIt();
         }
 
