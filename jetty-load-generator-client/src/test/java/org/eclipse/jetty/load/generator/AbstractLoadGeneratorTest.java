@@ -20,8 +20,11 @@ package org.eclipse.jetty.load.generator;
 
 
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
+import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.fcgi.server.ServerFCGIConnectionFactory;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
@@ -44,6 +47,7 @@ import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.server.session.HashSessionIdManager;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlet.StatisticsServlet;
 import org.eclipse.jetty.util.IO;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
@@ -329,11 +333,13 @@ public abstract class AbstractLoadGeneratorTest
         context.setContextPath( "/" );
 
         HandlerCollection handlerCollection = new HandlerCollection();
-        handlerCollection.setHandlers( new Handler[]{ context, statisticsHandler } );
+        handlerCollection.setHandlers( new Handler[]{statisticsHandler, context } );
 
         server.setHandler( handlerCollection );
 
-        context.addServlet( new ServletHolder( handler ), "/*" );
+        context.addServlet( new ServletHolder( new StatisticsServlet() ), "/stats" );
+
+        context.addServlet( new ServletHolder( handler ), "/" );
 
         server.start();
     }

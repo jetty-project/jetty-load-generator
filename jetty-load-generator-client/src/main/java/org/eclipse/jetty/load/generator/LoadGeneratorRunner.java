@@ -163,11 +163,11 @@ public class LoadGeneratorRunner
 
         request.onResponseContentAsync( loadGeneratorResultHandler );
 
-        //request.onResponseBegin( loadGeneratorResultHandler );
-        request.onComplete( loadGeneratorResultHandler );
+        request.onRequestBegin( loadGeneratorResultHandler );
 
-        request.header( LoadGeneratorResultHandler.START_SEND_TIME_HEADER, //
-                        Long.toString( System.nanoTime() ) );
+        request.onResponseBegin( loadGeneratorResultHandler );
+
+        request.onComplete( loadGeneratorResultHandler );
 
         return request;
     }

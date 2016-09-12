@@ -44,7 +44,8 @@ public class LoadGeneratorSimpleTest
 
         ResourceProfile resourceProfile =
             new ResourceProfile( //
-                new Resource( "/index.html" ) //
+                new Resource( "/index.html" ), //
+                new Resource( "/foo.html" ).wait( true )
             );
 
         runProfile( resourceProfile );

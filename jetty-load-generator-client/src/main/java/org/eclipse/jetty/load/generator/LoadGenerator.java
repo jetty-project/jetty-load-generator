@@ -21,6 +21,7 @@ package org.eclipse.jetty.load.generator;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.HttpProxy;
+import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.load.generator.latency.LatencyListener;
@@ -228,6 +229,20 @@ public class LoadGenerator
     public void interrupt()
     {
         this.stop.set( true );
+
+        try
+        {
+            HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + "/stats?xml=true";
+            Request request = httpClient.newRequest( uri );
+            ContentResponse contentResponse = request.send();
+            LOGGER.debug( "content response" );
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( "skip error getting stats", e );
+        }
+
         try
         {
             this.runnersExecutorService.shutdown();

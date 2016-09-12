@@ -19,128 +19,17 @@
 package org.eclipse.jetty.load.generator.latency;
 
 
+import org.eclipse.jetty.load.generator.ValueListener;
+
 /**
  *
  */
-public interface LatencyListener
+public interface LatencyListener extends ValueListener
 {
     /**
      * triggered with an http client latency value value
      * @param values the latency values
      */
     void onLatencyValue( Values values );
-
-    /**
-     * triggered when the load generator is stopped
-     */
-    void onLoadGeneratorStop();
-
-    class Values
-    {
-        private String path;
-
-        /**
-         * the latency time in nano seconds
-         */
-        private long latencyTime;
-
-        private String method;
-
-        private long size;
-
-        private int status;
-
-        public Values()
-        {
-            // no op
-        }
-
-        public String getPath()
-        {
-            return path;
-        }
-
-        public void setPath( String path )
-        {
-            this.path = path;
-        }
-
-        public Values path( String path )
-        {
-            this.path = path;
-            return this;
-        }
-
-        public long getLatencyTime()
-        {
-            return latencyTime;
-        }
-
-        public void setLatencyTime( long latencyTime )
-        {
-            this.latencyTime = latencyTime;
-        }
-
-        public Values latencyTime( long latencyTime )
-        {
-            this.latencyTime = latencyTime;
-            return this;
-        }
-
-        public String getMethod()
-        {
-            return method;
-        }
-
-        public void setMethod( String method )
-        {
-            this.method = method;
-        }
-
-        public Values method( String method )
-        {
-            this.method = method;
-            return this;
-        }
-
-        public long getSize()
-        {
-            return size;
-        }
-
-        public void setSize( long size )
-        {
-            this.size = size;
-        }
-
-        public Values size( long size )
-        {
-            this.size = size;
-            return this;
-        }
-
-        public int getStatus()
-        {
-            return status;
-        }
-
-        public void setStatus( int status )
-        {
-            this.status = status;
-        }
-
-        public Values status( int status )
-        {
-            this.status = status;
-            return this;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "Values{" + "path='" + path + '\'' + ", latencyTime=" + latencyTime + ", method='" + method + '\''
-                + ", size=" + size + ", status=" + status + '}';
-        }
-    }
 
 }

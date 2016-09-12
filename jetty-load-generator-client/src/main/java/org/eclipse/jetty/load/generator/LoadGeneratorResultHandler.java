@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class LoadGeneratorResultHandler
     extends Request.Listener.Adapter
-    implements Response.CompleteListener, Response.AsyncContentListener
+    implements Response.CompleteListener, Response.AsyncContentListener, Response.BeginListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
@@ -57,9 +57,29 @@ public class LoadGeneratorResultHandler
     @Override
     public void onBegin( Request request )
     {
-        //
+        request.header( LoadGeneratorResultHandler.START_SEND_TIME_HEADER, //
+                        Long.toString( System.nanoTime() ) );
     }
 
+    @Override
+    public void onBegin( Response response )
+    {
+        long end = System.nanoTime();
+
+        String startTime = response.getRequest().getHeaders().get( START_SEND_TIME_HEADER );
+        if ( !StringUtil.isBlank( startTime ) )
+        {
+            long time = end - Long.parseLong( startTime );
+            for ( LatencyListener latencyListener : latencyListeners )
+            {
+                latencyListener.onLatencyValue( new LatencyListener.Values() //
+                                                    .latencyTime( time ) //
+                                                    .path( response.getRequest().getPath() ) //
+                                                    .method( response.getRequest().getMethod() )
+                );
+            }
+        }
+    }
 
     @Override
     public void onComplete( Result result )
@@ -87,23 +107,9 @@ public class LoadGeneratorResultHandler
                 LOGGER.warn( "skip fail to get content size", e );
             }
         }
-
-        long end = System.nanoTime();
-
-        String startTime = response.getRequest().getHeaders().get( START_SEND_TIME_HEADER );
-        if ( !StringUtil.isBlank( startTime ) )
-        {
-            long time = end - Long.parseLong( startTime );
-            for ( LatencyListener latencyListener : latencyListeners )
-            {
-                latencyListener.onLatencyValue( new LatencyListener.Values() //
-                                                    .latencyTime( time ) //
-                                                    .path( response.getRequest().getPath() ) //
-                                                    .method( response.getRequest().getMethod() )
-                );
-            }
-        }
     }
+
+
 
     @Override
     public void onFailure( Request request, Throwable failure )
