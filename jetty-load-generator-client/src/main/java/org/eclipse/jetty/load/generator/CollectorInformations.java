@@ -181,7 +181,7 @@ public class CollectorInformations
     public String toString(boolean ls)
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
-        return "CollectorInformations{" + ( ls ?  System.lineSeparator() : "" ) //
+        return "CollectorInformations:" + ( ls ?  System.lineSeparator() : "" ) //
             + "informationType=" + informationType + ( ls ?  System.lineSeparator() : "" ) //
             + ",totalCount=" + totalCount + ( ls ?  System.lineSeparator() : "" ) //
             + ", minValue=" + minValue + ( ls ?  System.lineSeparator() : "" ) //
@@ -191,7 +191,7 @@ public class CollectorInformations
             + ", value 50%=" + value50 + ( ls ?  System.lineSeparator() : "" ) //
             + ", value 90%=" + value90 + ( ls ?  System.lineSeparator() : "" ) //
             + ", startTimeStamp=" + simpleDateFormat.format( startTimeStamp ) + ( ls ?  System.lineSeparator() : "" ) //
-            + ", endTimeStamp=" + simpleDateFormat.format(endTimeStamp ) + '}';
+            + ", endTimeStamp=" + simpleDateFormat.format(endTimeStamp );
     }
 
 }

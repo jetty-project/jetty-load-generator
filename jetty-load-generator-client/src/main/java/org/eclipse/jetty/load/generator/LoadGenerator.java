@@ -37,6 +37,7 @@ import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -230,18 +231,7 @@ public class LoadGenerator
     {
         this.stop.set( true );
 
-        try
-        {
-            HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
-            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + "/stats?xml=true";
-            Request request = httpClient.newRequest( uri );
-            ContentResponse contentResponse = request.send();
-            LOGGER.debug( "content response" );
-        }
-        catch ( Exception e )
-        {
-            LOGGER.warn( "skip error getting stats", e );
-        }
+        collectStats();
 
         try
         {
@@ -288,6 +278,8 @@ public class LoadGenerator
         final List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
         listeners.add( _loadGeneratorResultHandler );
+
+        statsReset();
 
         executorService.submit( () ->
             {
@@ -341,6 +333,75 @@ public class LoadGenerator
         this.run();
         PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
         this.interrupt();
+    }
+
+    /**
+     * reset stats on Server side
+     */
+    protected void statsReset()
+    {
+        HttpClient httpClient = null;
+        try
+        {
+            httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + "/stats?statsReset=true";
+            Request request = httpClient.newRequest( uri );
+            ContentResponse contentResponse = request.send();
+            if (LOGGER.isDebugEnabled())
+            {
+                LOGGER.debug( "stats reset status: {}", contentResponse.getStatus() );
+            }
+            if (contentResponse.getStatus() != HttpServletResponse.SC_OK ) {
+                LOGGER.warn( "cannot reset stats on Server side" );
+            }
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( "skip error getting stats", e );
+        }
+        finally
+        {
+            stopQuietly( httpClient );
+        }
+    }
+
+    /**
+     * collect stats on server side
+     */
+    protected void collectStats()
+    {
+        HttpClient httpClient = null;
+        try
+        {
+            httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + "/stats?xml=true";
+            Request request = httpClient.newRequest( uri );
+            ContentResponse contentResponse = request.send();
+            LOGGER.info( "content response xml: {}", contentResponse.getContentAsString() );
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( "skip error getting stats", e );
+        }
+        finally
+        {
+            stopQuietly( httpClient );
+        }
+    }
+
+    private void stopQuietly( HttpClient httpClient )
+    {
+        if ( httpClient != null )
+        {
+            try
+            {
+                httpClient.stop();
+            }
+            catch ( Exception e )
+            {
+                LOGGER.warn( "skip issue stopping httpclient:" + e.getMessage() );
+            }
+        }
     }
 
     protected HttpClient newHttpClient( HttpClientTransport httpClientTransport, SslContextFactory sslContextFactory )

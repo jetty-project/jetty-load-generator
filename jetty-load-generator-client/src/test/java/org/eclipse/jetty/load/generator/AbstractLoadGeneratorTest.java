@@ -42,9 +42,12 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.server.session.HashSessionIdManager;
+import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.StatisticsServlet;
@@ -329,17 +332,15 @@ public abstract class AbstractLoadGeneratorTest
         connector = newServerConnector( server );
         server.addConnector( connector );
 
-        ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
-        context.setContextPath( "/" );
+        StatisticsHandler statsHandler = new StatisticsHandler();
 
-        HandlerCollection handlerCollection = new HandlerCollection();
-        handlerCollection.setHandlers( new Handler[]{statisticsHandler, context } );
+        ServletContextHandler statsContext = new ServletContextHandler( server, "/");
+        statsContext.setHandler( statsHandler );
 
-        server.setHandler( handlerCollection );
+        server.setHandler( statsContext );
 
-        context.addServlet( new ServletHolder( new StatisticsServlet() ), "/stats" );
-
-        context.addServlet( new ServletHolder( handler ), "/" );
+        statsContext.addServlet(new ServletHolder(new StatisticsServlet()), "/stats");
+        statsContext.setSessionHandler(new SessionHandler());
 
         server.start();
     }
