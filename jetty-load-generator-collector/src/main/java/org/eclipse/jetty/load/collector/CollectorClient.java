@@ -93,28 +93,11 @@ public class CollectorClient
                         httpClient.start();
                         httpClients.add( httpClient );
 
-                        // client latency collect
-                        ContentResponse contentResponse = httpClient //
-                            .newRequest( "http://" + address + "/collector/client-latency" ) //
-                            .send();
-
-                        LOGGER.debug( "latency response status: {}, response: {}", //
-                                      contentResponse.getStatus(), //
-                                      contentResponse.getContentAsString() );
-
                         ObjectMapper objectMapper = new ObjectMapper();
-                        CollectorInformations latencyInfos = objectMapper //
-                            .readValue( contentResponse.getContentAsString(), //
-                                        CollectorInformations.class );
-
-                        for (CollectorResultHandler collectorResultHandler: collectorResultHandlers)
-                        {
-                            collectorResultHandler.handleLatencyInformations( latencyInfos );
-                        }
 
 
                         // response time per path informations
-                        contentResponse = httpClient //
+                        ContentResponse contentResponse = httpClient //
                             .newRequest( "http://" + address + "/collector/response-times" ) //
                             .send();
 

@@ -62,7 +62,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .httpClientTransport( this.httpClientTransport() ) //
             .selectors( this.usersNumber ) //
             .loadProfile( resourceProfile ) //
-            .latencyListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
+            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
             .build() //
             .run( 5, TimeUnit.SECONDS );
 

@@ -27,7 +27,6 @@ import java.util.Map;
  */
 public interface CollectorResultHandler
 {
-    void handleLatencyInformations(CollectorInformations infos);
 
     /**
      *

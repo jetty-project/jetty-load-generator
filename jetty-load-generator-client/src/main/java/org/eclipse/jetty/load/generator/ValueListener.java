@@ -34,9 +34,9 @@ public interface ValueListener
         private String path;
 
         /**
-         * the latency time in nano seconds
+         * the value in nano seconds
          */
-        private long latencyTime;
+        private long time;
 
         private String method;
 
@@ -65,19 +65,19 @@ public interface ValueListener
             return this;
         }
 
-        public long getLatencyTime()
+        public long getTime()
         {
-            return latencyTime;
+            return time;
         }
 
-        public void setLatencyTime( long latencyTime )
+        public void setTime( long time )
         {
-            this.latencyTime = latencyTime;
+            this.time = time;
         }
 
-        public Values latencyTime( long latencyTime )
+        public Values time( long time )
         {
-            this.latencyTime = latencyTime;
+            this.time = time;
             return this;
         }
 
@@ -132,7 +132,7 @@ public interface ValueListener
         @Override
         public String toString()
         {
-            return "Values{" + "path='" + path + '\'' + ", latencyTime=" + latencyTime + ", method='" + method + '\''
+            return "Values{" + "path='" + path + '\'' + ", time=" + time + ", method='" + method + '\''
                 + ", size=" + size + ", status=" + status + '}';
         }
     }

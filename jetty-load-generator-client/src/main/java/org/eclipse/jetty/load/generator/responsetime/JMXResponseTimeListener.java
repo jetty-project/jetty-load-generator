@@ -63,7 +63,7 @@ public class JMXResponseTimeListener
     @Override
     public void onResponseTimeValue( Values values )
     {
-        this._jmxJmxValues.setLastLatencyValue( values.getLatencyTime() );
+        this._jmxJmxValues.setLastResponseTimeValue( values.getTime() );
         this._jmxJmxValues.setPath( values.getPath() );
     }
 
@@ -95,19 +95,19 @@ public class JMXResponseTimeListener
     public static class JMXValues
         extends ContainerLifeCycle
     {
-        private long _lastLatencyValue;
+        private long _lastResponseTimeValue;
 
         private String _path;
 
-        @ManagedAttribute( "last since latency value" )
-        public long getLastLatencyValue()
+        @ManagedAttribute( "last response time value" )
+        public long getLastResponseTimeValue()
         {
-            return _lastLatencyValue;
+            return _lastResponseTimeValue;
         }
 
-        public void setLastLatencyValue( long _lastLatencyValue )
+        public void setLastResponseTimeValue( long lastResponseTimeValue )
         {
-            this._lastLatencyValue = _lastLatencyValue;
+            this._lastResponseTimeValue = lastResponseTimeValue;
         }
 
         @ManagedAttribute( "Some value that can be set and got from" )

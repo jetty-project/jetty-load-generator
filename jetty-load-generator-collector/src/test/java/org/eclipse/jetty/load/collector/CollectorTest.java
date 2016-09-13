@@ -140,7 +140,7 @@ public class CollectorTest
                 .httpClientTransport( new HttpTransportBuilder().build() ) //
                 .scheduler( scheduler ) //
                 .loadProfile( profile ) //
-                .latencyListeners( collectorServer ) //
+                .responseTimeListeners( collectorServer ) //
                 .requestListeners( testRequestListener ) //
                 .build();
 

@@ -33,11 +33,6 @@ public class LoggerCollectorResultHandler
 {
     private static final Logger LOGGER = Log.getLogger( LoggerCollectorResultHandler.class );
 
-    @Override
-    public void handleLatencyInformations( CollectorInformations infos )
-    {
-        LOGGER.info( "latency informations: {}", infos );
-    }
 
     @Override
     public void handleResponseTime( Map<String, CollectorInformations> responseTimePerPath )

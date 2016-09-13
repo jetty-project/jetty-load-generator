@@ -29,7 +29,7 @@ Then you run the load generator with this profile
             .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
-            .latencyListeners( some listeners you can build your own or use existing one ) // some listeners you can build your own
+            .responseTimeListeners( some listeners you can build your own or use existing one ) // some listeners you can build your own
             .requestListeners( some listeners you can build your own or use existing one ) //
             .build();
 
@@ -58,7 +58,6 @@ The LoadGenerator start a collector server you can query to get some information
 
 You can get those information trough Json result via GET request
 
-* /collector/client-latency will return the httpclient latency informations
 * /collector/response-times will return per http path the response times informations
 
 ### Results Collector

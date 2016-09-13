@@ -196,7 +196,7 @@ public abstract class AbstractLoadGeneratorTest
             .httpClientTransport( this.httpClientTransport() ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
-            .latencyListeners( responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()]) ) //
+            .responseTimeListeners( responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()]) ) //
             .requestListeners( testRequestListener ) //
             .build();
 
@@ -454,7 +454,7 @@ public abstract class AbstractLoadGeneratorTest
         public void onResponseTimeValue( Values values )
         {
             String path = values.getPath();
-            long latencyTime = values.getLatencyTime();
+            long responseTime = values.getTime();
             AtomicLong response = recorderPerPath.get( path );
             if (response == null) {
                 response = new AtomicLong( 1 );

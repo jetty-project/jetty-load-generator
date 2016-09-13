@@ -581,7 +581,7 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder latencyListeners( ResponseTimeListener... responseTimeListeners )
+        public Builder responseTimeListeners( ResponseTimeListener... responseTimeListeners )
         {
             this.responseTimeListeners = new ArrayList<>( Arrays.asList( responseTimeListeners ) );
             return this;

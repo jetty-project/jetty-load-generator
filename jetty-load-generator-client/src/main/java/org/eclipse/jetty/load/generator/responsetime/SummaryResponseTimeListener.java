@@ -43,7 +43,7 @@ public class SummaryResponseTimeListener
     public void onResponseTimeValue( Values values )
     {
         String path = values.getPath();
-        long responseTime = values.getLatencyTime();
+        long responseTime = values.getTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {

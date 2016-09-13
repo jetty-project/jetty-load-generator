@@ -43,9 +43,9 @@ public class LoadGeneratorResultHandler
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
 
     /**
-     * time of the start latency calculation
+     * time of the start response time calculation
      */
-    public static final String START_LATENCY_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Latency-Time";
+    public static final String START_RESPONSE_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Response-Time";
 
     private List<ResponseTimeListener> responseTimeListeners;
 
@@ -57,7 +57,7 @@ public class LoadGeneratorResultHandler
     @Override
     public void onBegin( Request request )
     {
-        request.header( LoadGeneratorResultHandler.START_LATENCY_TIME_HEADER, //
+        request.header( LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER, //
                         Long.toString( System.nanoTime() ) );
     }
 
@@ -66,14 +66,14 @@ public class LoadGeneratorResultHandler
     {
         long end = System.nanoTime();
 
-        String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER );
+        String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
         if ( !StringUtil.isBlank( startTime ) )
         {
             long time = end - Long.parseLong( startTime );
             for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
             {
                 responseTimeListener.onResponseTimeValue( new ResponseTimeListener.Values() //
-                                                    .latencyTime( time ) //
+                                                    .time( time ) //
                                                     .path( response.getRequest().getPath() ) //
                                                     .method( response.getRequest().getMethod() )
                 );

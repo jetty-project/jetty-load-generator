@@ -138,10 +138,7 @@ public class CollectorServer
 
             ObjectMapper mapper = new ObjectMapper();
 
-            // FIXME expose it!!
-
-
-            if ( StringUtil.endsWithIgnoreCase( pathInfo, "client-latency" ) )
+            if ( StringUtil.endsWithIgnoreCase( pathInfo, "response-times" ) )
             {
                 Map<String, CollectorInformations> infos = new HashMap<>( recorderPerPath.size() );
                 for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
@@ -157,10 +154,10 @@ public class CollectorServer
     }
 
     @Override
-    public void onResponseTimeValue( Values latencyValue )
+    public void onResponseTimeValue( Values responseTimeValue )
     {
-        String path = latencyValue.getPath();
-        long responseTime = latencyValue.getLatencyTime();
+        String path = responseTimeValue.getPath();
+        long responseTime = responseTimeValue.getTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
