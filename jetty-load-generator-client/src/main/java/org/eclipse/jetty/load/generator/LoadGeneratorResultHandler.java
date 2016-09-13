@@ -57,28 +57,13 @@ public class LoadGeneratorResultHandler
     @Override
     public void onBegin( Request request )
     {
-        request.header( LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER, //
-                        Long.toString( System.nanoTime() ) );
+        // no op
     }
 
     @Override
     public void onBegin( Response response )
     {
-        long end = System.nanoTime();
-
-        String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
-        if ( !StringUtil.isBlank( startTime ) )
-        {
-            long time = end - Long.parseLong( startTime );
-            for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
-            {
-                responseTimeListener.onResponseTimeValue( new ResponseTimeListener.Values() //
-                                                    .time( time ) //
-                                                    .path( response.getRequest().getPath() ) //
-                                                    .method( response.getRequest().getMethod() )
-                );
-            }
-        }
+        // no
     }
 
     @Override
@@ -89,6 +74,23 @@ public class LoadGeneratorResultHandler
 
     public void onComplete( Response response )
     {
+
+        long end = System.nanoTime();
+
+        String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
+        if ( !StringUtil.isBlank( startTime ) )
+        {
+            long time = end - Long.parseLong( startTime );
+            for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
+            {
+                responseTimeListener.onResponseTimeValue( new ResponseTimeListener.Values() //
+                                                              .time( time ) //
+                                                              .path( response.getRequest().getPath() ) //
+                                                              .method( response.getRequest().getMethod() )
+                );
+            }
+        }
+
         int size = 0;
         // we need to consume content!
         if (response instanceof ContentResponse ) {

@@ -98,14 +98,14 @@ public class LoadGeneratorRunner
     }
 
     private void handleResource( Resource resource ) throws Exception {
-        Request request = buildRequest( resource );
+
         // so we have sync call if we have children or resource marked as wait
         if ( !resource.getResources().isEmpty() || resource.isWait() )
         {
-            ContentResponse contentResponse = request.send();
+            ContentResponse contentResponse = buildRequest( resource ).send();
             //loadGeneratorResultHandler.onComplete( contentResponse );
         } else {
-            request.send( loadGeneratorResultHandler );
+            buildRequest( resource ).send( loadGeneratorResultHandler );
         }
 
 
@@ -168,6 +168,9 @@ public class LoadGeneratorRunner
         request.onResponseBegin( loadGeneratorResultHandler );
 
         request.onComplete( loadGeneratorResultHandler );
+
+        request.header( LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER, //
+                        Long.toString( System.nanoTime() ) );
 
         return request;
     }

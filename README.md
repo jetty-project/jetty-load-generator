@@ -43,6 +43,26 @@ Then you run the load generator with this profile
         
 ```
 
+### Time Measure
+
+With all listeners we have, we can take measure in different places
+
+1. [request start]  (request#send( ) ) 
+2. request de queued ready to be sent ( BeginListener#onBegin() )
+3. [request headers finished sent]  ( CommitListener#onCommit() )
+4. [request body start] ( ContentListener#onContent() )
+5. [request body finished] ( SuccessListener#onSuccess()
+6. [response headers start receiving]  ( BeginListener#onBegin() )
+7. [response headers received] 
+8. [response body start received] ( ContentListener#onContent() ) 
+9. [response body completed] ( CompleteListener#onComplete() )
+
+#### Response Time
+
+The responseTime exposed using ResponseTimeListener is the time taken just before 1. and 9.
+
+
+
 ### Exposed results
 The LoadGenerator start a collector server you can query to get some informations as: 
 
