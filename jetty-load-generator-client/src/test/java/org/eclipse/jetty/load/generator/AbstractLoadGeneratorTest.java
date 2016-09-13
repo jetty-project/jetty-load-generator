@@ -49,6 +49,7 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -110,6 +111,7 @@ public abstract class AbstractLoadGeneratorTest
     @After
     public void stop() throws Exception
     {
+        statisticsHandler.statsReset();
         server.stop();
     }
 
@@ -155,7 +157,7 @@ public abstract class AbstractLoadGeneratorTest
             case H2C:
             case H2:
             {
-                return new Http2TransportBuilder().build();
+                return new Http2TransportBuilder().selectors( 1 ).build();
             }
             case FCGI:
             {
@@ -177,7 +179,7 @@ public abstract class AbstractLoadGeneratorTest
         return Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
     }
 
-    protected LoadGenerator buid(ResourceProfile profile ) throws Exception {
+    protected LoadGenerator build( ResourceProfile profile ) throws Exception {
 
         responsePerPath = new ResponsePerPath();
 
@@ -213,7 +215,7 @@ public abstract class AbstractLoadGeneratorTest
         throws Exception
     {
 
-        LoadGenerator loadGenerator = buid( profile );
+        LoadGenerator loadGenerator = build( profile );
 
         loadGenerator.run();
 
@@ -325,14 +327,15 @@ public abstract class AbstractLoadGeneratorTest
         connector = newServerConnector( server );
         server.addConnector( connector );
 
-        StatisticsHandler statsHandler = new StatisticsHandler();
+        server.setHandler( statisticsHandler );
 
-        ServletContextHandler statsContext = new ServletContextHandler( server, "/");
-        statsContext.setHandler( statsHandler );
+        ServletContextHandler statsContext = new ServletContextHandler( statisticsHandler, "/");
 
-        server.setHandler( statsContext );
 
         statsContext.addServlet(new ServletHolder(new StatisticsServlet()), "/stats");
+
+        statsContext.addServlet( new ServletHolder( handler ), "/" );
+
         statsContext.setSessionHandler(new SessionHandler());
 
         server.start();

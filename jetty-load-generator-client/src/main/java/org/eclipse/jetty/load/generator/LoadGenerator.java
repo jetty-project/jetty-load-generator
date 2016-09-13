@@ -63,8 +63,6 @@ public class LoadGenerator
 
     private AtomicBoolean stop;
 
-    private int selectors = -1;
-
     /**
      * target host scheme
      */
@@ -168,11 +166,6 @@ public class LoadGenerator
     public SslContextFactory getSslContextFactory()
     {
         return sslContextFactory;
-    }
-
-    public int getSelectors()
-    {
-        return selectors;
     }
 
     public List<Request.Listener> getRequestListeners()
@@ -311,7 +304,8 @@ public class LoadGenerator
                     }
                     catch ( Exception e )
                     {
-                        LOGGER.warn( "ignore exception", e );
+                        LOGGER.warn( "skip exception:" + e.getMessage(), e );
+                        this.stop.set( true );
                     }
                 }
 
@@ -325,7 +319,7 @@ public class LoadGenerator
                 }
                 catch ( Throwable e )
                 {
-                    LOGGER.warn( "ignore exception", e );
+                    LOGGER.warn( "skip exception:" + e.getMessage(), e );
                 }
                 LOGGER.debug( "exit run lambda" );
             }
@@ -439,13 +433,16 @@ public class LoadGenerator
 
         }
 
-        httpClientTransport.setHttpClient( httpClient );
-        httpClient.start();
+        // TODO ?
+        //httpClient.setExecutor(  );
 
         if ( this.getScheduler() != null )
         {
             httpClient.setScheduler( this.getScheduler() );
         }
+
+        //httpClientTransport.setHttpClient( httpClient );
+        httpClient.start();
 
         return httpClient;
     }
@@ -487,8 +484,6 @@ public class LoadGenerator
         private HttpClientTransport httpClientTransport;
 
         private SslContextFactory sslContextFactory;
-
-        private int selectors = -1;
 
         private List<Request.Listener> requestListeners;
 
@@ -551,12 +546,6 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder selectors( int selectors )
-        {
-            this.selectors = selectors;
-            return this;
-        }
-
         public Builder requestListeners( Request.Listener... requestListeners )
         {
             this.requestListeners = new ArrayList<>( Arrays.asList( requestListeners ) );
@@ -615,7 +604,6 @@ public class LoadGenerator
                 : this.requestListeners;
             loadGenerator.httpClientTransport = httpClientTransport;
             loadGenerator.sslContextFactory = sslContextFactory;
-            loadGenerator.selectors = selectors;
             loadGenerator.scheduler = httpScheduler;
             loadGenerator.socketAddressResolver = socketAddressResolver == null ? //
                 new SocketAddressResolver.Sync() : socketAddressResolver;

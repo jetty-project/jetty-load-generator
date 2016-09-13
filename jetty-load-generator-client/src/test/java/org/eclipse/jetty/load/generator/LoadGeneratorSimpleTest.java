@@ -35,8 +35,6 @@ public class LoadGeneratorSimpleTest
         super( transport, usersNumber );
     }
 
-
-
     @Test
     public void simple_test()
         throws Exception

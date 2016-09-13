@@ -60,7 +60,6 @@ public class LoadGeneratorSimpleRunTimeTest
             .transactionRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
-            .selectors( this.usersNumber ) //
             .loadProfile( resourceProfile ) //
             .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
             .build() //
