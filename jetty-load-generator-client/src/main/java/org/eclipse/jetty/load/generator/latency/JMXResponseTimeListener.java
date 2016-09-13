@@ -14,7 +14,7 @@ import java.lang.management.ManagementFactory;
  *
  */
 public class JMXResponseTimeListener
-    implements LatencyListener
+    implements ResponseTimeListener
 {
 
     private static final Logger LOGGER = Log.getLogger( JMXResponseTimeListener.class );
@@ -61,7 +61,7 @@ public class JMXResponseTimeListener
     }
 
     @Override
-    public void onLatencyValue( Values values )
+    public void onResponseTimeValue( Values values )
     {
         this._jmxJmxValues.setLastLatencyValue( values.getLatencyTime() );
         this._jmxJmxValues.setPath( values.getPath() );

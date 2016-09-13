@@ -32,11 +32,11 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class LatencyDisplayListener
-    implements LatencyListener
+public class ResponseTimeDisplayListener
+    implements ResponseTimeListener
 {
 
-    private static final Logger LOGGER = Log.getLogger( LatencyDisplayListener.class );
+    private static final Logger LOGGER = Log.getLogger( ResponseTimeDisplayListener.class );
 
     private final Map<String, Recorder> recorderPerPath;
 
@@ -44,7 +44,7 @@ public class LatencyDisplayListener
 
     private ValueListenerRunnable runnable;
 
-    public LatencyDisplayListener( long initial, long delay, TimeUnit timeUnit )
+    public ResponseTimeDisplayListener( long initial, long delay, TimeUnit timeUnit )
     {
         this.recorderPerPath = new ConcurrentHashMap<>();
         this.runnable = new ValueListenerRunnable( recorderPerPath );
@@ -53,7 +53,7 @@ public class LatencyDisplayListener
         scheduledExecutorService.scheduleWithFixedDelay( runnable, initial, delay, timeUnit );
     }
 
-    public LatencyDisplayListener()
+    public ResponseTimeDisplayListener()
     {
         this( 0, 5, TimeUnit.SECONDS );
     }
@@ -86,7 +86,7 @@ public class LatencyDisplayListener
 
 
     @Override
-    public void onLatencyValue( Values values )
+    public void onResponseTimeValue( Values values )
     {
         String path = values.getPath();
         long responseTime = values.getLatencyTime();

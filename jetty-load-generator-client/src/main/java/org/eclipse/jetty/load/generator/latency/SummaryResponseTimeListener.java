@@ -28,21 +28,19 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class SummaryLatencyListener
-    implements LatencyListener
+public class SummaryResponseTimeListener
+    implements ResponseTimeListener
 {
-
-    //private static final Logger LOGGER = Log.getLogger( SummaryLatencyListener.class );
 
     private Map<String, Recorder> recorderPerPath;
 
-    public SummaryLatencyListener( )
+    public SummaryResponseTimeListener( )
     {
         this.recorderPerPath = new ConcurrentHashMap<>(  );
     }
 
     @Override
-    public void onLatencyValue( Values values )
+    public void onResponseTimeValue( Values values )
     {
         String path = values.getPath();
         long responseTime = values.getLatencyTime();

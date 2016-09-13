@@ -22,7 +22,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
-import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.latency.ResponseTimeListener;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
@@ -47,11 +47,11 @@ public class LoadGeneratorResultHandler
      */
     public static final String START_LATENCY_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Latency-Time";
 
-    private List<LatencyListener> latencyListeners;
+    private List<ResponseTimeListener> responseTimeListeners;
 
-    public LoadGeneratorResultHandler( List<LatencyListener> latencyListeners )
+    public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners )
     {
-        this.latencyListeners = latencyListeners == null ? Collections.emptyList() : latencyListeners;
+        this.responseTimeListeners = responseTimeListeners == null ? Collections.emptyList() : responseTimeListeners;
     }
 
     @Override
@@ -70,9 +70,9 @@ public class LoadGeneratorResultHandler
         if ( !StringUtil.isBlank( startTime ) )
         {
             long time = end - Long.parseLong( startTime );
-            for ( LatencyListener latencyListener : latencyListeners )
+            for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
             {
-                latencyListener.onLatencyValue( new LatencyListener.Values() //
+                responseTimeListener.onResponseTimeValue( new ResponseTimeListener.Values() //
                                                     .latencyTime( time ) //
                                                     .path( response.getRequest().getPath() ) //
                                                     .method( response.getRequest().getMethod() )

@@ -19,8 +19,8 @@
 package org.eclipse.jetty.load.generator;
 
 
-import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
-import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
+import org.eclipse.jetty.load.generator.latency.ResponseTimeDisplayListener;
+import org.eclipse.jetty.load.generator.latency.SummaryResponseTimeListener;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
@@ -62,7 +62,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .httpClientTransport( this.httpClientTransport() ) //
             .selectors( this.usersNumber ) //
             .loadProfile( resourceProfile ) //
-            .latencyListeners( new LatencyDisplayListener(), new SummaryLatencyListener() ) //
+            .latencyListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
             .build() //
             .run( 5, TimeUnit.SECONDS );
 

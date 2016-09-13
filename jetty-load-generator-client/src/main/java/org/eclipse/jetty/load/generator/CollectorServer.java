@@ -21,7 +21,7 @@ package org.eclipse.jetty.load.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.HdrHistogram.Recorder;
-import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.latency.ResponseTimeListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class CollectorServer
-    implements LatencyListener
+    implements ResponseTimeListener
 {
 
     private static final Logger LOGGER = Log.getLogger( CollectorServer.class );
@@ -157,7 +157,7 @@ public class CollectorServer
     }
 
     @Override
-    public void onLatencyValue( Values latencyValue )
+    public void onResponseTimeValue( Values latencyValue )
     {
         String path = latencyValue.getPath();
         long responseTime = latencyValue.getLatencyTime();

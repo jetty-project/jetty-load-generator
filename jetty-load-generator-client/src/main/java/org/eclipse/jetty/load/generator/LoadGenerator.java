@@ -24,7 +24,7 @@ import org.eclipse.jetty.client.HttpProxy;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
-import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.latency.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
@@ -98,7 +98,7 @@ public class LoadGenerator
 
     private SocketAddressResolver socketAddressResolver;
 
-    private List<LatencyListener> latencyListeners;
+    private List<ResponseTimeListener> responseTimeListeners;
 
     private LoadGeneratorResultHandler _loadGeneratorResultHandler;
 
@@ -222,7 +222,7 @@ public class LoadGenerator
 
         this.runnersExecutorService = Executors.newWorkStealingPool( parallelism );
 
-        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( latencyListeners );
+        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners );
 
         return this;
 
@@ -253,11 +253,11 @@ public class LoadGenerator
                 Thread.sleep( 2 );
             }
 
-            if ( latencyListeners != null )
+            if ( responseTimeListeners != null )
             {
-                for ( LatencyListener latencyListener : latencyListeners )
+                for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
                 {
-                    latencyListener.onLoadGeneratorStop();
+                    responseTimeListener.onLoadGeneratorStop();
                 }
             }
 
@@ -498,7 +498,7 @@ public class LoadGenerator
 
         private ResourceProfile profile;
 
-        private List<LatencyListener> latencyListeners;
+        private List<ResponseTimeListener> responseTimeListeners;
 
         private List<HttpProxy> httpProxies;
 
@@ -581,9 +581,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder latencyListeners( LatencyListener... latencyListeners )
+        public Builder latencyListeners( ResponseTimeListener... responseTimeListeners )
         {
-            this.latencyListeners = new ArrayList<>( Arrays.asList( latencyListeners ) );
+            this.responseTimeListeners = new ArrayList<>( Arrays.asList( responseTimeListeners ) );
             return this;
         }
 
@@ -619,7 +619,7 @@ public class LoadGenerator
             loadGenerator.scheduler = httpScheduler;
             loadGenerator.socketAddressResolver = socketAddressResolver == null ? //
                 new SocketAddressResolver.Sync() : socketAddressResolver;
-            loadGenerator.latencyListeners = latencyListeners;
+            loadGenerator.responseTimeListeners = responseTimeListeners;
             loadGenerator.httpProxies = httpProxies;
             loadGenerator.transport = transport;
             loadGenerator.statisticsPath = statisticsPath;

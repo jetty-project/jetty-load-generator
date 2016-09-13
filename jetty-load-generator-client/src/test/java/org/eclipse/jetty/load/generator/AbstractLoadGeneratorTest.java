@@ -20,31 +20,24 @@ package org.eclipse.jetty.load.generator;
 
 
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
-import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpClientTransport;
-import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.fcgi.server.ServerFCGIConnectionFactory;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
-import org.eclipse.jetty.load.generator.latency.LatencyDisplayListener;
-import org.eclipse.jetty.load.generator.latency.LatencyListener;
-import org.eclipse.jetty.load.generator.latency.SummaryLatencyListener;
+import org.eclipse.jetty.load.generator.latency.ResponseTimeDisplayListener;
+import org.eclipse.jetty.load.generator.latency.ResponseTimeListener;
+import org.eclipse.jetty.load.generator.latency.SummaryResponseTimeListener;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.server.ConnectionFactory;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.server.session.HashSessionIdManager;
 import org.eclipse.jetty.server.session.SessionHandler;
@@ -179,9 +172,9 @@ public abstract class AbstractLoadGeneratorTest
     }
 
 
-    protected List<LatencyListener> getLatencyListeners()
+    protected List<ResponseTimeListener> getLatencyListeners()
     {
-        return Arrays.asList( new LatencyDisplayListener(), new SummaryLatencyListener() );
+        return Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
     }
 
     protected LoadGenerator buid(ResourceProfile profile ) throws Exception {
@@ -190,9 +183,9 @@ public abstract class AbstractLoadGeneratorTest
 
         testRequestListener = new TestRequestListener( logger );
 
-        List<LatencyListener> latencyListeners = new ArrayList<>( getLatencyListeners() );
+        List<ResponseTimeListener> responseTimeListeners = new ArrayList<>( getLatencyListeners() );
 
-        latencyListeners.add( responsePerPath );
+        responseTimeListeners.add( responsePerPath );
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
@@ -203,7 +196,7 @@ public abstract class AbstractLoadGeneratorTest
             .httpClientTransport( this.httpClientTransport() ) //
             .sslContextFactory( sslContextFactory ) //
             .loadProfile( profile ) //
-            .latencyListeners( latencyListeners.toArray(new LatencyListener[latencyListeners.size()]) ) //
+            .latencyListeners( responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()]) ) //
             .requestListeners( testRequestListener ) //
             .build();
 
@@ -452,12 +445,13 @@ public abstract class AbstractLoadGeneratorTest
     }
 
 
-    public static class ResponsePerPath implements LatencyListener {
+    public static class ResponsePerPath implements ResponseTimeListener
+    {
 
         private final Map<String, AtomicLong> recorderPerPath = new ConcurrentHashMap<>(  );
 
         @Override
-        public void onLatencyValue( Values values )
+        public void onResponseTimeValue( Values values )
         {
             String path = values.getPath();
             long latencyTime = values.getLatencyTime();

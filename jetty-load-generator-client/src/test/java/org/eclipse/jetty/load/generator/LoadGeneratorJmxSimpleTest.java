@@ -21,7 +21,7 @@ package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.load.generator.latency.JMXResponseTimeListener;
-import org.eclipse.jetty.load.generator.latency.LatencyListener;
+import org.eclipse.jetty.load.generator.latency.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.util.log.Log;
@@ -44,9 +44,9 @@ public class LoadGeneratorJmxSimpleTest
     }
 
     @Override
-    protected List<LatencyListener> getLatencyListeners()
+    protected List<ResponseTimeListener> getLatencyListeners()
     {
-        List<LatencyListener> listeners = new ArrayList<>( super.getLatencyListeners() );
+        List<ResponseTimeListener> listeners = new ArrayList<>( super.getLatencyListeners() );
         listeners.add( new JMXResponseTimeListener(server) );
         return listeners;
     }

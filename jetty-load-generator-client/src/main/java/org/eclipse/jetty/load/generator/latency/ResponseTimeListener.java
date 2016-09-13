@@ -24,12 +24,14 @@ import org.eclipse.jetty.load.generator.ValueListener;
 /**
  *
  */
-public interface LatencyListener extends ValueListener
+public interface ResponseTimeListener
+    extends ValueListener
 {
     /**
-     * triggered with an http client latency value value
-     * @param values the latency values
+     * triggered with an http client response time value
+     *
+     * @param values the response time values
      */
-    void onLatencyValue( Values values );
+    void onResponseTimeValue( Values values );
 
 }
