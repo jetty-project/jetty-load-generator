@@ -47,15 +47,15 @@ Then you run the load generator with this profile
 
 With all listeners we have, we can take measure in different places
 
-1. [request start]  (request#send( ) ) 
+1. request start  (request#send( ) ) 
 2. request de queued ready to be sent ( BeginListener#onBegin() )
-3. [request headers finished sent]  ( CommitListener#onCommit() )
-4. [request body start] ( ContentListener#onContent() )
-5. [request body finished] ( SuccessListener#onSuccess()
-6. [response headers start receiving]  ( BeginListener#onBegin() )
-7. [response headers received] 
-8. [response body start received] ( ContentListener#onContent() ) 
-9. [response body completed] ( CompleteListener#onComplete() )
+3. request headers finished sent  ( CommitListener#onCommit() )
+4. request body start ( ContentListener#onContent() )
+5. request body finished ( SuccessListener#onSuccess()
+6. response headers start receiving  ( BeginListener#onBegin() )
+7. response headers received 
+8. response body start received ( ContentListener#onContent() ) 
+9. response body completed ( CompleteListener#onComplete() )
 
 #### Response Time
 
