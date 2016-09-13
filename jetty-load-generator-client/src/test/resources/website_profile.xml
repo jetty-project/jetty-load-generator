@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd">
+
+<!-- =============================================================== -->
+<!--                                                                 -->
+<!-- =============================================================== -->
+<Configure id="ResourceProfile" class="org.eclipse.jetty.load.generator.profile.ResourceProfile">
+  <Call name="addResource">
+    <Arg>
+      <New class="org.eclipse.jetty.load.generator.profile.Resource">
+        <Arg>index.html</Arg>
+        <Arg>
+          <Array type="org.eclipse.jetty.load.generator.profile.Resource">
+            <Item>
+              <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                <Arg>style.css</Arg>
+                <Arg>
+                  <Array type="org.eclipse.jetty.load.generator.profile.Resource">
+                    <Item>
+                      <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                        <Arg>logo.gif</Arg>
+                      </New>
+                    </Item>
+                    <Item>
+                      <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                        <Arg>spacer.png</Arg>
+                      </New>
+                    </Item>
+                  </Array>
+                </Arg>
+              </New>
+            </Item>
+            <Item>
+              <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                <Arg>fancy.css</Arg>
+              </New>
+            </Item>
+            <Item>
+              <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                <Arg>script.js</Arg>
+                <Arg>
+                  <Array type="org.eclipse.jetty.load.generator.profile.Resource">
+                    <Item>
+                      <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                        <Arg>library.js</Arg>
+                      </New>
+                    </Item>
+                    <Item>
+                      <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                        <Arg>morestuff.js</Arg>
+                      </New>
+                    </Item>
+                  </Array>
+                </Arg>
+              </New>
+            </Item>
+            <Item>
+              <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                <Arg>anotherScript.js</Arg>
+              </New>
+            </Item>
+            <Item>
+              <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                <Arg>iframeContents.html</Arg>
+              </New>
+            </Item>
+            <Item>
+              <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                <Arg>moreIframeContents.html</Arg>
+              </New>
+            </Item>
+            <Item>
+              <New class="org.eclipse.jetty.load.generator.profile.Resource">
+                <Arg>favicon.ico</Arg>
+              </New>
+            </Item>
+          </Array>
+        </Arg>
+      </New>
+    </Arg>
+  </Call>
+</Configure>
