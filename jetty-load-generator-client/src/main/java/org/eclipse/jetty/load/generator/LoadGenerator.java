@@ -24,8 +24,8 @@ import org.eclipse.jetty.client.HttpProxy;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
-import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
+import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -93,6 +94,8 @@ public class LoadGenerator
     private CopyOnWriteArrayList<HttpClient> clients = new CopyOnWriteArrayList<>();
 
     private Scheduler scheduler;
+
+    private Executor executor;
 
     private SocketAddressResolver socketAddressResolver;
 
@@ -196,6 +199,11 @@ public class LoadGenerator
     public String getScheme()
     {
         return scheme;
+    }
+
+    public Executor getExecutor()
+    {
+        return executor;
     }
 
     //--------------------------------------------------------------
@@ -339,10 +347,9 @@ public class LoadGenerator
      */
     protected void statsReset()
     {
-        HttpClient httpClient = null;
         try
         {
-            httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+            HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
             final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?statsReset=true";
             Request request = httpClient.newRequest( uri );
             ContentResponse contentResponse = request.send();
@@ -353,14 +360,11 @@ public class LoadGenerator
             if (contentResponse.getStatus() != HttpServletResponse.SC_OK ) {
                 LOGGER.warn( "cannot reset stats on Server side" );
             }
+            clients.add( httpClient );
         }
         catch ( Exception e )
         {
             LOGGER.warn( "skip error getting stats", e );
-        }
-        finally
-        {
-            stopQuietly( httpClient );
         }
     }
 
@@ -369,10 +373,14 @@ public class LoadGenerator
      */
     protected void collectStats()
     {
-        HttpClient httpClient = null;
         try
         {
-            httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+            if (clients.isEmpty()) {
+                LOGGER.warn( "skip collect server stats impossible to get a httpclient instance" );
+                return;
+            }
+            // we get the first one
+            HttpClient httpClient = clients.get( 0 );
             final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?xml=true";
             Request request = httpClient.newRequest( uri );
             ContentResponse contentResponse = request.send();
@@ -381,10 +389,6 @@ public class LoadGenerator
         catch ( Exception e )
         {
             LOGGER.warn( "skip error getting stats", e );
-        }
-        finally
-        {
-            stopQuietly( httpClient );
         }
     }
 
@@ -440,8 +444,11 @@ public class LoadGenerator
         {
             httpClient.setScheduler( this.getScheduler() );
         }
+        if (this.getExecutor() != null)
+        {
+            httpClient.setExecutor( this.getExecutor() );
+        }
 
-        //httpClientTransport.setHttpClient( httpClient );
         httpClient.start();
 
         return httpClient;
@@ -488,6 +495,8 @@ public class LoadGenerator
         private List<Request.Listener> requestListeners;
 
         private Scheduler httpScheduler;
+
+        private Executor executor;
 
         private SocketAddressResolver socketAddressResolver;
 
@@ -558,6 +567,12 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder executor( Executor Executor )
+        {
+            this.executor = executor;
+            return this;
+        }
+
         public Builder httpClientSocketAddressResolver( SocketAddressResolver socketAddressResolver )
         {
             this.socketAddressResolver = socketAddressResolver;
@@ -611,6 +626,7 @@ public class LoadGenerator
             loadGenerator.httpProxies = httpProxies;
             loadGenerator.transport = transport;
             loadGenerator.statisticsPath = statisticsPath;
+            loadGenerator.executor = executor;
             return loadGenerator.startIt();
         }
 

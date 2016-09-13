@@ -200,6 +200,7 @@ public abstract class AbstractLoadGeneratorTest
             .loadProfile( profile ) //
             .responseTimeListeners( responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()]) ) //
             .requestListeners( testRequestListener ) //
+            //.executor( new QueuedThreadPool() )
             .build();
 
         enhanceLoadGenerator( loadGenerator );
