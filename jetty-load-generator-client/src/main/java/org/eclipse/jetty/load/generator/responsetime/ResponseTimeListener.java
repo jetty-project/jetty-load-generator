@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.eclipse.jetty.load.generator.latency;
+package org.eclipse.jetty.load.generator.responsetime;
 
 
 import org.eclipse.jetty.load.generator.ValueListener;

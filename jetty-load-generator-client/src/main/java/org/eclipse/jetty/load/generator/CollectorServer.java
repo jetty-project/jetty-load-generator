@@ -21,7 +21,7 @@ package org.eclipse.jetty.load.generator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.HdrHistogram.Recorder;
-import org.eclipse.jetty.load.generator.latency.ResponseTimeListener;
+import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;

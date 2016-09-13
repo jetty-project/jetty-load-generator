@@ -1,4 +1,4 @@
-package org.eclipse.jetty.load.generator.latency;
+package org.eclipse.jetty.load.generator.responsetime;
 
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.Server;
