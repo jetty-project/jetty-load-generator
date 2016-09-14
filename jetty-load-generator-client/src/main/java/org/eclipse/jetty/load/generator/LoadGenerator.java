@@ -303,7 +303,6 @@ public class LoadGenerator
                         if (this.httpProxies != null) {
                             httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
                         }
-                        clients.add( httpClient );
 
                         LoadGeneratorRunner loadGeneratorRunner = //
                             new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler );
@@ -350,7 +349,6 @@ public class LoadGenerator
         try
         {
             HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
-            clients.add( httpClient );
             final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?statsReset=true";
             Request request = httpClient.newRequest( uri );
             ContentResponse contentResponse = request.send();
@@ -411,6 +409,7 @@ public class LoadGenerator
         throws Exception
     {
         HttpClient httpClient = new HttpClient( httpClientTransport, sslContextFactory );
+        clients.add( httpClient );
         switch ( this.transport )
         {
             case HTTP:
