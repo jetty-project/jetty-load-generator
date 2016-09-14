@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class LoadGeneratorResultHandler
     extends Request.Listener.Adapter
-    implements Response.CompleteListener, Response.AsyncContentListener, Response.BeginListener
+    implements Response.CompleteListener, Response.AsyncContentListener, Response.BeginListener, Response.SuccessListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
@@ -153,6 +153,12 @@ public class LoadGeneratorResultHandler
 
     protected void onContentSize(int size) {
         // TODO store this bandwith approx
+        LOGGER.debug( "onContentSize: {}", size );
     }
 
+    @Override
+    public void onSuccess( Response response )
+    {
+        LOGGER.debug( "onSuccess" );
+    }
 }

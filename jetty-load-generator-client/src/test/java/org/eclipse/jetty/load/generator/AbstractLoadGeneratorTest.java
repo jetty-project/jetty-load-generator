@@ -458,7 +458,6 @@ public abstract class AbstractLoadGeneratorTest
         public void onResponseTimeValue( Values values )
         {
             String path = values.getPath();
-            long responseTime = values.getTime();
             AtomicLong response = recorderPerPath.get( path );
             if (response == null) {
                 response = new AtomicLong( 1 );

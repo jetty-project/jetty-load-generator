@@ -350,6 +350,7 @@ public class LoadGenerator
         try
         {
             HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+            clients.add( httpClient );
             final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?statsReset=true";
             Request request = httpClient.newRequest( uri );
             ContentResponse contentResponse = request.send();
@@ -360,7 +361,6 @@ public class LoadGenerator
             if (contentResponse.getStatus() != HttpServletResponse.SC_OK ) {
                 LOGGER.warn( "cannot reset stats on Server side" );
             }
-            clients.add( httpClient );
         }
         catch ( Exception e )
         {
@@ -436,7 +436,7 @@ public class LoadGenerator
             }
 
         }
-        
+
         if ( this.getScheduler() != null )
         {
             httpClient.setScheduler( this.getScheduler() );

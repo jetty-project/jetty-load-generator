@@ -79,9 +79,9 @@ public class LoadGeneratorRunner
 
                 List<Resource> resources = loadGenerator.getProfile().getResources();
 
-                for ( Resource main : resources )
+                for ( Resource resource : resources )
                 {
-                    handleResource( main );
+                    handleResource( resource );
                 }
 
                 long waitTime = 1000 / loadGenerator.getTransactionRate();
@@ -103,7 +103,7 @@ public class LoadGeneratorRunner
         if ( !resource.getResources().isEmpty() || resource.isWait() )
         {
             ContentResponse contentResponse = buildRequest( resource ).send();
-            //loadGeneratorResultHandler.onComplete( contentResponse );
+            loadGeneratorResultHandler.onComplete( contentResponse );
         } else {
             buildRequest( resource ).send( loadGeneratorResultHandler );
         }
@@ -171,6 +171,8 @@ public class LoadGeneratorRunner
 
         request.header( LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER, //
                         Long.toString( System.nanoTime() ) );
+
+        request.onResponseSuccess( loadGeneratorResultHandler );
 
         return request;
     }
