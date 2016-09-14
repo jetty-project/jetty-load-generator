@@ -436,10 +436,7 @@ public class LoadGenerator
             }
 
         }
-
-        // TODO ?
-        //httpClient.setExecutor(  );
-
+        
         if ( this.getScheduler() != null )
         {
             httpClient.setScheduler( this.getScheduler() );
