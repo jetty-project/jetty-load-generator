@@ -184,4 +184,6 @@ public class Resource
         return "Resource{" + "responseSize=" + responseSize + ", path='" + path + '\'' + ", size=" + size + ", method='"
             + method + '\'' + '}';
     }
+
+    
 }

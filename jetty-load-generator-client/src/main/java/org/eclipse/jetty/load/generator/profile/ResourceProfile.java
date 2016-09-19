@@ -63,4 +63,10 @@ public class ResourceProfile
         }
         this.resources.add( resource );
     }
+
+    @Override
+    public String toString()
+    {
+        return "ResourceProfile{" + "resources=" + resources + '}';
+    }
 }
