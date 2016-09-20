@@ -21,6 +21,7 @@ package org.eclipse.jetty.load.generator.profile;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.util.StringUtil;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.List;
  *
  */
 public class Resource
+    implements Serializable
 {
 
     private int responseSize;
@@ -76,7 +78,7 @@ public class Resource
     public Resource( String path, Resource... then )
     {
         this( path );
-        this.resources = then == null ? new ArrayList<>(  ) : Arrays.asList( then );
+        this.resources = then == null ? new ArrayList<>() : Arrays.asList( then );
     }
 
     public Resource( String path, List<Resource> then )
@@ -93,7 +95,7 @@ public class Resource
 
     public void setPath( String path )
     {
-        this.path(path);
+        this.path( path );
     }
 
     public Resource size( int size )
@@ -136,6 +138,7 @@ public class Resource
 
     /**
      * cannot be used to add Resource, you must use {@link #addResource(Resource)}
+     *
      * @return the children {@link Resource} or an empty list
      */
     public List<Resource> getResources()

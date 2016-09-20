@@ -57,7 +57,10 @@ public class LoadGeneratorGroupTest
 
         Map<String,AtomicLong> response = responsePerPath.getRecorderPerPath();
 
-        logger.info( "responsePerPath: {}", response );
+        for ( Map.Entry<String,AtomicLong> entry : response.entrySet())
+        {
+            logger.info( "responsePerPath: {}", entry );
+        }
     }
 
     @Test

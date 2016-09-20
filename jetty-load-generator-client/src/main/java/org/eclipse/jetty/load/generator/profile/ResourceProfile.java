@@ -18,6 +18,7 @@
 
 package org.eclipse.jetty.load.generator.profile;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
  *
  */
 public class ResourceProfile
+    implements Serializable
 {
 
     private List<Resource> resources = new ArrayList<>();
