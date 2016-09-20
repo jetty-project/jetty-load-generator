@@ -49,7 +49,6 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -174,7 +173,7 @@ public abstract class AbstractLoadGeneratorTest
     }
 
 
-    protected List<ResponseTimeListener> getLatencyListeners()
+    protected List<ResponseTimeListener> getResponseTimeListeners()
     {
         return Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
     }
@@ -185,7 +184,7 @@ public abstract class AbstractLoadGeneratorTest
 
         testRequestListener = new TestRequestListener( logger );
 
-        List<ResponseTimeListener> responseTimeListeners = new ArrayList<>( getLatencyListeners() );
+        List<ResponseTimeListener> responseTimeListeners = new ArrayList<>( getResponseTimeListeners() );
 
         responseTimeListeners.add( responsePerPath );
 
@@ -472,6 +471,11 @@ public abstract class AbstractLoadGeneratorTest
         public void onLoadGeneratorStop()
         {
 
+        }
+
+        public Map<String, AtomicLong> getRecorderPerPath()
+        {
+            return recorderPerPath;
         }
     }
 

@@ -44,9 +44,9 @@ public class LoadGeneratorJmxSimpleTest
     }
 
     @Override
-    protected List<ResponseTimeListener> getLatencyListeners()
+    protected List<ResponseTimeListener> getResponseTimeListeners()
     {
-        List<ResponseTimeListener> listeners = new ArrayList<>( super.getLatencyListeners() );
+        List<ResponseTimeListener> listeners = new ArrayList<>( super.getResponseTimeListeners() );
         listeners.add( new JMXResponseTimeListener(server) );
         return listeners;
     }

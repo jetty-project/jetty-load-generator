@@ -185,5 +185,5 @@ public class Resource
             + method + '\'' + '}';
     }
 
-    
+
 }

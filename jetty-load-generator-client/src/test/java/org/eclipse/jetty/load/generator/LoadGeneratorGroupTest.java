@@ -21,9 +21,13 @@ package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.profile.Resource;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
 public class LoadGeneratorGroupTest
@@ -40,28 +44,27 @@ public class LoadGeneratorGroupTest
     public void simple_with_group()
         throws Exception
     {
-
-        // TODO size only for upload PUT / POST
-
-        ResourceProfile resourceProfile = new ResourceProfile( //
-                                                               new Resource( "/index.html",
-                              new Resource( "/foo.html" ), //
-                              new Resource( "/beer.html" ) //
-
-            ).size( 1024 ), //
-                                                               new Resource( "/wine.html" ), //
-                                                               new Resource( "/beer.html" )
-            );
+        ResourceProfile resourceProfile =
+            new ResourceProfile(
+                                new Resource( "/index.html",
+                                    new Resource( "/foo.html" ), //
+                                    new Resource( "/cider.html" )),
+                                new Resource( "/wine.html" , //
+                                    new Resource( "/beer.html" )
+                                ));
 
         runProfile( resourceProfile );
 
+        Map<String,AtomicLong> response = responsePerPath.getRecorderPerPath();
+
+        logger.info( "responsePerPath: {}", response );
     }
 
     @Test
     public void website_like() throws Exception {
         ResourceProfile sample = //
             new ResourceProfile( //
-                                 new Resource( "index.html", //
+                    new Resource( "index.html", //
                         new Resource( "/style.css", //
                         new Resource( "/logo.gif" ), //
                         new Resource( "/spacer.png" ) //
@@ -80,6 +83,10 @@ public class LoadGeneratorGroupTest
 
 
         runProfile( sample );
+
+        Map<String,AtomicLong> response = responsePerPath.getRecorderPerPath();
+
+        logger.info( "responsePerPath: {}", response );
 
     }
 
