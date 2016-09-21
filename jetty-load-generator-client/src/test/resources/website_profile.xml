@@ -1,9 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_3.dtd">
-<!-- =============================================================== -->
-<!--                                                                 -->
-<!-- =============================================================== -->
 <Configure id="ResourceProfile" class="org.eclipse.jetty.load.generator.profile.ResourceProfile">
   <Call name="addResource">
     <Arg>
