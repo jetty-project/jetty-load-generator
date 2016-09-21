@@ -105,7 +105,7 @@ public class LoadGeneratorRunner
             ContentResponse contentResponse = buildRequest( resource ).send();
             loadGeneratorResultHandler.onComplete( contentResponse );
         } else {
-            buildRequest( resource ).send( loadGeneratorResultHandler );
+            buildRequest( resource ).send();// loadGeneratorResultHandler );
         }
 
 
