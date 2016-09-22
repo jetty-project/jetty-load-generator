@@ -33,10 +33,10 @@ public class JettyLoadGeneratorRunnerArgs
     private String profileXmlPath;
 
     @Parameter( names = { "--host", "-h" }, description = "Target host" )
-    private String host;
+    private String host = "localhost";
 
     @Parameter( names = { "--port", "-p" }, description = "Target port" )
-    private int port;
+    private int port = 8080;
 
     @Parameter( names = { "--users", "-u" }, description = "Simulated users number" )
     private int users = 1;
