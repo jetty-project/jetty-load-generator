@@ -50,17 +50,20 @@ public class LoadGeneratorRunner
 
     private static final PlatformTimer PLATFORM_TIMER = PlatformTimer.detect();
 
+    private int transactionNumber = -1;
+
     // maintain a session/cookie per httpClient
     // FIXME olamy: not sure we really need that??
     private final HttpCookie httpCookie = new HttpCookie( "XXX-Jetty-LoadGenerator", //
                                                           Long.toString( System.nanoTime() ) );
 
     public LoadGeneratorRunner( HttpClient httpClient, LoadGenerator loadGenerator,
-                                LoadGeneratorResultHandler loadGeneratorResultHandler )
+                                LoadGeneratorResultHandler loadGeneratorResultHandler, int transactionNumber )
     {
         this.httpClient = httpClient;
         this.loadGenerator = loadGenerator;
         this.loadGeneratorResultHandler = loadGeneratorResultHandler;
+        this.transactionNumber = transactionNumber;
     }
 
     @Override
@@ -70,7 +73,7 @@ public class LoadGeneratorRunner
         LOGGER.debug( "loadGenerator#run" );
         try
         {
-            while ( true )
+            do
             {
                 if ( this.loadGenerator.getStop().get() || httpClient.isStopped() )
                 {
@@ -88,7 +91,12 @@ public class LoadGeneratorRunner
 
                 PLATFORM_TIMER.sleep( TimeUnit.MILLISECONDS.toMicros( waitTime ) );
 
-            }
+                if ( transactionNumber > -1 )
+                {
+                    transactionNumber--;
+                }
+
+            } while ( true && transactionNumber != 0 );
         }
         catch ( Throwable e )
         {

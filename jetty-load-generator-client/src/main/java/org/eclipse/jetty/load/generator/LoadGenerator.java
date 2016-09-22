@@ -277,7 +277,7 @@ public class LoadGenerator
     /**
      * run the defined load (users / request numbers)
      */
-    public void run()
+    public void run( int transactionNumber)
         throws Exception
     {
 
@@ -305,9 +305,10 @@ public class LoadGenerator
                         }
 
                         LoadGeneratorRunner loadGeneratorRunner = //
-                            new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler );
+                            new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
+                                                      transactionNumber);
 
-                        LoadGenerator.this.runnersExecutorService.submit( loadGeneratorRunner );
+                        this.runnersExecutorService.submit( loadGeneratorRunner );
                     }
                     catch ( Exception e )
                     {
@@ -331,12 +332,27 @@ public class LoadGenerator
                 LOGGER.debug( "exit run lambda" );
             }
         );
+
+        if ( transactionNumber > 0 )
+        {
+            executorService.shutdown();
+            while ( !executorService.isTerminated() )
+            {
+                Thread.sleep( 1 );
+            }
+        }
+    }
+
+    public void run( )
+        throws Exception
+    {
+        this.run( -1 );
     }
 
     public void run( long time, TimeUnit timeUnit )
         throws Exception
     {
-        this.run();
+        this.run( -1 );
         PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
         this.interrupt();
     }
