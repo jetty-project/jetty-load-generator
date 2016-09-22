@@ -43,6 +43,7 @@
   <modules>
     <module>jetty-load-generator-client</module>
     <module>jetty-load-generator-collector</module>
+    <module>jetty-load-generator-runner</module>
   </modules>
 
   <repositories>
