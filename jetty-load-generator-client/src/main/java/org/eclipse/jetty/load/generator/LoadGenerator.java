@@ -45,6 +45,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -291,6 +292,8 @@ public class LoadGenerator
             {
                 HttpClientTransport httpClientTransport = getHttpClientTransport();
 
+                List<Future<?>> futures = new ArrayList<Future<?>>( getUsers() );
+
                 for ( int i = getUsers(); i > 0; i-- )
                 {
                     try
@@ -308,7 +311,8 @@ public class LoadGenerator
                             new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
                                                       transactionNumber);
 
-                        this.runnersExecutorService.submit( loadGeneratorRunner );
+                        futures.add( this.runnersExecutorService.submit( loadGeneratorRunner ));
+
                     }
                     catch ( Exception e )
                     {
@@ -319,7 +323,7 @@ public class LoadGenerator
 
                 try
                 {
-                    while ( !LoadGenerator.this.stop.get() )
+                    while ( !LoadGenerator.this.stop.get() && !allFinished( futures ))
                     {
                         // wait until stopped
                         Thread.sleep( 1 );
@@ -341,6 +345,18 @@ public class LoadGenerator
                 Thread.sleep( 1 );
             }
         }
+    }
+
+    private boolean allFinished( List<Future<?>> futures )
+    {
+        for ( Future<?> future : futures )
+        {
+            if ( !future.isDone() )
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void run( )

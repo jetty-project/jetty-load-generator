@@ -29,6 +29,7 @@ import org.eclipse.jetty.util.log.Logger;
 
 import java.net.HttpCookie;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -111,7 +112,7 @@ public class LoadGeneratorRunner
         if ( !resource.getResources().isEmpty() || resource.isWait() )
         {
             ContentResponse contentResponse = buildRequest( resource ).send();
-            loadGeneratorResultHandler.onComplete( contentResponse );
+            //loadGeneratorResultHandler.onComplete( contentResponse );
         }
         else
         {
@@ -175,15 +176,11 @@ public class LoadGeneratorRunner
 
         request.onRequestBegin( loadGeneratorResultHandler );
 
-        request.onResponseBegin( loadGeneratorResultHandler );
-
         request.onComplete( loadGeneratorResultHandler );
 
         request.header( LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER, //
                         Long.toString( System.nanoTime() ) );
-
-        request.onResponseSuccess( loadGeneratorResultHandler );
-
+        
         return request;
     }
 
