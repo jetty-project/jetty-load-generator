@@ -55,7 +55,6 @@ public class LoadGeneratorRunNumberTest
         List<LoadGenerator.Transport> transports = new ArrayList<>();
 
         transports.add( LoadGenerator.Transport.HTTP );
-
         transports.add( LoadGenerator.Transport.HTTPS );
         transports.add( LoadGenerator.Transport.H2 );
         transports.add( LoadGenerator.Transport.H2C );
@@ -80,7 +79,7 @@ public class LoadGeneratorRunNumberTest
 
 
     @Test
-    public void simple_test_limited_run_two()
+    public void simpleTestLimitedRunTwo()
         throws Exception
     {
         int number = 2, expected =  number * usersNumber;
@@ -118,7 +117,7 @@ public class LoadGeneratorRunNumberTest
     }
 
     @Test
-    public void group_test_limited_run_two()
+    public void groupTestLimitedRunTwo()
         throws Exception
     {
 
@@ -139,6 +138,7 @@ public class LoadGeneratorRunNumberTest
                 .users( this.usersNumber ) //
                 .scheduler( scheduler ) //
                 .transactionRate( 1 ) //
+                .sslContextFactory( sslContextFactory ) //
                 .transport( this.transport ) //
                 .httpClientTransport( this.httpClientTransport() ) //
                 .loadProfile( resourceProfile ) //
