@@ -47,7 +47,7 @@ public class LoadGeneratorRunNumberTest
         super( transport, usersNumber );
     }
 
-    /*
+
     @Parameterized.Parameters( name = "httpClientTransport/users: {0},{1}" )
     public static Collection<Object[]> data()
     {
@@ -56,14 +56,14 @@ public class LoadGeneratorRunNumberTest
 
         transports.add( LoadGenerator.Transport.HTTP );
 
-        //transports.add( LoadGenerator.Transport.HTTPS );
-        //transports.add( LoadGenerator.Transport.H2 );
-        //transports.add( LoadGenerator.Transport.H2C );
-        //transports.add( LoadGenerator.Transport.FCGI );
+        transports.add( LoadGenerator.Transport.HTTPS );
+        transports.add( LoadGenerator.Transport.H2 );
+        transports.add( LoadGenerator.Transport.H2C );
+        transports.add( LoadGenerator.Transport.FCGI );
 
 
         // number of users
-        List<Integer> users = Arrays.asList( 1, 2, 4 );
+        List<Integer> users = Arrays.asList( 1 );//, 2, 4 );
 
         List<Object[]> parameters = new ArrayList<>();
 
@@ -77,7 +77,7 @@ public class LoadGeneratorRunNumberTest
         }
         return parameters;
     }
-    */
+
 
     @Test
     public void simple_test_limited_run_two()
@@ -101,6 +101,7 @@ public class LoadGeneratorRunNumberTest
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
             .loadProfile( resourceProfile ) //
+            .sslContextFactory( sslContextFactory ) //
             .responseTimeListeners( responsePerPath ) //
             .build();
         loadGenerator.run( number );
@@ -109,7 +110,7 @@ public class LoadGeneratorRunNumberTest
 
         for ( Map.Entry<String, AtomicLong> entry : responsePerPath.getRecorderPerPath().entrySet() )
         {
-            Assert.assertEquals( "not " + expected + " response for path " + entry.getKey(), //
+            Assert.assertEquals( transport +  " not " + expected + " response for path " + entry.getKey(), //
                                  expected, //
                                  entry.getValue().get() );
         }
@@ -149,7 +150,7 @@ public class LoadGeneratorRunNumberTest
 
             for ( Map.Entry<String, AtomicLong> entry : responsePerPath.getRecorderPerPath().entrySet() )
             {
-                Assert.assertEquals( "not " + expected + " response for path " + entry.getKey(), //
+                Assert.assertEquals( transport + " not " + expected + " response for path " + entry.getKey(), //
                                      expected, //
                                      entry.getValue().get() );
             }
