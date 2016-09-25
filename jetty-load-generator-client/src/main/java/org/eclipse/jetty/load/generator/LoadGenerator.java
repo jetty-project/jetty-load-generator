@@ -323,7 +323,8 @@ public class LoadGenerator
 
                 try
                 {
-                    while ( !LoadGenerator.this.stop.get() && !allFinished( futures ))
+
+                    while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ))
                     {
                         // wait until stopped
                         Thread.sleep( 1 );
@@ -345,18 +346,6 @@ public class LoadGenerator
                 Thread.sleep( 1 );
             }
         }
-    }
-
-    private boolean allFinished( List<Future<?>> futures )
-    {
-        for ( Future<?> future : futures )
-        {
-            if ( !future.isDone() )
-            {
-                return false;
-            }
-        }
-        return true;
     }
 
     public void run( )
