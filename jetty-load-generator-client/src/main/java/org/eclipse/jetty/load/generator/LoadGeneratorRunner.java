@@ -111,12 +111,11 @@ public class LoadGeneratorRunner
         // so we have sync call if we have children or resource marked as wait
         if ( !resource.getResources().isEmpty() || resource.isWait() )
         {
-            ContentResponse contentResponse = buildRequest( resource ).send();
-            //loadGeneratorResultHandler.onComplete( contentResponse );
+            loadGeneratorResultHandler.onComplete( buildRequest( resource ).send() );
         }
         else
         {
-            buildRequest( resource ).send();
+            buildRequest( resource ).send( loadGeneratorResultHandler );
         }
 
 
@@ -160,7 +159,11 @@ public class LoadGeneratorRunner
                 + loadGenerator.getPort() + //
                 ( resource.getPath() == null ? "" : resource.getPath() );
 
-        Request request = httpClient.newRequest( url ).method( resource.getMethod() ).cookie( httpCookie );
+        Request request = httpClient.newRequest( url );
+
+        request.version( loadGenerator.getHttpVersion() );
+
+        request.method( resource.getMethod() ).cookie( httpCookie );
 
         if ( resource.getResponseSize() > 0 )
         {
@@ -172,11 +175,11 @@ public class LoadGeneratorRunner
             request.content( new BytesContentProvider( new byte[resource.getSize()] ) );
         }
 
-        request.onResponseContentAsync( loadGeneratorResultHandler );
+        //request.onResponseContentAsync( loadGeneratorResultHandler );
 
-        request.onRequestBegin( loadGeneratorResultHandler );
+        //request.onRequestBegin( loadGeneratorResultHandler );
 
-        request.onComplete( loadGeneratorResultHandler );
+        //request.onComplete( loadGeneratorResultHandler );
 
         request.header( LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER, //
                         Long.toString( System.nanoTime() ) );

@@ -36,8 +36,7 @@ import java.util.List;
  *
  */
 public class LoadGeneratorResultHandler
-    extends Request.Listener.Adapter
-    implements Response.CompleteListener, Response.AsyncContentListener
+    implements Response.CompleteListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
@@ -79,6 +78,8 @@ public class LoadGeneratorResultHandler
             }
         }
 
+        /*
+
         int size = 0;
         // we need to consume content!
         if (response instanceof ContentResponse ) {
@@ -97,11 +98,12 @@ public class LoadGeneratorResultHandler
                 LOGGER.warn( "skip fail to get content size", e );
             }
         }
+        */
     }
 
 
 
-    @Override
+    //@Override
     public void onFailure( Request request, Throwable failure )
     {
         if (LOGGER.isDebugEnabled()) {
@@ -109,8 +111,7 @@ public class LoadGeneratorResultHandler
         }
     }
 
-
-
+    /*
     @Override
     public void onContent( Response response, ByteBuffer buffer, Callback callback )
     {
@@ -137,6 +138,7 @@ public class LoadGeneratorResultHandler
         }
         callback.succeeded();
     }
+    */
 
 
     protected void onContentSize(int size) {

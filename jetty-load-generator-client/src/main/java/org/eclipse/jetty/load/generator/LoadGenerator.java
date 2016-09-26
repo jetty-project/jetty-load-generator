@@ -24,6 +24,8 @@ import org.eclipse.jetty.client.HttpProxy;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
@@ -108,6 +110,8 @@ public class LoadGenerator
 
     private Transport transport;
 
+    private HttpVersion httpVersion = HttpVersion.HTTP_1_1;
+
     /**
      * path of the {@link org.eclipse.jetty.servlet.StatisticsServlet} on server side
      */
@@ -130,6 +134,8 @@ public class LoadGenerator
         this.port = port;
         this.stop = new AtomicBoolean( false );
         this.profile = profile;
+
+
     }
 
     //--------------------------------------------------------------
@@ -207,7 +213,12 @@ public class LoadGenerator
         return executor;
     }
 
-    //--------------------------------------------------------------
+    public HttpVersion getHttpVersion()
+    {
+        return httpVersion;
+    }
+
+//--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
 
@@ -284,7 +295,7 @@ public class LoadGenerator
 
         final List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
-        listeners.add( _loadGeneratorResultHandler );
+        //listeners.add( _loadGeneratorResultHandler );
 
         statsReset();
 
@@ -430,7 +441,7 @@ public class LoadGenerator
         throws Exception
     {
         HttpClient httpClient = new HttpClient( httpClientTransport, sslContextFactory );
-        clients.add( httpClient );
+
         switch ( this.transport )
         {
             case HTTP:
@@ -466,6 +477,7 @@ public class LoadGenerator
             httpClient.setExecutor( this.getExecutor() );
         }
 
+        clients.add( httpClient );
         httpClient.start();
 
         return httpClient;
@@ -526,6 +538,8 @@ public class LoadGenerator
         private Transport transport;
 
         private String statisticsPath = "/stats";
+
+        private HttpVersion httpVersion = HttpVersion.HTTP_1_1;
 
         public Builder()
         {
@@ -627,6 +641,12 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder httpVersion( HttpVersion httpVersion )
+        {
+            this.httpVersion = httpVersion;
+            return this;
+        }
+
         public LoadGenerator build()
         {
             this.validate();
@@ -644,6 +664,7 @@ public class LoadGenerator
             loadGenerator.transport = transport;
             loadGenerator.statisticsPath = statisticsPath;
             loadGenerator.executor = executor;
+            loadGenerator.httpVersion = httpVersion;
             return loadGenerator.startIt();
         }
 

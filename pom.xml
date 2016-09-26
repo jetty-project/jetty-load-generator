@@ -38,7 +38,7 @@
     <jetty-93-version>9.3.12.v20160915</jetty-93-version>
     <jetty-94-version>9.4.0.RC0</jetty-94-version>
     <jackson2-version>2.7.5</jackson2-version>
-    <jetty.version>${jetty-93-version}</jetty.version> <!-- 9.3.13-SNAPSHOT ${jetty-93-version} ${jetty-94-version} -->
+    <jetty.version>9.3.13-SNAPSHOT</jetty.version> <!-- 9.3.13-SNAPSHOT ${jetty-93-version} ${jetty-94-version} -->
   </properties>
 
   <modules>

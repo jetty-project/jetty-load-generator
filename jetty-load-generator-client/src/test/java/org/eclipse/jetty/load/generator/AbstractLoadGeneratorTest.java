@@ -23,6 +23,7 @@ import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.fcgi.server.ServerFCGIConnectionFactory;
+import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
@@ -172,6 +173,32 @@ public abstract class AbstractLoadGeneratorTest
         throw new IllegalArgumentException( "unknow httpClientTransport" );
     }
 
+    public HttpVersion httpVersion()  {
+        switch ( this.transport )
+        {
+            case HTTP:
+            case HTTPS:
+            {
+                return HttpVersion.HTTP_1_1;
+            }
+            case H2C:
+            case H2:
+            {
+                return HttpVersion.HTTP_2;
+            }
+            case FCGI:
+            {
+                return HttpVersion.HTTP_1_1;
+            }
+
+            default:
+            {
+                // nothing this weird case already handled by #provideClientTransport
+            }
+
+        }
+        throw new IllegalArgumentException( "unknow httpClientTransport" );
+    }
 
     protected List<ResponseTimeListener> getResponseTimeListeners()
     {
@@ -199,6 +226,7 @@ public abstract class AbstractLoadGeneratorTest
             .loadProfile( profile ) //
             .responseTimeListeners( responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()]) ) //
             .requestListeners( testRequestListener ) //
+            .httpVersion( httpVersion() ) //
             //.executor( new QueuedThreadPool() )
             .build();
 

@@ -19,6 +19,10 @@
 package org.eclipse.jetty.load.generator;
 
 
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
@@ -46,7 +50,6 @@ public class LoadGeneratorRunNumberTest
     {
         super( transport, usersNumber );
     }
-
 
     @Parameterized.Parameters( name = "httpClientTransport/users: {0},{1}" )
     public static Collection<Object[]> data()
@@ -77,7 +80,6 @@ public class LoadGeneratorRunNumberTest
         return parameters;
     }
 
-
     @Test
     public void simpleTestLimitedRunTwo()
         throws Exception
@@ -87,7 +89,7 @@ public class LoadGeneratorRunNumberTest
         responsePerPath = new ResponsePerPath();
 
         ResourceProfile resourceProfile = //
-            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ) );
+            new ResourceProfile( new Resource( "/index.html" ) );//, new Resource( "/foo.html" ).wait( true ) );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -102,10 +104,13 @@ public class LoadGeneratorRunNumberTest
             .loadProfile( resourceProfile ) //
             .sslContextFactory( sslContextFactory ) //
             .responseTimeListeners( responsePerPath ) //
+            .httpVersion( httpVersion() ) //
             .build();
         loadGenerator.run( number );
 
         scheduler.stop();
+
+        //Assert.assertEquals( 2, responsePerPath.getRecorderPerPath().size() );
 
         for ( Map.Entry<String, AtomicLong> entry : responsePerPath.getRecorderPerPath().entrySet() )
         {
@@ -143,6 +148,7 @@ public class LoadGeneratorRunNumberTest
                 .httpClientTransport( this.httpClientTransport() ) //
                 .loadProfile( resourceProfile ) //
                 .responseTimeListeners( responsePerPath ) //
+                .httpVersion( httpVersion() ) //
                 .build();
             loadGenerator.run( number );
 
