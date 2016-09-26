@@ -18,13 +18,22 @@
 
 package org.eclipse.jetty.load.generator.profile;
 
+import groovy.lang.Binding;
+import groovy.lang.GroovyShell;
+import org.codehaus.groovy.control.CompilerConfiguration;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -105,6 +114,38 @@ public class ResourceProfileBuildTest
             ResourceProfile sample = (ResourceProfile) new XmlConfiguration( inputStream ).configure();
             web_profile_assert( sample );
         }
+    }
+
+    public static String read(InputStream input) throws IOException
+    {
+        try (BufferedReader buffer = new BufferedReader( new InputStreamReader( input))) {
+            return buffer.lines().collect( Collectors.joining( System.lineSeparator() ));
+        }
+    }
+
+    @Test
+    public void website_profile_with_groovy()
+        throws Exception
+    {
+        try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream( "website_profile.groovy" ))
+        {
+            ResourceProfile sample = (ResourceProfile) evaluateScript( read( inputStream ) );
+            web_profile_assert( sample );
+        }
+    }
+
+
+    public Object evaluateScript( String script )
+        throws Exception
+    {
+
+        CompilerConfiguration config = new CompilerConfiguration( CompilerConfiguration.DEFAULT );
+        config.setDebug( true );
+        config.setVerbose( true );
+
+        GroovyShell interpreter = new GroovyShell( config );
+
+        return interpreter.evaluate( script );
     }
 
 
