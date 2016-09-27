@@ -1,7 +1,8 @@
-## Project description
-
+## HTTP/1.1 and HTTP/2 Load Testing
 
 LoadGenerator will generate some load on an http server using the Jetty HttpClient.
+
+You can generate load for both HTTP/1.1 and HTTP/2
 
 ## Documentation
 
