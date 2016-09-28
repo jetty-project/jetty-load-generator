@@ -75,4 +75,9 @@ public class SummaryResponseTimeListener
         }
         System.out.println( message.toString() );
     }
+
+    public Map<String, Recorder> getRecorderPerPath()
+    {
+        return recorderPerPath;
+    }
 }
