@@ -62,6 +62,7 @@ public class LoadGeneratorResultHandler
     public void onComplete( Response response )
     {
 
+        // TODO olamy: call to listener in an async way?
         long end = System.nanoTime();
 
         String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
