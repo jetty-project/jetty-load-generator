@@ -25,7 +25,7 @@ import org.eclipse.jetty.load.generator.HttpFCGITransportBuilder;
 import org.eclipse.jetty.load.generator.HttpTransportBuilder;
 import org.eclipse.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
-import org.eclipse.jetty.load.generator.responsetime.SummaryResponseTimeListener;
+import org.eclipse.jetty.load.generator.responsetime.ResponseTimePerPathListener;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 
@@ -100,7 +100,7 @@ public class JettyLoadGeneratorRunner
             .httpClientTransport( httpClientTransport() ) //
             .sslContextFactory( sslContextFactory() ) //
             .loadProfile( resourceProfile ) //
-            .responseTimeListeners( new SummaryResponseTimeListener() ) //
+            .responseTimeListeners( new ResponseTimePerPathListener() ) //
             //.requestListeners( testRequestListener ) //
             //.executor( new QueuedThreadPool() )
             .build();

@@ -20,7 +20,7 @@ package org.eclipse.jetty.load.generator;
 
 
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
-import org.eclipse.jetty.load.generator.responsetime.SummaryResponseTimeListener;
+import org.eclipse.jetty.load.generator.responsetime.ResponseTimePerPathListener;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
@@ -61,7 +61,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
             .loadProfile( resourceProfile ) //
-            .responseTimeListeners( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() ) //
+            .responseTimeListeners( new ResponseTimeDisplayListener(), new ResponseTimePerPathListener() ) //
             .httpVersion( httpVersion() ) //
             .build() //
             .run( 5, TimeUnit.SECONDS );

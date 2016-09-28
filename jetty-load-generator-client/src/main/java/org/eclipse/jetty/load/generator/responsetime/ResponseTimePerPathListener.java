@@ -26,10 +26,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Print out general statistics when stopping.
- * To prevent that and only get the values simply use the constructor with <code>false</code>
+ * <p>Use {@link Recorder} to tracker response time per path</p>
+ * <p>
+ *     Print out general statistics when stopping.
+ *     To prevent that and only get the values simply use the constructor with <code>false</code>
+ * </p>
  */
-public class SummaryResponseTimeListener
+public class ResponseTimePerPathListener
     implements ResponseTimeListener
 {
 
@@ -37,13 +40,31 @@ public class SummaryResponseTimeListener
 
     private boolean printOnEnd = true;
 
-    public SummaryResponseTimeListener( boolean printOnEnd )
+    private long lowestDiscernibleValue = TimeUnit.MICROSECONDS.toNanos( 1 );
+    private long highestTrackableValue = TimeUnit.MINUTES.toNanos( 1 );
+    private int numberOfSignificantValueDigits = 3;
+
+
+    public ResponseTimePerPathListener( Map<String, Recorder> recorderPerPath, boolean printOnEnd,
+                                        long lowestDiscernibleValue, long highestTrackableValue,
+                                        int numberOfSignificantValueDigits )
+    {
+        this.recorderPerPath = recorderPerPath;
+        this.printOnEnd = printOnEnd;
+        this.lowestDiscernibleValue = lowestDiscernibleValue;
+        this.highestTrackableValue = highestTrackableValue;
+        this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
+    }
+
+    public ResponseTimePerPathListener( boolean printOnEnd )
     {
         this.printOnEnd = printOnEnd;
         this.recorderPerPath = new ConcurrentHashMap<>();
     }
 
-    public SummaryResponseTimeListener()
+
+
+    public ResponseTimePerPathListener()
     {
         this( true );
     }

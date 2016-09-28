@@ -18,11 +18,15 @@
 
 package org.eclipse.jetty.load.generator.responsetime;
 
+import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.CollectorInformations;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -44,13 +48,38 @@ public class ResponseTimeDisplayListener
 
     private ValueListenerRunnable runnable;
 
+    private long lowestDiscernibleValue = TimeUnit.MICROSECONDS.toNanos( 1 );
+
+    private long highestTrackableValue = TimeUnit.MINUTES.toNanos( 1 );
+
+    private int numberOfSignificantValueDigits = 3;
+
+    private List<ValueListener> valueListeners = new ArrayList<>();
+
     public ResponseTimeDisplayListener( long initial, long delay, TimeUnit timeUnit )
     {
+        this( TimeUnit.MICROSECONDS.toNanos( 1 ), //
+              TimeUnit.MINUTES.toNanos( 1 ),  //
+              3,  //
+              initial, //
+              delay,  //
+              timeUnit, //
+              Arrays.asList(new PrintValueListener()) );
+    }
+
+    public ResponseTimeDisplayListener( long lowestDiscernibleValue, long highestTrackableValue,
+                                        int numberOfSignificantValueDigits, long initial, long delay,
+                                        TimeUnit timeUnit, List<ValueListener> valueListeners )
+    {
+        this.valueListeners.addAll( valueListeners );
         this.recorderPerPath = new ConcurrentHashMap<>();
-        this.runnable = new ValueListenerRunnable( recorderPerPath );
+        this.runnable = new ValueListenerRunnable( recorderPerPath, this.valueListeners );
         // FIXME configurable or using a shared one
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
         scheduledExecutorService.scheduleWithFixedDelay( runnable, initial, delay, timeUnit );
+        this.lowestDiscernibleValue = lowestDiscernibleValue;
+        this.highestTrackableValue = highestTrackableValue;
+        this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
     }
 
     public ResponseTimeDisplayListener()
@@ -63,9 +92,12 @@ public class ResponseTimeDisplayListener
     {
         private final Map<String, Recorder> recorderPerPath;
 
-        private ValueListenerRunnable( Map<String, Recorder> recorderPerPath )
+        private final List<ValueListener> valueListeners;
+
+        private ValueListenerRunnable( Map<String, Recorder> recorderPerPath, List<ValueListener> valueListeners )
         {
             this.recorderPerPath = recorderPerPath;
+            this.valueListeners = valueListeners;
         }
 
         @Override
@@ -73,13 +105,12 @@ public class ResponseTimeDisplayListener
         {
             for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
             {
-                StringBuilder message =
-                    new StringBuilder( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
-                message.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                           CollectorInformations.InformationType.REQUEST ) //
-                                    .toString( true ) ) //
-                    .append( System.lineSeparator() );
-                LOGGER.info( message.toString() );
+                String path = entry.getKey();
+                Histogram histogram = entry.getValue().getIntervalHistogram();
+                for (ValueListener valueListener : valueListeners )
+                {
+                    valueListener.onValue( path, histogram );
+                }
             }
         }
     }
@@ -93,9 +124,9 @@ public class ResponseTimeDisplayListener
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
-            recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                     TimeUnit.MINUTES.toNanos( 1 ), //
-                                     3 );
+            recorder = new Recorder( lowestDiscernibleValue, //
+                                     highestTrackableValue, //
+                                     numberOfSignificantValueDigits );
             recorderPerPath.put( path, recorder );
         }
         recorder.recordValue( responseTime );
@@ -107,5 +138,26 @@ public class ResponseTimeDisplayListener
         scheduledExecutorService.shutdown();
         // last run
         runnable.run();
+    }
+
+
+    interface ValueListener
+    {
+        void onValue( String path, Histogram histogram );
+    }
+
+    public static class PrintValueListener
+        implements ValueListener
+    {
+        @Override
+        public void onValue( String path, Histogram histogram )
+        {
+            StringBuilder message = new StringBuilder( "Path:" ).append( path ).append( System.lineSeparator() );
+            message.append( new CollectorInformations( histogram, //
+                                                       CollectorInformations.InformationType.REQUEST ) //
+                                .toString( true ) ) //
+                .append( System.lineSeparator() );
+            LOGGER.info( message.toString() );
+        }
     }
 }

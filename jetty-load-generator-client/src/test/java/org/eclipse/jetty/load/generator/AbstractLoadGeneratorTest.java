@@ -29,7 +29,7 @@ import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.eclipse.jetty.load.generator.responsetime.SummaryResponseTimeListener;
+import org.eclipse.jetty.load.generator.responsetime.ResponseTimePerPathListener;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.server.ConnectionFactory;
@@ -202,7 +202,7 @@ public abstract class AbstractLoadGeneratorTest
 
     protected List<ResponseTimeListener> getResponseTimeListeners()
     {
-        return Arrays.asList( new ResponseTimeDisplayListener(), new SummaryResponseTimeListener() );
+        return Arrays.asList( new ResponseTimeDisplayListener(), new ResponseTimePerPathListener() );
     }
 
     protected LoadGenerator build( ResourceProfile profile ) throws Exception {
