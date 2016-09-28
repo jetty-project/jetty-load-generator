@@ -26,7 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Print out general statistics when stopping.
+ * To prevent that and only get the values simply use the constructor with <code>false</code>
  */
 public class SummaryResponseTimeListener
     implements ResponseTimeListener
@@ -34,9 +35,17 @@ public class SummaryResponseTimeListener
 
     private Map<String, Recorder> recorderPerPath;
 
-    public SummaryResponseTimeListener( )
+    private boolean printOnEnd = true;
+
+    public SummaryResponseTimeListener( boolean printOnEnd )
     {
-        this.recorderPerPath = new ConcurrentHashMap<>(  );
+        this.printOnEnd = printOnEnd;
+        this.recorderPerPath = new ConcurrentHashMap<>();
+    }
+
+    public SummaryResponseTimeListener()
+    {
+        this( true );
     }
 
     @Override
@@ -58,22 +67,25 @@ public class SummaryResponseTimeListener
     @Override
     public void onLoadGeneratorStop()
     {
-        StringBuilder message =  //
-            new StringBuilder( System.lineSeparator()) //
-                .append( "--------------------------------------" ).append( System.lineSeparator() ) //
-                .append( "   Response Time Summary    " ).append( System.lineSeparator() ) //
-                .append( "--------------------------------------" ).append( System.lineSeparator() ); //
-
-        for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
+        if ( printOnEnd )
         {
-            message.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
-            message.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                       CollectorInformations.InformationType.REQUEST ) //
-                                .toString( true ) ) //
-                .append( System.lineSeparator() );
+            StringBuilder message =  //
+                new StringBuilder( System.lineSeparator() ) //
+                    .append( "--------------------------------------" ).append( System.lineSeparator() ) //
+                    .append( "   Response Time Summary    " ).append( System.lineSeparator() ) //
+                    .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
+            for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
+            {
+                message.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
+                message.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                           CollectorInformations.InformationType.REQUEST ) //
+                                    .toString( true ) ) //
+                    .append( System.lineSeparator() );
+
+            }
+            System.out.println( message.toString() );
         }
-        System.out.println( message.toString() );
     }
 
     public Map<String, Recorder> getRecorderPerPath()
