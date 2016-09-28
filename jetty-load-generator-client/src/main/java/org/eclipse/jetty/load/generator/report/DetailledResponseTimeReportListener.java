@@ -3,7 +3,7 @@ package org.eclipse.jetty.load.generator.report;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 
 /**
- * Created by olamy on 28/9/16.
+ * Use this one to collect all values
  */
 public class DetailledResponseTimeReportListener
     implements ResponseTimeListener

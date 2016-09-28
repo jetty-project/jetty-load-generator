@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class CollectorInformations
 {
 
-    public static enum InformationType
+    public enum InformationType
     {
         REQUEST,
         MONITORING;
@@ -56,6 +56,11 @@ public class CollectorInformations
     public CollectorInformations()
     {
         // no op to help json mapper
+    }
+
+    public CollectorInformations( Histogram histogram )
+    {
+        this( histogram, InformationType.REQUEST );
     }
 
     public CollectorInformations( Histogram histogram, InformationType informationType )
@@ -175,23 +180,23 @@ public class CollectorInformations
     @Override
     public String toString()
     {
-        return toString(false);
+        return toString( false );
     }
 
-    public String toString(boolean ls)
+    public String toString( boolean ls )
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
-        return "CollectorInformations:" + ( ls ?  System.lineSeparator() : "" ) //
-            + "informationType=" + informationType + ( ls ?  System.lineSeparator() : "" ) //
-            + ",totalCount=" + totalCount + ( ls ?  System.lineSeparator() : "" ) //
-            + ", minValue=" + minValue + ( ls ?  System.lineSeparator() : "" ) //
-            + ", maxValue=" + maxValue +  ( ls ?  System.lineSeparator() : "" ) //
-            + ", mean=" + mean + ( ls ?  System.lineSeparator() : "" ) //
-            + ", stdDeviation=" + stdDeviation + ( ls ?  System.lineSeparator() : "" ) //
-            + ", value 50%=" + value50 + ( ls ?  System.lineSeparator() : "" ) //
-            + ", value 90%=" + value90 + ( ls ?  System.lineSeparator() : "" ) //
-            + ", startTimeStamp=" + simpleDateFormat.format( startTimeStamp ) + ( ls ?  System.lineSeparator() : "" ) //
-            + ", endTimeStamp=" + simpleDateFormat.format(endTimeStamp );
+        return "CollectorInformations:" + ( ls ? System.lineSeparator() : "" ) //
+            + "informationType=" + informationType + ( ls ? System.lineSeparator() : "" ) //
+            + ",totalCount=" + totalCount + ( ls ? System.lineSeparator() : "" ) //
+            + ", minValue=" + minValue + ( ls ? System.lineSeparator() : "" ) //
+            + ", maxValue=" + maxValue + ( ls ? System.lineSeparator() : "" ) //
+            + ", mean=" + mean + ( ls ? System.lineSeparator() : "" ) //
+            + ", stdDeviation=" + stdDeviation + ( ls ? System.lineSeparator() : "" ) //
+            + ", value 50%=" + value50 + ( ls ? System.lineSeparator() : "" ) //
+            + ", value 90%=" + value90 + ( ls ? System.lineSeparator() : "" ) //
+            + ", startTimeStamp=" + simpleDateFormat.format( startTimeStamp ) + ( ls ? System.lineSeparator() : "" ) //
+            + ", endTimeStamp=" + simpleDateFormat.format( endTimeStamp );
     }
 
 }
