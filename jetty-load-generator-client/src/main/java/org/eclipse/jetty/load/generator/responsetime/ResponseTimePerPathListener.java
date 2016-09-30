@@ -77,9 +77,9 @@ public class ResponseTimePerPathListener
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
-            recorder = new Recorder( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-                                     TimeUnit.MINUTES.toNanos( 1 ), //
-                                     3 );
+            recorder = new Recorder( lowestDiscernibleValue, //
+                                     highestTrackableValue, //
+                                     numberOfSignificantValueDigits );
             recorderPerPath.put( path, recorder );
         }
         recorder.recordValue( responseTime );
