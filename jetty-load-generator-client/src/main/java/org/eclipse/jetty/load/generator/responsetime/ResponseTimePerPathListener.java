@@ -40,9 +40,9 @@ public class ResponseTimePerPathListener
 
     private boolean printOnEnd = true;
 
-    private long lowestDiscernibleValue = TimeUnit.MICROSECONDS.toNanos( 1 );
-    private long highestTrackableValue = TimeUnit.MINUTES.toNanos( 1 );
-    private int numberOfSignificantValueDigits = 3;
+    private long lowestDiscernibleValue = RecorderConstants.LOWEST_DISCERNIBLE_VALUE;
+    private long highestTrackableValue = RecorderConstants.HIGHEST_TRACKABLE_VALUE;
+    private int numberOfSignificantValueDigits = RecorderConstants.NUMBER_OF_SIHNIFICANT_VALUE_DIGITS;
 
 
     public ResponseTimePerPathListener( Map<String, Recorder> recorderPerPath, boolean printOnEnd,

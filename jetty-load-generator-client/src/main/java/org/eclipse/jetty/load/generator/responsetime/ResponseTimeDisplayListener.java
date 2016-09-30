@@ -48,19 +48,17 @@ public class ResponseTimeDisplayListener
 
     private ValueListenerRunnable runnable;
 
-    private long lowestDiscernibleValue = TimeUnit.MICROSECONDS.toNanos( 1 );
-
-    private long highestTrackableValue = TimeUnit.MINUTES.toNanos( 1 );
-
-    private int numberOfSignificantValueDigits = 3;
+    private final long lowestDiscernibleValue;
+    private final long highestTrackableValue;
+    private final int numberOfSignificantValueDigits;
 
     private List<ValueListener> valueListeners = new ArrayList<>();
 
     public ResponseTimeDisplayListener( long initial, long delay, TimeUnit timeUnit )
     {
-        this( TimeUnit.MICROSECONDS.toNanos( 1 ), //
-              TimeUnit.MINUTES.toNanos( 1 ),  //
-              3,  //
+        this( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
+              RecorderConstants.HIGHEST_TRACKABLE_VALUE,  //
+              RecorderConstants.NUMBER_OF_SIHNIFICANT_VALUE_DIGITS,  //
               initial, //
               delay,  //
               timeUnit, //
