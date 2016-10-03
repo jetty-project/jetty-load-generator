@@ -58,6 +58,7 @@ public class DetailledResponseTimeReport
 
         private int httpStatus;
 
+        // in nano s
         private long time;
 
         public Entry( long timeStamp, String path, int httpStatus, long time )
