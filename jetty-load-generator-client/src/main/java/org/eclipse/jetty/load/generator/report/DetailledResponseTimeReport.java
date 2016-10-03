@@ -51,7 +51,7 @@ public class DetailledResponseTimeReport
 
     public static class Entry
     {
-        // in nano s
+        // in  ms
         private long timeStamp;
 
         private String path;

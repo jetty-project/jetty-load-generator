@@ -38,7 +38,7 @@ public class DetailledResponseTimeReportListener
     public void onResponseTimeValue( Values values )
     {
         this.detailledResponseTimeReport.addEntry(
-            new DetailledResponseTimeReport.Entry( System.nanoTime(), //
+            new DetailledResponseTimeReport.Entry( System.currentTimeMillis(), //
                                                    values.getPath(), //
                                                    values.getStatus(), //
                                                    values.getTime() ) );
