@@ -59,6 +59,12 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--running-time-unit", "-rtu" }, description = "Running Time Unit (h/m/s/ms)" )
     private String runningTimeUnit = "s";
 
+    @Parameter( names = { "--report-host", "-rh" }, description = "Report host" )
+    private String reportHost = "localhost";
+
+    @Parameter( names = { "--report-port", "-rp" }, description = "Report port" )
+    private int reportPort;
+
     @Parameter( names = { "--help"}, description = "Display help" )
     private boolean help;
 
@@ -200,5 +206,25 @@ public class LoadGeneratorStarterArgs
     public void setProfileJsonPath( String profileJsonPath )
     {
         this.profileJsonPath = profileJsonPath;
+    }
+
+    public String getReportHost()
+    {
+        return reportHost;
+    }
+
+    public void setReportHost( String reportHost )
+    {
+        this.reportHost = reportHost;
+    }
+
+    public int getReportPort()
+    {
+        return reportPort;
+    }
+
+    public void setReportPort( int reportPort )
+    {
+        this.reportPort = reportPort;
     }
 }

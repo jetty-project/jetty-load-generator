@@ -86,21 +86,25 @@ public abstract class AbstractLoadGeneratorStarter
     protected ResourceProfile getResourceProfile()
         throws Exception
     {
-        ResourceProfile resourceProfile;
-        Path profilePath = Paths.get( starterArgs.getProfileJsonPath() );
-        if ( Files.exists( profilePath ) )
+        
+        if (starterArgs.getProfileJsonPath()!= null)
         {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue( profilePath.toFile(), ResourceProfile.class );
+            Path profilePath = Paths.get( starterArgs.getProfileJsonPath() );
+            if ( Files.exists( profilePath ) )
+            {
+                ObjectMapper objectMapper = new ObjectMapper();
+                return objectMapper.readValue( profilePath.toFile(), ResourceProfile.class );
+            }
         }
-
-        profilePath = Paths.get( starterArgs.getProfileXmlPath() );
-        try (InputStream inputStream = Files.newInputStream( profilePath ))
+        if (starterArgs.getProfileXmlPath() != null)
         {
-            resourceProfile = (ResourceProfile) new XmlConfiguration( inputStream ).configure();
+            Path profilePath = Paths.get( starterArgs.getProfileXmlPath() );
+            try (InputStream inputStream = Files.newInputStream( profilePath ))
+            {
+                return (ResourceProfile) new XmlConfiguration( inputStream ).configure();
+            }
         }
-
-        return resourceProfile;
+        throw new IllegalArgumentException( "not resource profile file defined" );
     }
 
 
