@@ -55,7 +55,13 @@ public class LoadGeneratorStarter
         try
         {
             LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs );
-            runner.run();
+            if (runnerArgs.getRunIteration() > 0)
+            {
+                runner.run(runnerArgs.getRunIteration());
+            } else
+            {
+                runner.run();
+            }
         }
         catch ( Exception e )
         {

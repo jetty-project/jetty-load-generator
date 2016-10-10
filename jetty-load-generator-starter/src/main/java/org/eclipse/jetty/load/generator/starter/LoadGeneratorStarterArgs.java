@@ -59,6 +59,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--running-time-unit", "-rtu" }, description = "Running Time Unit (h/m/s/ms)" )
     private String runningTimeUnit = "s";
 
+    @Parameter( names = { "--running-iteration", "-ri" }, description = "Iteration number to run" )
+    private int runIteration;
+
     @Parameter( names = { "--report-host", "-rh" }, description = "Report host" )
     private String reportHost = "localhost";
 
@@ -191,6 +194,16 @@ public class LoadGeneratorStarterArgs
             default:
                 throw new IllegalArgumentException( runningTimeUnit + " is not recognized" );
         }
+    }
+
+    public int getRunIteration()
+    {
+        return runIteration;
+    }
+
+    public void setRunIteration( int runIteration )
+    {
+        this.runIteration = runIteration;
     }
 
     public void setRunningTimeUnit( String runningTimeUnit )

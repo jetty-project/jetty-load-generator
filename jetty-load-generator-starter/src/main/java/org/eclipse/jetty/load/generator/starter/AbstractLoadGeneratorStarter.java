@@ -56,6 +56,14 @@ public abstract class AbstractLoadGeneratorStarter
         loadGenerator.run( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
     }
 
+    protected void run(int iteration)
+        throws Exception
+    {
+        LoadGenerator loadGenerator = getLoadGenerator();
+
+        loadGenerator.run( iteration );
+    }
+
     protected LoadGenerator getLoadGenerator()
         throws Exception
     {
@@ -86,7 +94,7 @@ public abstract class AbstractLoadGeneratorStarter
     protected ResourceProfile getResourceProfile()
         throws Exception
     {
-        
+
         if (starterArgs.getProfileJsonPath()!= null)
         {
             Path profilePath = Paths.get( starterArgs.getProfileJsonPath() );
