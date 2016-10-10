@@ -27,12 +27,12 @@
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>jetty-load-generator-runner</artifactId>
+  <artifactId>jetty-load-generator-starter</artifactId>
   <packaging>jar</packaging>
-  <name>Jetty :: Load Generator Runner</name>
+  <name>Jetty :: Load Generator Starter</name>
 
   <properties>
-    <bundle-symbolic-name>${project.groupId}.load.generator.collector</bundle-symbolic-name>
+    <bundle-symbolic-name>${project.groupId}.load.generator.starter</bundle-symbolic-name>
   </properties>
 
   <dependencies>

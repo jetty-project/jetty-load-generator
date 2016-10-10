@@ -129,7 +129,7 @@ public abstract class AbstractLoadGeneratorStarter
             }
 
         }
-        throw new IllegalArgumentException( "unknow httpClientTransport" );
+        throw new IllegalArgumentException( "unknown httpClientTransport" );
     }
 
     protected SslContextFactory sslContextFactory()
