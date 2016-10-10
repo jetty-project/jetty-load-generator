@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.eclipse.jetty.load.generator.runner;
+package org.eclipse.jetty.load.generator.starter;
 
 import com.beust.jcommander.JCommander;
 import org.eclipse.jetty.client.HttpClientTransport;
