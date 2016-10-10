@@ -37,12 +37,12 @@ import java.nio.file.Paths;
 /**
  *
  */
-public class JettyLoadGeneratorRunner
+public class LoadGeneratorStarter
 {
 
-    private JettyLoadGeneratorRunnerArgs runnerArgs;
+    private LoadGeneratorStarterArgs runnerArgs;
 
-    public JettyLoadGeneratorRunner( JettyLoadGeneratorRunnerArgs runnerArgs )
+    public LoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
         this.runnerArgs = runnerArgs;
     }
@@ -51,7 +51,7 @@ public class JettyLoadGeneratorRunner
         throws Exception
     {
 
-        JettyLoadGeneratorRunnerArgs runnerArgs = new JettyLoadGeneratorRunnerArgs();
+        LoadGeneratorStarterArgs runnerArgs = new LoadGeneratorStarterArgs();
 
         try
         {
@@ -69,7 +69,7 @@ public class JettyLoadGeneratorRunner
 
         try
         {
-            JettyLoadGeneratorRunner runner = new JettyLoadGeneratorRunner( runnerArgs );
+            LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs );
             runner.run();
         }
         catch ( Exception e )

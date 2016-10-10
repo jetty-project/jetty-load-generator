@@ -26,11 +26,14 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class JettyLoadGeneratorRunnerArgs
+public class LoadGeneratorStarterArgs
 {
 
     @Parameter( names = { "--profile-xml-path", "-pxp" }, description = "Path to profile xml file" )
     private String profileXmlPath;
+
+    @Parameter( names = { "--profile-json-path", "-pjp" }, description = "Path to profile json file" )
+    private String profileJsonPath;
 
     @Parameter( names = { "--host", "-h" }, description = "Target host" )
     private String host = "localhost";
@@ -59,7 +62,7 @@ public class JettyLoadGeneratorRunnerArgs
     @Parameter( names = { "--help"}, description = "Display help" )
     private boolean help;
 
-    public JettyLoadGeneratorRunnerArgs()
+    public LoadGeneratorStarterArgs()
     {
         // no op
     }
