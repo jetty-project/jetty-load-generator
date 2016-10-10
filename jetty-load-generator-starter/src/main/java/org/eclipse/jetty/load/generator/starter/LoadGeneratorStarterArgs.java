@@ -191,4 +191,14 @@ public class LoadGeneratorStarterArgs
     {
         this.runningTimeUnit = runningTimeUnit;
     }
+
+    public String getProfileJsonPath()
+    {
+        return profileJsonPath;
+    }
+
+    public void setProfileJsonPath( String profileJsonPath )
+    {
+        this.profileJsonPath = profileJsonPath;
+    }
 }
