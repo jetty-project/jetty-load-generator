@@ -74,7 +74,8 @@ public class LoadGeneratorResultHandler
                 responseTimeListener.onResponseTimeValue( new ResponseTimeListener.Values() //
                                                               .time( time ) //
                                                               .path( response.getRequest().getPath() ) //
-                                                              .method( response.getRequest().getMethod() )
+                                                              .method( response.getRequest().getMethod() ) //
+                                                              .status( response.getStatus() )
                 );
             }
         }
