@@ -21,6 +21,7 @@ package org.eclipse.jetty.load.generator.responsetime;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.CollectorInformations;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * </p>
  */
 public class ResponseTimePerPathListener
-    implements ResponseTimeListener
+    implements ResponseTimeListener, Serializable
 {
 
     private Map<String, Recorder> recorderPerPath;

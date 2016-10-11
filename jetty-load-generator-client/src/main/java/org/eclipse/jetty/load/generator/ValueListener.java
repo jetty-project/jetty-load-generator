@@ -31,6 +31,12 @@ public interface ValueListener
 
     class Values
     {
+
+        /**
+         * the timestamp in nano seconds
+         */
+        private long eventTimestamp;
+
         private String path;
 
         /**
@@ -126,6 +132,22 @@ public interface ValueListener
         public Values status( int status )
         {
             this.status = status;
+            return this;
+        }
+
+        public long getEventTimestamp()
+        {
+            return eventTimestamp;
+        }
+
+        public void setEventTimestamp( long eventTimestamp )
+        {
+            this.eventTimestamp = eventTimestamp;
+        }
+
+        public Values eventTimestamp( long eventTimestamp )
+        {
+            this.eventTimestamp = eventTimestamp;
             return this;
         }
 

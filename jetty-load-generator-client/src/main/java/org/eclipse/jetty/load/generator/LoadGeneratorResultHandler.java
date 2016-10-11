@@ -75,7 +75,8 @@ public class LoadGeneratorResultHandler
                                                               .time( time ) //
                                                               .path( response.getRequest().getPath() ) //
                                                               .method( response.getRequest().getMethod() ) //
-                                                              .status( response.getStatus() )
+                                                              .status( response.getStatus() ) //
+                                                              .eventTimestamp( end )
                 );
             }
         }

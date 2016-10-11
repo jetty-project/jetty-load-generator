@@ -23,11 +23,13 @@ import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.responsetime.RecorderConstants;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 
+import java.io.Serializable;
+
 /**
  * This will collect a global histogram for all response time
  */
 public class GlobalSummaryReportListener
-    implements ResponseTimeListener
+    implements ResponseTimeListener, Serializable
 {
 
     private Recorder recorder;

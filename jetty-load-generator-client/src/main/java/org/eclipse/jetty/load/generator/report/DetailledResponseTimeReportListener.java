@@ -20,11 +20,13 @@ package org.eclipse.jetty.load.generator.report;
 
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 
+import java.io.Serializable;
+
 /**
  * Use this one to collect all values
  */
 public class DetailledResponseTimeReportListener
-    implements ResponseTimeListener
+    implements ResponseTimeListener, Serializable
 {
     private DetailledResponseTimeReport detailledResponseTimeReport = new DetailledResponseTimeReport();
 

@@ -17,6 +17,7 @@
 
 package org.eclipse.jetty.load.generator.responsetime;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by olamy on 27/9/16.
  */
 public class ResponseNumberPerPath
-    implements ResponseTimeListener
+    implements ResponseTimeListener, Serializable
 {
 
     private final Map<String, AtomicInteger> responseNumberPerPath = new ConcurrentHashMap<>();
