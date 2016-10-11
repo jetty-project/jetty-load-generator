@@ -67,6 +67,7 @@ public class LoadGeneratorStarter
         {
             e.printStackTrace();
             new JCommander( runnerArgs ).usage();
+            System.exit( 1 );
         }
     }
 
