@@ -17,6 +17,8 @@
 //
 package org.eclipse.jetty.load.generator;
 
+import java.io.Serializable;
+
 /**
  *
  */
@@ -30,6 +32,7 @@ public interface ValueListener
 
 
     class Values
+        implements Serializable
     {
 
         /**
@@ -154,8 +157,8 @@ public interface ValueListener
         @Override
         public String toString()
         {
-            return "Values{" + "path='" + path + '\'' + ", time=" + time + ", method='" + method + '\''
-                + ", size=" + size + ", status=" + status + '}';
+            return "Values{" + "eventTimestamp=" + eventTimestamp + ", path='" + path + '\'' + ", time=" + time
+                + ", method='" + method + '\'' + ", size=" + size + ", status=" + status + '}';
         }
     }
 
