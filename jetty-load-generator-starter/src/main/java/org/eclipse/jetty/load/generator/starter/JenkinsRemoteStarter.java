@@ -34,7 +34,12 @@ public class JenkinsRemoteStarter
     public static void main( String... args)  throws Exception {
         String slaveAgentSocket = args[0];
         int i = slaveAgentSocket.indexOf(':');
-        main( slaveAgentSocket.substring(0, i), Integer.parseInt(slaveAgentSocket.substring(i+1) ));
+        if (i > 0)
+        {
+            main( slaveAgentSocket.substring( 0, i ), Integer.parseInt( slaveAgentSocket.substring( i + 1 ) ) );
+        } else {
+            main( null, Integer.parseInt( slaveAgentSocket ) );
+        }
     }
 
     public static void main( String agentIp, int tcpPort) throws Exception {
@@ -46,24 +51,24 @@ public class JenkinsRemoteStarter
 
         Class remotingLauncher = classLoader.loadClass("hudson.remoting.Launcher");
 
-        remotingLauncher.getMethod("main",
-                                   new Class[] { InputStream.class, OutputStream.class }).invoke(
-            null,
-            new Object[] {
+        remotingLauncher.getMethod("main", //
+                                   new Class[] { InputStream.class, OutputStream.class }).invoke( //
+            null, //
+            new Object[] { //
                 // do partial close, since socket.getInputStream and
                 // getOutputStream doesn't do it by
-                new BufferedInputStream(
-                    new FilterInputStream( s.getInputStream()) {
-                        public void close() throws IOException {
-                            s.shutdownInput();
-                        }
-                    }),
-                    new BufferedOutputStream(
-                        new RealFilterOutputStream( s.getOutputStream()) {
-                    public void close() throws IOException {
-                        s.shutdownOutput();
-                    }
-                }) });
+                new BufferedInputStream( //
+                    new FilterInputStream( s.getInputStream()) { //
+                        public void close() throws IOException { //
+                            s.shutdownInput(); //
+                        } //
+                    }), //
+                    new BufferedOutputStream( //
+                        new RealFilterOutputStream( s.getOutputStream()) { //
+                    public void close() throws IOException { //
+                        s.shutdownOutput(); //
+                    } //
+                }) }); //
         System.exit(0);
     }
 
