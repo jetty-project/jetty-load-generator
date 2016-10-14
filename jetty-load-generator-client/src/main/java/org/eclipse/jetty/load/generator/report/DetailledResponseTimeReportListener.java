@@ -40,7 +40,7 @@ public class DetailledResponseTimeReportListener
     public void onResponseTimeValue( Values values )
     {
         this.detailledResponseTimeReport.addEntry(
-            new DetailledResponseTimeReport.Entry( System.currentTimeMillis(), //
+            new DetailledResponseTimeReport.Entry( values.getEventTimestamp(), //
                                                    values.getPath(), //
                                                    values.getStatus(), //
                                                    values.getTime() ) );
