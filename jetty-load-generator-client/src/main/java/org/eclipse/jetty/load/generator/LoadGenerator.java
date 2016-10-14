@@ -231,9 +231,9 @@ public class LoadGenerator
 
         int parallelism = Math.min( Runtime.getRuntime().availableProcessors(), getUsers() );
 
-        this.executorService = Executors.newWorkStealingPool( parallelism );
+        this.executorService = Executors.newFixedThreadPool( 1 );
 
-        this.runnersExecutorService = Executors.newWorkStealingPool( parallelism );
+        this.runnersExecutorService = Executors.newFixedThreadPool( parallelism - 1 < 1 ? 1 : parallelism - 1);
 
         _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners );
 
@@ -301,39 +301,38 @@ public class LoadGenerator
 
         executorService.submit( () ->
             {
-                HttpClientTransport httpClientTransport = getHttpClientTransport();
-
-                List<Future<?>> futures = new ArrayList<Future<?>>( getUsers() );
-
-                for ( int i = getUsers(); i > 0; i-- )
-                {
-                    try
-                    {
-                        HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
-                        // TODO dynamic depending on the rate??
-                        httpClient.setMaxRequestsQueuedPerDestination( 2048 );
-                        httpClient.setSocketAddressResolver( getSocketAddressResolver() );
-                        httpClient.getRequestListeners().addAll( listeners );
-                        if (this.httpProxies != null) {
-                            httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
-                        }
-
-                        LoadGeneratorRunner loadGeneratorRunner = //
-                            new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
-                                                      transactionNumber);
-
-                        futures.add( this.runnersExecutorService.submit( loadGeneratorRunner ));
-
-                    }
-                    catch ( Exception e )
-                    {
-                        LOGGER.warn( "skip exception:" + e.getMessage(), e );
-                        this.stop.set( true );
-                    }
-                }
-
                 try
                 {
+                    HttpClientTransport httpClientTransport = getHttpClientTransport();
+
+                    List<Future<?>> futures = new ArrayList<Future<?>>( getUsers() );
+
+                    for ( int i = getUsers(); i > 0; i-- )
+                    {
+                        try
+                        {
+                            HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+                            // TODO dynamic depending on the rate??
+                            httpClient.setMaxRequestsQueuedPerDestination( 2048 );
+                            httpClient.setSocketAddressResolver( getSocketAddressResolver() );
+                            httpClient.getRequestListeners().addAll( listeners );
+                            if (this.httpProxies != null) {
+                                httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
+                            }
+
+                            LoadGeneratorRunner loadGeneratorRunner = //
+                                new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
+                                                          transactionNumber);
+
+                            futures.add( this.runnersExecutorService.submit( loadGeneratorRunner ));
+
+                        }
+                        catch ( Exception e )
+                        {
+                            LOGGER.warn( "skip exception:" + e.getMessage(), e );
+                            this.stop.set( true );
+                        }
+                    }
 
                     while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ))
                     {

@@ -70,7 +70,6 @@ public class LoadGeneratorRunner
     @Override
     public void run()
     {
-
         LOGGER.debug( "loadGenerator#run" );
         try
         {
