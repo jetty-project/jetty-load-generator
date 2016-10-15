@@ -69,15 +69,17 @@ public class LoadGeneratorResultHandler
         if ( !StringUtil.isBlank( startTime ) )
         {
             long time = end - Long.parseLong( startTime );
+
+            ValueListener.Values values = new ResponseTimeListener.Values() //
+                .time( time ) //
+                .path( response.getRequest().getPath() ) //
+                .method( response.getRequest().getMethod() ) //
+                .status( response.getStatus() ) //
+                .eventTimestamp( end );
+
             for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
             {
-                responseTimeListener.onResponseTimeValue( new ResponseTimeListener.Values() //
-                                                              .time( time ) //
-                                                              .path( response.getRequest().getPath() ) //
-                                                              .method( response.getRequest().getMethod() ) //
-                                                              .status( response.getStatus() ) //
-                                                              .eventTimestamp( end )
-                );
+                responseTimeListener.onResponseTimeValue( values );
             }
         }
 

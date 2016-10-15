@@ -225,7 +225,7 @@ public class LoadGenerator
     /**
      * start the generator lifecycle (this doesn't send any requests but just start few internal components)
      */
-    private LoadGenerator startIt()
+    protected LoadGenerator startIt()
     {
         this.scheme = scheme( this.transport );
 
@@ -295,11 +295,9 @@ public class LoadGenerator
 
         final List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
-        //listeners.add( _loadGeneratorResultHandler );
-
         statsReset();
 
-        executorService.submit( () ->
+        Future globaleFuture = executorService.submit( () ->
             {
                 try
                 {
@@ -327,7 +325,7 @@ public class LoadGenerator
                             futures.add( this.runnersExecutorService.submit( loadGeneratorRunner ));
 
                         }
-                        catch ( Exception e )
+                        catch ( Throwable e )
                         {
                             LOGGER.warn( "skip exception:" + e.getMessage(), e );
                             this.stop.set( true );
@@ -350,11 +348,12 @@ public class LoadGenerator
 
         if ( transactionNumber > 0 )
         {
-            executorService.shutdown();
-            while ( !executorService.isTerminated() )
+
+            while ( !globaleFuture.isDone() )
             {
                 Thread.sleep( 1 );
             }
+            executorService.shutdownNow();
         }
     }
 

@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.Executor;
 
 /**
  *
@@ -54,6 +55,8 @@ public abstract class AbstractLoadGeneratorStarter
         LoadGenerator loadGenerator = getLoadGenerator();
 
         loadGenerator.run( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
+
+        loadGenerator.interrupt();
     }
 
     protected void run(int iteration)
@@ -62,6 +65,8 @@ public abstract class AbstractLoadGeneratorStarter
         LoadGenerator loadGenerator = getLoadGenerator();
 
         loadGenerator.run( iteration );
+
+        loadGenerator.interrupt();
     }
 
     protected LoadGenerator getLoadGenerator()
@@ -80,10 +85,14 @@ public abstract class AbstractLoadGeneratorStarter
             .loadProfile( resourceProfile ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
             //.requestListeners( testRequestListener ) //
-            //.executor( new QueuedThreadPool() )
+            .executor( getExecutor() != null ? getExecutor() : null )
             .build();
 
         return loadGenerator;
+    }
+
+    protected Executor getExecutor() {
+      return null;
     }
 
     protected ResponseTimeListener[] getResponseTimeListeners() {
