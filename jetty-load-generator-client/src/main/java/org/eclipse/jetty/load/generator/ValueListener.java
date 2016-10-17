@@ -36,7 +36,7 @@ public interface ValueListener
     {
 
         /**
-         * the timestamp in nano seconds
+         * the timestamp in millis seconds
          */
         private long eventTimestamp;
 

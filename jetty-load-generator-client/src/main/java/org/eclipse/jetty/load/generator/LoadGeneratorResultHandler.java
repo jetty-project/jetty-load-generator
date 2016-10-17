@@ -75,7 +75,7 @@ public class LoadGeneratorResultHandler
                 .path( response.getRequest().getPath() ) //
                 .method( response.getRequest().getMethod() ) //
                 .status( response.getStatus() ) //
-                .eventTimestamp( end );
+                .eventTimestamp( System.currentTimeMillis() );
 
             for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
             {
