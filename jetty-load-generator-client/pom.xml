@@ -33,7 +33,7 @@
 
   <properties>
     <bundle-symbolic-name>${project.groupId}.load.generator.client</bundle-symbolic-name>
-    <test.users>1,2,4</test.users>
+    <test.users>1</test.users>
   </properties>
 
   <dependencies>
