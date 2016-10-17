@@ -33,6 +33,7 @@
 
   <properties>
     <bundle-symbolic-name>${project.groupId}.load.generator.client</bundle-symbolic-name>
+    <test.users>1,2,4</test.users>
   </properties>
 
   <dependencies>
@@ -144,6 +145,9 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <argLine>-Xbootclasspath/p:${project.build.directory}/alpn/alpn-boot-${alpn.version}.jar</argLine>
+          <systemPropertyVariables>
+            <test.users>${test.users}</test.users>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
     </plugins>
