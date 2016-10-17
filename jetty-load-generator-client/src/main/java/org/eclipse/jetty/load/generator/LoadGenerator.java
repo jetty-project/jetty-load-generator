@@ -247,6 +247,10 @@ public class LoadGenerator
     @ManagedOperation
     public void interrupt()
     {
+        if (this.stop.get()) {
+            LOGGER.info( "already stopped" );
+            return;
+        }
         this.stop.set( true );
 
         collectStats();
