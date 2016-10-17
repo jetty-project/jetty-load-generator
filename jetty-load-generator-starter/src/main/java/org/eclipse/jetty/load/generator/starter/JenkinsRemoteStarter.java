@@ -2,6 +2,8 @@ package org.eclipse.jetty.load.generator.starter;
 
 import com.beust.jcommander.JCommander;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -12,13 +14,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 /**
  * Class to start remote process for Jenkins
  */
 public class JenkinsRemoteStarter
 {
+
+    private static final Logger LOGGER = Log.getLogger( JenkinsRemoteStarter.class );
 
     public static List<ResponseTimeListener> responseTimeListeners;
 
@@ -129,12 +132,15 @@ public class JenkinsRemoteStarter
 
             if (runnerArgs.getRunIteration() > 0)
             {
+                LOGGER.info( "start LoadGenerator for " + runnerArgs.getRunIteration() + " iterations" );
                 runner.run(runnerArgs.getRunIteration());
             } else
             {
+                LOGGER.info( "start LoadGenerator for " + runnerArgs.getRunningTime() + " " + runnerArgs.getRunningTimeUnit() );
                 runner.run();
             }
 
+            LOGGER.info( "LoadGenerator stopped" );
 
         }
         catch ( Exception e )
