@@ -87,6 +87,12 @@ public class CollectorInformations
         this.endTimeStamp = endTimeStamp;
     }
 
+    public CollectorInformations endTimeStamp( long endTimeStamp )
+    {
+        this.endTimeStamp = endTimeStamp;
+        return this;
+    }
+
     public long getTotalCount()
     {
         return totalCount;
@@ -95,6 +101,12 @@ public class CollectorInformations
     public void setTotalCount( long totalCount )
     {
         this.totalCount = totalCount;
+    }
+
+    public CollectorInformations totalCount( long totalCount )
+    {
+        this.totalCount = totalCount;
+        return this;
     }
 
     public long getMinValue()
@@ -107,6 +119,12 @@ public class CollectorInformations
         this.minValue = minValue;
     }
 
+    public CollectorInformations minValue( long minValue )
+    {
+        this.minValue = minValue;
+        return this;
+    }
+
     public long getMaxValue()
     {
         return maxValue;
@@ -115,6 +133,12 @@ public class CollectorInformations
     public void setMaxValue( long maxValue )
     {
         this.maxValue = maxValue;
+    }
+
+    public CollectorInformations maxValue( long maxValue )
+    {
+        this.maxValue = maxValue;
+        return this;
     }
 
     public double getMean()
@@ -127,6 +151,12 @@ public class CollectorInformations
         this.mean = mean;
     }
 
+    public CollectorInformations mean( double mean )
+    {
+        this.mean = mean;
+        return this;
+    }
+
     public double getStdDeviation()
     {
         return stdDeviation;
@@ -137,6 +167,12 @@ public class CollectorInformations
         this.stdDeviation = stdDeviation;
     }
 
+    public CollectorInformations stdDeviation( double stdDeviation )
+    {
+        this.stdDeviation = stdDeviation;
+        return this;
+    }
+
     public long getStartTimeStamp()
     {
         return startTimeStamp;
@@ -145,6 +181,12 @@ public class CollectorInformations
     public void setStartTimeStamp( long startTimeStamp )
     {
         this.startTimeStamp = startTimeStamp;
+    }
+
+    public CollectorInformations startTimeStamp( long startTimeStamp )
+    {
+        this.startTimeStamp = startTimeStamp;
+        return this;
     }
 
     public InformationType getInformationType()
@@ -167,6 +209,12 @@ public class CollectorInformations
         this.value50 = value50;
     }
 
+    public CollectorInformations value50( long value50 )
+    {
+        this.value50 = value50;
+        return this;
+    }
+
     public long getValue90()
     {
         return value90;
@@ -175,6 +223,12 @@ public class CollectorInformations
     public void setValue90( long value90 )
     {
         this.value90 = value90;
+    }
+
+    public CollectorInformations value90( long value90 )
+    {
+        this.value90 = value90;
+        return this;
     }
 
     @Override

@@ -13,9 +13,11 @@ public class SummaryReport
 
     private Map<String, CollectorInformations> collectorInformationsPerPath = new ConcurrentHashMap<>();
 
-    public SummaryReport()
+    private String buildId;
+
+    public SummaryReport(String buildId)
     {
-        // no op
+        this.buildId = buildId;
     }
 
     public Map<String, CollectorInformations> getCollectorInformationsPerPath()
