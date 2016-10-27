@@ -25,7 +25,6 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http.HttpVersion;
-import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
@@ -288,6 +287,22 @@ public class LoadGenerator
             LOGGER.warn( e.getMessage(), e );
             throw new RuntimeException( e.getMessage(), e.getCause() );
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        return "LoadGenerator{" + "users=" + users + ", transactionRate=" + transactionRate + ", scheme='" + scheme
+            + '\'' + ", host='" + host + '\'' + ", port=" + port + ", profile=" + profile + ", requestListeners="
+            + requestListeners + ", scheduler=" + scheduler + ", responseTimeListeners=" + responseTimeListeners
+            + ", httpProxies=" + httpProxies + ", transport=" + transport + ", httpVersion=" + httpVersion
+            + ", statisticsPath='" + statisticsPath + '\'' + '}';
+    }
+
+    public void dumpConfiguration()
+    {
+
+        LOGGER.info( "Configuration dump: {}", this );
     }
 
     /**

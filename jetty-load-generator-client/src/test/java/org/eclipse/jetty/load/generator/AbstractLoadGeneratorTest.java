@@ -252,6 +252,8 @@ public abstract class AbstractLoadGeneratorTest
 
         LoadGenerator loadGenerator = build( profile );
 
+        loadGenerator.dumpConfiguration();
+
         loadGenerator.run();
 
         Thread.sleep( 5000 );
