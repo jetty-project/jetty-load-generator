@@ -19,7 +19,9 @@
 package org.eclipse.jetty.load.generator;
 
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.HttpDestination;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Destination;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.load.generator.profile.Resource;
@@ -30,6 +32,7 @@ import org.eclipse.jetty.util.log.Logger;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +100,18 @@ public class LoadGeneratorRunner
                 }
 
             } while ( true && transactionNumber != 0 );
+
+
+            HttpDestination destination =
+                (HttpDestination) httpClient.getDestination( loadGenerator.getScheme(), //
+                                                             loadGenerator.getHost(), //
+                                                             loadGenerator.getPort() );
+
+            //wait until the end of all requests
+            while (!destination.getHttpExchanges().isEmpty())
+            {
+                Thread.sleep( 1 );
+            }
         }
         catch ( Throwable e )
         {
