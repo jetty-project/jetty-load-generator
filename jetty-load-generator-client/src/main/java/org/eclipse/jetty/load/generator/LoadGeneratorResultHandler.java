@@ -18,17 +18,15 @@
 
 package org.eclipse.jetty.load.generator;
 
-import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.load.generator.latency.LatencyTimeListener;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,7 +34,7 @@ import java.util.List;
  *
  */
 public class LoadGeneratorResultHandler
-    implements Response.CompleteListener
+    implements Response.CompleteListener, Response.BeginListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorResultHandler.class );
@@ -46,11 +44,17 @@ public class LoadGeneratorResultHandler
      */
     public static final String START_RESPONSE_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Response-Time";
 
-    private List<ResponseTimeListener> responseTimeListeners;
+    public static final String START_LATENCY_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Latency-Time";
 
-    public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners )
+    private final List<ResponseTimeListener> responseTimeListeners;
+
+    private final List<LatencyTimeListener> latencyTimeListeners;
+
+    public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners,
+                                       List<LatencyTimeListener> latencyTimeListeners )
     {
         this.responseTimeListeners = responseTimeListeners == null ? Collections.emptyList() : responseTimeListeners;
+        this.latencyTimeListeners = latencyTimeListeners == null ? Collections.emptyList() : latencyTimeListeners;
     }
 
     @Override
@@ -61,7 +65,10 @@ public class LoadGeneratorResultHandler
 
     public void onComplete( Response response )
     {
-
+        if ( responseTimeListeners.isEmpty() )
+        {
+            return;
+        }
         // TODO olamy: call to listeners in an async way?
         long end = System.nanoTime();
 
@@ -106,12 +113,41 @@ public class LoadGeneratorResultHandler
         */
     }
 
+    @Override
+    public void onBegin( Response response )
+    {
+        if ( latencyTimeListeners.isEmpty() )
+        {
+            return;
+        }
 
+        long end = System.nanoTime();
+
+        String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER);
+
+        if ( !StringUtil.isBlank( startTime ) )
+        {
+            long time = end - Long.parseLong( startTime );
+
+            ValueListener.Values values = new ResponseTimeListener.Values() //
+                .time( time ) //
+                .path( response.getRequest().getPath() ) //
+                .method( response.getRequest().getMethod() ) //
+                .status( response.getStatus() ) //
+                .eventTimestamp( System.currentTimeMillis() );
+
+            for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
+            {
+                latencyTimeListener.onLatencyTimeValue( values );
+            }
+        }
+    }
 
     //@Override
     public void onFailure( Request request, Throwable failure )
     {
-        if (LOGGER.isDebugEnabled()) {
+        if ( LOGGER.isDebugEnabled() )
+        {
             LOGGER.debug( "request failure" + request, failure );
         }
     }
@@ -146,10 +182,19 @@ public class LoadGeneratorResultHandler
     */
 
 
-    protected void onContentSize(int size) {
+    protected void onContentSize( int size )
+    {
         // TODO store this bandwith approx
         LOGGER.debug( "onContentSize: {}", size );
     }
 
+    public List<ResponseTimeListener> getResponseTimeListeners()
+    {
+        return responseTimeListeners;
+    }
 
+    public List<LatencyTimeListener> getLatencyTimeListeners()
+    {
+        return latencyTimeListeners;
+    }
 }

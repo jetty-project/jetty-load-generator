@@ -27,6 +27,9 @@ import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
+import org.eclipse.jetty.load.generator.latency.LatencyTimeDisplayListener;
+import org.eclipse.jetty.load.generator.latency.LatencyTimeListener;
+import org.eclipse.jetty.load.generator.latency.LatencyTimePerPathListener;
 import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
@@ -207,6 +210,10 @@ public abstract class AbstractLoadGeneratorTest
         return Arrays.asList( new ResponseTimeDisplayListener(), new ResponseTimePerPathListener() );
     }
 
+    protected List<LatencyTimeListener> getLatencyTimeListeners() {
+        return Arrays.asList( new LatencyTimeDisplayListener(), new LatencyTimePerPathListener());
+    }
+
     protected LoadGenerator build( ResourceProfile profile )
         throws Exception
     {
@@ -219,6 +226,8 @@ public abstract class AbstractLoadGeneratorTest
 
         responseTimeListeners.add( responsePerPath );
 
+        List<LatencyTimeListener> latencyTimeListeners = getLatencyTimeListeners();
+
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
@@ -230,6 +239,8 @@ public abstract class AbstractLoadGeneratorTest
             .loadProfile( profile ) //
             .responseTimeListeners(
                 responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()] ) ) //
+            .latencyTimeListeners(
+                latencyTimeListeners.toArray(new LatencyTimeListener[latencyTimeListeners.size()]) ) //
             .requestListeners( testRequestListener ) //
             .httpVersion( httpVersion() ) //
             //.executor( new QueuedThreadPool() )

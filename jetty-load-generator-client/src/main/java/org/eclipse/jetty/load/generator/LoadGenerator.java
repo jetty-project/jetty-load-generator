@@ -25,6 +25,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.load.generator.latency.LatencyTimeListener;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
@@ -102,6 +103,8 @@ public class LoadGenerator
     private SocketAddressResolver socketAddressResolver;
 
     private List<ResponseTimeListener> responseTimeListeners;
+
+    private List<LatencyTimeListener> latencyTimeListeners;
 
     private LoadGeneratorResultHandler _loadGeneratorResultHandler;
 
@@ -217,7 +220,12 @@ public class LoadGenerator
         return httpVersion;
     }
 
-//--------------------------------------------------------------
+    public List<LatencyTimeListener> getLatencyTimeListeners()
+    {
+        return latencyTimeListeners;
+    }
+
+    //--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
 
@@ -234,7 +242,7 @@ public class LoadGenerator
 
         this.runnersExecutorService = Executors.newFixedThreadPool( parallelism - 1 < 1 ? 1 : parallelism - 1);
 
-        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners );
+        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners );
 
         return this;
 
@@ -550,6 +558,8 @@ public class LoadGenerator
 
         private List<ResponseTimeListener> responseTimeListeners;
 
+        private List<LatencyTimeListener> latencyTimeListeners;
+
         private List<HttpProxy> httpProxies;
 
         private Transport transport;
@@ -639,6 +649,11 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder latencyTimeListeners( LatencyTimeListener... latencyTimeListeners )
+        {
+            this.latencyTimeListeners = new ArrayList<>( Arrays.asList( latencyTimeListeners ) );
+            return this;
+        }
 
         public Builder httpProxies( HttpProxy... httpProxies )
         {
@@ -682,6 +697,7 @@ public class LoadGenerator
             loadGenerator.statisticsPath = statisticsPath;
             loadGenerator.executor = executor;
             loadGenerator.httpVersion = httpVersion;
+            loadGenerator.latencyTimeListeners = latencyTimeListeners;
             return loadGenerator.startIt();
         }
 
