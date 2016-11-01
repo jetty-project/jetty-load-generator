@@ -502,10 +502,12 @@ public abstract class AbstractLoadGeneratorTest
 
 
     public static class ResponsePerPath
-        implements ResponseTimeListener
+        implements ResponseTimeListener, LatencyTimeListener
     {
 
         private final Map<String, AtomicLong> recorderPerPath = new ConcurrentHashMap<>();
+
+        private final Map<String, AtomicLong> recorderLatencyPerPath = new ConcurrentHashMap<>();
 
         @Override
         public void onResponseTimeValue( Values values )
@@ -523,6 +525,21 @@ public abstract class AbstractLoadGeneratorTest
             }
         }
 
+        @Override
+        public void onLatencyTimeValue( Values values )
+        {
+            String path = values.getPath();
+            AtomicLong response = recorderLatencyPerPath.get( path );
+            if ( response == null )
+            {
+                response = new AtomicLong( 1 );
+                recorderLatencyPerPath.put( path, response );
+            }
+            else
+            {
+                response.incrementAndGet();
+            }
+        }
 
         @Override
         public void onLoadGeneratorStop()
@@ -533,6 +550,11 @@ public abstract class AbstractLoadGeneratorTest
         public Map<String, AtomicLong> getRecorderPerPath()
         {
             return recorderPerPath;
+        }
+
+        public Map<String, AtomicLong> getRecorderLatencyPerPath()
+        {
+            return recorderLatencyPerPath;
         }
     }
 

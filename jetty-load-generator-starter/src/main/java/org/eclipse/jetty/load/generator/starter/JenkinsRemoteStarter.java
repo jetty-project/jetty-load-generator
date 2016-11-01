@@ -1,6 +1,7 @@
 package org.eclipse.jetty.load.generator.starter;
 
 import com.beust.jcommander.JCommander;
+import org.eclipse.jetty.load.generator.latency.LatencyTimeListener;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
@@ -33,6 +34,18 @@ public class JenkinsRemoteStarter
     public static void setResponseTimeListeners( List<ResponseTimeListener> responseTimeListeners )
     {
         JenkinsRemoteStarter.responseTimeListeners = responseTimeListeners;
+    }
+
+    public static List<LatencyTimeListener> latencyTimeListeners;
+
+    public static List<LatencyTimeListener> getLatencyTimeListeners()
+    {
+        return latencyTimeListeners;
+    }
+
+    public static void setLatencyTimeListeners( List<LatencyTimeListener> latencyTimeListeners )
+    {
+        JenkinsRemoteStarter.latencyTimeListeners = latencyTimeListeners;
     }
 
     public static void main( String... args)  throws Exception {
@@ -127,6 +140,11 @@ public class JenkinsRemoteStarter
                     return responseTimeListeners.toArray(new ResponseTimeListener[responseTimeListeners.size()]);
                 }
 
+                @Override
+                protected LatencyTimeListener[] getLatencyTimeListeners()
+                {
+                    return latencyTimeListeners.toArray(new LatencyTimeListener[latencyTimeListeners.size()]);
+                }
             };
 
 

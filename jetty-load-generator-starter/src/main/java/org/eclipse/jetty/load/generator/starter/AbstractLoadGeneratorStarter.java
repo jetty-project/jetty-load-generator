@@ -24,6 +24,8 @@ import org.eclipse.jetty.load.generator.Http2TransportBuilder;
 import org.eclipse.jetty.load.generator.HttpFCGITransportBuilder;
 import org.eclipse.jetty.load.generator.HttpTransportBuilder;
 import org.eclipse.jetty.load.generator.LoadGenerator;
+import org.eclipse.jetty.load.generator.latency.LatencyTimeListener;
+import org.eclipse.jetty.load.generator.latency.LatencyTimePerPathListener;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimePerPathListener;
@@ -97,6 +99,10 @@ public abstract class AbstractLoadGeneratorStarter
 
     protected ResponseTimeListener[] getResponseTimeListeners() {
         return new ResponseTimeListener[]{new ResponseTimePerPathListener()};
+    }
+
+    protected LatencyTimeListener[] getLatencyTimeListeners() {
+        return new LatencyTimeListener[] {new LatencyTimePerPathListener()};
     }
 
 
