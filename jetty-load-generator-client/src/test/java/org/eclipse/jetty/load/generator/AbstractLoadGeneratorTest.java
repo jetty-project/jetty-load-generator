@@ -34,7 +34,7 @@ import org.eclipse.jetty.load.generator.profile.Resource;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.eclipse.jetty.load.generator.responsetime.ResponseTimePerPathListener;
+import org.eclipse.jetty.load.generator.responsetime.TimePerPathListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -207,7 +207,7 @@ public abstract class AbstractLoadGeneratorTest
 
     protected List<ResponseTimeListener> getResponseTimeListeners()
     {
-        return Arrays.asList( new ResponseTimeDisplayListener(), new ResponseTimePerPathListener() );
+        return Arrays.asList( new ResponseTimeDisplayListener(), new TimePerPathListener() );
     }
 
     protected List<LatencyTimeListener> getLatencyTimeListeners() {

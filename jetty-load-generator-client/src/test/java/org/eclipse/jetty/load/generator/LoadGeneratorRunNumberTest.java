@@ -110,7 +110,7 @@ public class LoadGeneratorRunNumberTest
 
         scheduler.stop();
 
-        //Assert.assertEquals( 2, responsePerPath.getRecorderPerPath().size() );
+        //Assert.assertEquals( 2, responsePerPath.getResponseTimePerPath().size() );
 
         for ( Map.Entry<String, AtomicLong> entry : responsePerPath.getRecorderPerPath().entrySet() )
         {

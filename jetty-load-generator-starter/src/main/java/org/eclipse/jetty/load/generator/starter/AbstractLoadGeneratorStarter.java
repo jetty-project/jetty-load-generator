@@ -28,7 +28,7 @@ import org.eclipse.jetty.load.generator.latency.LatencyTimeListener;
 import org.eclipse.jetty.load.generator.latency.LatencyTimePerPathListener;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.eclipse.jetty.load.generator.responsetime.ResponseTimePerPathListener;
+import org.eclipse.jetty.load.generator.responsetime.TimePerPathListener;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 
@@ -98,7 +98,7 @@ public abstract class AbstractLoadGeneratorStarter
     }
 
     protected ResponseTimeListener[] getResponseTimeListeners() {
-        return new ResponseTimeListener[]{new ResponseTimePerPathListener()};
+        return new ResponseTimeListener[]{new TimePerPathListener()};
     }
 
     protected LatencyTimeListener[] getLatencyTimeListeners() {
