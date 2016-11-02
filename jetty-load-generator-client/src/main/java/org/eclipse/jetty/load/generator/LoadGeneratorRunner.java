@@ -18,6 +18,7 @@
 
 package org.eclipse.jetty.load.generator;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpDestination;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -186,7 +187,7 @@ public class LoadGeneratorRunner
 
         if ( resource.getSize() > 0 )
         {
-            request.content( new BytesContentProvider( new byte[resource.getSize()] ) );
+            request.content( new BytesContentProvider( RandomStringUtils.random( resource.getSize() ).getBytes() ) );
         }
 
         //request.onResponseContentAsync( loadGeneratorResultHandler );

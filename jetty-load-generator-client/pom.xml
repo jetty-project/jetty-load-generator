@@ -70,6 +70,10 @@
       <artifactId>jetty-servlet</artifactId>
     </dependency>
     <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.eclipse.jetty.toolchain</groupId>
       <artifactId>jetty-perf-helper</artifactId>
     </dependency>

@@ -11,7 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SummaryReport
 {
 
-    private Map<String, CollectorInformations> collectorInformationsPerPath = new ConcurrentHashMap<>();
+    private Map<String, CollectorInformations> responseTimeInformationsPerPath = new ConcurrentHashMap<>();
+
+    private Map<String, CollectorInformations> latencyTimeInformationsPerPath = new ConcurrentHashMap<>();
 
     private String buildId;
 
@@ -20,18 +22,33 @@ public class SummaryReport
         this.buildId = buildId;
     }
 
-    public Map<String, CollectorInformations> getCollectorInformationsPerPath()
+    public Map<String, CollectorInformations> getResponseTimeInformationsPerPath()
     {
-        return collectorInformationsPerPath;
+        return responseTimeInformationsPerPath;
     }
 
-    public void setCollectorInformationsPerPath( Map<String, CollectorInformations> collectorInformationsPerPath )
+    public void setResponseTimeInformationsPerPath( Map<String, CollectorInformations> responseTimeInformationsPerPath )
     {
-        this.collectorInformationsPerPath = collectorInformationsPerPath;
+        this.responseTimeInformationsPerPath = responseTimeInformationsPerPath;
     }
 
-    public void addCollectorInformations( String path, CollectorInformations collectorInformations )
+    public void addResponseTimeInformations( String path, CollectorInformations collectorInformations )
     {
-        this.collectorInformationsPerPath.put( path, collectorInformations );
+        this.responseTimeInformationsPerPath.put( path, collectorInformations );
+    }
+
+    public Map<String, CollectorInformations> getLatencyTimeInformationsPerPath()
+    {
+        return latencyTimeInformationsPerPath;
+    }
+
+    public void setLatencyTimeInformationsPerPath( Map<String, CollectorInformations> latencyTimeInformationsPerPath )
+    {
+        this.latencyTimeInformationsPerPath = latencyTimeInformationsPerPath;
+    }
+
+    public void addLatencyTimeInformations( String path, CollectorInformations collectorInformations )
+    {
+        this.latencyTimeInformationsPerPath.put( path, collectorInformations );
     }
 }
