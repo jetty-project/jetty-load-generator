@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <p>Use {@link Recorder} to tracker response time per path</p>
+ * <p>Use {@link Recorder} to tracker response/latency time per path</p>
  * <p>
  *     Print out general statistics when stopping.
  *     To prevent that and only get the values simply use the constructor with <code>false</code>
