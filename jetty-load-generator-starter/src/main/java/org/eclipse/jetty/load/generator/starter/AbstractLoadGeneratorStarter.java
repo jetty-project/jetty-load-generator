@@ -86,6 +86,7 @@ public abstract class AbstractLoadGeneratorStarter
             .sslContextFactory( sslContextFactory() ) //
             .loadProfile( resourceProfile ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
+            .latencyTimeListeners( getLatencyTimeListeners() ) //
             //.requestListeners( testRequestListener ) //
             .executor( getExecutor() != null ? getExecutor() : null )
             .build();

@@ -157,7 +157,7 @@ public class CollectorServer
     public void onResponseTimeValue( Values responseTimeValue )
     {
         String path = responseTimeValue.getPath();
-        long responseTime = responseTimeValue.getTime();
+
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
@@ -166,7 +166,19 @@ public class CollectorServer
                                      3 );
             recorderPerPath.put( path, recorder );
         }
-        recorder.recordValue( responseTime );
+
+
+        long time = responseTimeValue.getTime();
+        try
+        {
+            recorder.recordValue( time );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+        }
+
+
     }
 
     @Override

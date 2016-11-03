@@ -120,7 +120,7 @@ public class LatencyTimeDisplayListener
     public void onLatencyTimeValue( Values values )
     {
         String path = values.getPath();
-        long responseTime = values.getTime();
+        long time = values.getTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
@@ -129,7 +129,14 @@ public class LatencyTimeDisplayListener
                                      numberOfSignificantValueDigits );
             recorderPerPath.put( path, recorder );
         }
-        recorder.recordValue( responseTime );
+        try
+        {
+            recorder.recordValue( time );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+        }
     }
 
     @Override

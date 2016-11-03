@@ -21,6 +21,8 @@ package org.eclipse.jetty.load.generator.responsetime;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.CollectorInformations;
 import org.eclipse.jetty.load.generator.latency.LatencyTimeListener;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -36,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TimePerPathListener
     implements ResponseTimeListener, LatencyTimeListener, Serializable
 {
+
+    private static final Logger LOGGER = Log.getLogger( TimePerPathListener.class );
 
     private Map<String, Recorder> responseTimePerPath = new ConcurrentHashMap<>();
 
@@ -83,14 +87,21 @@ public class TimePerPathListener
                                      numberOfSignificantValueDigits );
             responseTimePerPath.put( path, recorder );
         }
-        recorder.recordValue( responseTime );
+        try
+        {
+            recorder.recordValue( responseTime );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "skip error recording time {}, {}", responseTime, e.getMessage() );
+        }
     }
 
     @Override
     public void onLatencyTimeValue( Values values )
     {
         String path = values.getPath();
-        long responseTime = values.getTime();
+        long time = values.getTime();
         Recorder recorder = latencyTimePerPath.get( path );
         if ( recorder == null )
         {
@@ -99,7 +110,14 @@ public class TimePerPathListener
                                      numberOfSignificantValueDigits );
             latencyTimePerPath.put( path, recorder );
         }
-        recorder.recordValue( responseTime );
+        try
+        {
+            recorder.recordValue( time );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+        }
     }
 
     @Override
@@ -117,8 +135,8 @@ public class TimePerPathListener
             {
                 responseTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
                 responseTimeMessage.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                           CollectorInformations.InformationType.REQUEST ) //
-                                    .toString( true ) ) //
+                                                                       CollectorInformations.InformationType.REQUEST ) //
+                                                .toString( true ) ) //
                     .append( System.lineSeparator() );
 
             }
@@ -135,8 +153,8 @@ public class TimePerPathListener
             {
                 latencyTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
                 latencyTimeMessage.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                           CollectorInformations.InformationType.REQUEST ) //
-                                    .toString( true ) ) //
+                                                                      CollectorInformations.InformationType.REQUEST ) //
+                                               .toString( true ) ) //
                     .append( System.lineSeparator() );
 
             }
@@ -150,5 +168,11 @@ public class TimePerPathListener
     public Map<String, Recorder> getResponseTimePerPath()
     {
         return responseTimePerPath;
+    }
+
+
+    public Map<String, Recorder> getLatencyTimePerPath()
+    {
+        return latencyTimePerPath;
     }
 }

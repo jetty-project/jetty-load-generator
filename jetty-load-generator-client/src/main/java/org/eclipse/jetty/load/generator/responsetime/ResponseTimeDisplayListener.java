@@ -49,7 +49,9 @@ public class ResponseTimeDisplayListener
     private ValueListenerRunnable runnable;
 
     private final long lowestDiscernibleValue;
+
     private final long highestTrackableValue;
+
     private final int numberOfSignificantValueDigits;
 
     private List<ValueListener> valueListeners = new ArrayList<>();
@@ -62,12 +64,12 @@ public class ResponseTimeDisplayListener
               initial, //
               delay,  //
               timeUnit, //
-              Arrays.asList(new PrintValueListener()) );
+              Arrays.asList( new PrintValueListener() ) );
     }
 
     public ResponseTimeDisplayListener( long lowestDiscernibleValue, long highestTrackableValue,
-                                        int numberOfSignificantValueDigits, long initial, long delay,
-                                        TimeUnit timeUnit, List<ValueListener> valueListeners )
+                                        int numberOfSignificantValueDigits, long initial, long delay, TimeUnit timeUnit,
+                                        List<ValueListener> valueListeners )
     {
         this.valueListeners.addAll( valueListeners );
         this.recorderPerPath = new ConcurrentHashMap<>();
@@ -105,7 +107,7 @@ public class ResponseTimeDisplayListener
             {
                 String path = entry.getKey();
                 Histogram histogram = entry.getValue().getIntervalHistogram();
-                for (ValueListener valueListener : valueListeners )
+                for ( ValueListener valueListener : valueListeners )
                 {
                     valueListener.onValue( path, histogram );
                 }
@@ -118,7 +120,7 @@ public class ResponseTimeDisplayListener
     public void onResponseTimeValue( Values values )
     {
         String path = values.getPath();
-        long responseTime = values.getTime();
+
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
@@ -127,7 +129,17 @@ public class ResponseTimeDisplayListener
                                      numberOfSignificantValueDigits );
             recorderPerPath.put( path, recorder );
         }
-        recorder.recordValue( responseTime );
+
+        long time = values.getTime();
+        try
+        {
+            recorder.recordValue( time );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+        }
+
     }
 
     @Override

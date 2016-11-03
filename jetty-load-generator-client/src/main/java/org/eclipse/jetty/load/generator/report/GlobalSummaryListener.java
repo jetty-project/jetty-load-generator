@@ -23,6 +23,8 @@ import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.load.generator.latency.LatencyTimeListener;
 import org.eclipse.jetty.load.generator.responsetime.RecorderConstants;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 import java.io.Serializable;
 
@@ -32,6 +34,8 @@ import java.io.Serializable;
 public class GlobalSummaryListener
     implements ResponseTimeListener, LatencyTimeListener, Serializable
 {
+
+    private static final Logger LOGGER = Log.getLogger( GlobalSummaryListener.class );
 
     private Recorder responseTimeRecorder, latencyTimeRecorder;
 
@@ -58,14 +62,30 @@ public class GlobalSummaryListener
     @Override
     public void onResponseTimeValue( Values values )
     {
-        responseTimeRecorder.recordValue( values.getTime() );
+        long time = values.getTime();
+        try
+        {
+            responseTimeRecorder.recordValue( time );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+        }
 
     }
 
     @Override
     public void onLatencyTimeValue( Values values )
     {
-        latencyTimeRecorder.recordValue( values.getTime() );
+        long time = values.getTime();
+        try
+        {
+            latencyTimeRecorder.recordValue( time );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+        }
     }
 
     @Override

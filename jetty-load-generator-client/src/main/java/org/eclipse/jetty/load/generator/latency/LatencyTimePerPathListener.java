@@ -23,6 +23,9 @@ import org.eclipse.jetty.load.generator.CollectorInformations;
 import org.eclipse.jetty.load.generator.ValueListener;
 import org.eclipse.jetty.load.generator.responsetime.RecorderConstants;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
+import org.eclipse.jetty.load.generator.responsetime.TimePerPathListener;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -38,6 +41,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LatencyTimePerPathListener
     implements LatencyTimeListener, Serializable
 {
+
+    private static final Logger LOGGER = Log.getLogger( LatencyTimePerPathListener.class );
 
     private Map<String, Recorder> recorderPerPath;
 
@@ -76,7 +81,7 @@ public class LatencyTimePerPathListener
     public void onLatencyTimeValue( Values values )
     {
         String path = values.getPath();
-        long responseTime = values.getTime();
+        long time = values.getTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
@@ -85,7 +90,14 @@ public class LatencyTimePerPathListener
                                      numberOfSignificantValueDigits );
             recorderPerPath.put( path, recorder );
         }
-        recorder.recordValue( responseTime );
+        try
+        {
+            recorder.recordValue( time );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+        }
     }
 
     @Override
