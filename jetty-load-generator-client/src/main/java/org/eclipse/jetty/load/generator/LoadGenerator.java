@@ -325,11 +325,24 @@ public class LoadGenerator
     /**
      * run the defined load (users / request numbers)
      */
-    public void run( int transactionNumber)
+    public void run( int transactionNumber )
+        throws Exception
+    {
+        this.run( transactionNumber, false );
+    }
+
+    /**
+     * run the defined load (users / request numbers)
+     * @param transactionNumber the total transaction to run if lower than 0 will run infinite
+     * @param dryRun to record or not result
+     */
+    public void run( int transactionNumber, boolean dryRun )
         throws Exception
     {
 
         final List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
+
+        _loadGeneratorResultHandler.setDryRun( dryRun );
 
         statsReset();
 

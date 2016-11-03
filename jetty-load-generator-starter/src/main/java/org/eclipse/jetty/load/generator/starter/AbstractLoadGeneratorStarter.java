@@ -64,11 +64,20 @@ public abstract class AbstractLoadGeneratorStarter
     protected void run(int iteration)
         throws Exception
     {
+        this.run(iteration, false);
+    }
+
+    protected void run(int iteration, boolean dryRun)
+        throws Exception
+    {
         LoadGenerator loadGenerator = getLoadGenerator();
 
-        loadGenerator.run( iteration );
+        loadGenerator.run( iteration, dryRun );
 
-        loadGenerator.interrupt();
+        if (!dryRun)
+        {
+            loadGenerator.interrupt();
+        }
     }
 
     protected LoadGenerator getLoadGenerator()

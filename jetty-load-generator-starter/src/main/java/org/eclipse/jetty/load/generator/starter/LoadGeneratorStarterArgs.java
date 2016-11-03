@@ -68,6 +68,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--report-port", "-rp" }, description = "Report port" )
     private int reportPort;
 
+    @Parameter( names = { "--dry-run", "-dr" }, description = "Dry run" )
+    private boolean dryRun = false;
+
     @Parameter( names = { "--help"}, description = "Display help" )
     private boolean help;
 
@@ -239,5 +242,15 @@ public class LoadGeneratorStarterArgs
     public void setReportPort( int reportPort )
     {
         this.reportPort = reportPort;
+    }
+
+    public boolean isDryRun()
+    {
+        return dryRun;
+    }
+
+    public void setDryRun( boolean dryRun )
+    {
+        this.dryRun = dryRun;
     }
 }
