@@ -348,7 +348,7 @@ public class LoadGenerator
         {
             statsReset();
         }
-        
+
         Future globaleFuture = executorService.submit( () ->
             {
                 try
