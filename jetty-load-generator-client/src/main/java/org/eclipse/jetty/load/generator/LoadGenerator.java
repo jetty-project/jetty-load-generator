@@ -285,6 +285,15 @@ public class LoadGenerator
                 }
             }
 
+            if ( latencyTimeListeners != null )
+            {
+                for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
+                {
+                    latencyTimeListener.onLoadGeneratorStop();
+                }
+            }
+
+
             for ( HttpClient httpClient : this.clients )
             {
                 httpClient.stop();
