@@ -344,8 +344,11 @@ public class LoadGenerator
 
         _loadGeneratorResultHandler.setDryRun( dryRun );
 
-        statsReset();
-
+        if (!dryRun)
+        {
+            statsReset();
+        }
+        
         Future globaleFuture = executorService.submit( () ->
             {
                 try
