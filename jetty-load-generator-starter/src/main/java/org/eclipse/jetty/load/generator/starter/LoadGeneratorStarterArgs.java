@@ -68,8 +68,8 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--report-port", "-rp" }, description = "Report port" )
     private int reportPort;
 
-    @Parameter( names = { "--dry-run", "-dr" }, description = "Dry run" )
-    private boolean dryRun = false;
+    @Parameter( names = { "--no-interrupt", "-notint"}, description = "Not Interrupt Loadgenerator after run" )
+    private boolean notInterrupt = false;
 
     @Parameter( names = { "--help"}, description = "Display help" )
     private boolean help;
@@ -244,13 +244,13 @@ public class LoadGeneratorStarterArgs
         this.reportPort = reportPort;
     }
 
-    public boolean isDryRun()
+    public boolean isNotInterrupt()
     {
-        return dryRun;
+        return notInterrupt;
     }
 
-    public void setDryRun( boolean dryRun )
+    public void setNotInterrupt( boolean notInterrupt )
     {
-        this.dryRun = dryRun;
+        this.notInterrupt = notInterrupt;
     }
 }

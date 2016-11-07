@@ -322,32 +322,20 @@ public class LoadGenerator
         LOGGER.info( "Configuration dump: {}", this );
     }
 
-    /**
-     * run the defined load (users / request numbers)
-     */
-    public void run( int transactionNumber )
-        throws Exception
-    {
-        this.run( transactionNumber, false );
-    }
+
 
     /**
      * run the defined load (users / request numbers)
      * @param transactionNumber the total transaction to run if lower than 0 will run infinite
-     * @param dryRun to record or not result
      */
-    public void run( int transactionNumber, boolean dryRun )
+    public void run( int transactionNumber )
         throws Exception
     {
 
         final List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
-        _loadGeneratorResultHandler.setDryRun( dryRun );
+        statsReset();
 
-        if (!dryRun)
-        {
-            statsReset();
-        }
 
         Future globaleFuture = executorService.submit( () ->
             {
@@ -418,9 +406,25 @@ public class LoadGenerator
     public void run( long time, TimeUnit timeUnit )
         throws Exception
     {
+        this.run( time, timeUnit, true);
+    }
+
+    /**
+     *
+     * @param time
+     * @param timeUnit
+     * @param interupt if <code>true</code>
+     * @throws Exception
+     */
+    public void run( long time, TimeUnit timeUnit, boolean interupt )
+        throws Exception
+    {
         this.run( -1 );
         PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
-        this.interrupt();
+        if (interupt)
+        {
+            this.interrupt();
+        }
     }
 
     /**

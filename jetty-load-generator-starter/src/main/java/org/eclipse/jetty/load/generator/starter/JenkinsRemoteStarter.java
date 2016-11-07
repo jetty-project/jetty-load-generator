@@ -151,7 +151,7 @@ public class JenkinsRemoteStarter
             if (runnerArgs.getRunIteration() > 0)
             {
                 LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost()  + " for " + runnerArgs.getRunIteration() + " iterations" );
-                runner.run(runnerArgs.getRunIteration(), runnerArgs.isDryRun());
+                runner.run(runnerArgs.getRunIteration(), !runnerArgs.isNotInterrupt());
             } else
             {
                 LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost() + " for " + runnerArgs.getRunningTime() + " " + runnerArgs.getRunningTimeUnit() );

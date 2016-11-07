@@ -50,7 +50,6 @@ public class LoadGeneratorResultHandler
 
     private final List<LatencyTimeListener> latencyTimeListeners;
 
-    private boolean dryRun = false;
 
     public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners,
                                        List<LatencyTimeListener> latencyTimeListeners )
@@ -67,7 +66,7 @@ public class LoadGeneratorResultHandler
 
     public void onComplete( Response response )
     {
-        if ( responseTimeListeners.isEmpty() || dryRun )
+        if ( responseTimeListeners.isEmpty() )
         {
             return;
         }
@@ -118,7 +117,7 @@ public class LoadGeneratorResultHandler
     @Override
     public void onBegin( Response response )
     {
-        if ( latencyTimeListeners.isEmpty() || dryRun )
+        if ( latencyTimeListeners.isEmpty() )
         {
             return;
         }
@@ -200,13 +199,4 @@ public class LoadGeneratorResultHandler
         return latencyTimeListeners;
     }
 
-    public boolean isDryRun()
-    {
-        return dryRun;
-    }
-
-    public void setDryRun( boolean dryRun )
-    {
-        this.dryRun = dryRun;
-    }
 }
