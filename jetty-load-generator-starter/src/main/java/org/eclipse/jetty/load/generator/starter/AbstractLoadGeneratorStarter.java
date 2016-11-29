@@ -92,7 +92,7 @@ public abstract class AbstractLoadGeneratorStarter
         throws Exception
     {
         if ( starterArgs.getStatsFile() != null //
-            && StringUtil.isNotBlank( loadGenerator.getStatsResponse()) )
+            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse()) )
         {
             Path path = Paths.get( starterArgs.getStatsFile() );
             if ( Files.notExists( path ) )
@@ -100,7 +100,7 @@ public abstract class AbstractLoadGeneratorStarter
                 Files.createFile( path );
             }
 
-            Files.write( path, loadGenerator.getStatsResponse().getBytes() );
+            Files.write( path, loadGenerator.getEndStatsResponse().getBytes() );
 
         }
     }
