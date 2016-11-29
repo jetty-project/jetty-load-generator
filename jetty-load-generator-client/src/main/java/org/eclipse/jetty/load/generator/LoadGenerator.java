@@ -114,6 +114,8 @@ public class LoadGenerator
 
     private HttpVersion httpVersion = HttpVersion.HTTP_1_1;
 
+    private String statsResponse;
+
     /**
      * path of the {@link org.eclipse.jetty.servlet.StatisticsServlet} on server side
      */
@@ -223,6 +225,15 @@ public class LoadGenerator
     public List<LatencyTimeListener> getLatencyTimeListeners()
     {
         return latencyTimeListeners;
+    }
+
+    /**
+     * will return <code>null</code> if used before {@link #interrupt()}
+     * @return xml content coming from {@link org.eclipse.jetty.servlet.StatisticsServlet} at the end of the run
+     */
+    public String getStatsResponse()
+    {
+        return statsResponse;
     }
 
     //--------------------------------------------------------------
@@ -468,7 +479,8 @@ public class LoadGenerator
             final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?xml=true";
             Request request = httpClient.newRequest( uri );
             ContentResponse contentResponse = request.send();
-            LOGGER.info( "content response xml: {}", contentResponse.getContentAsString() );
+            this.statsResponse = contentResponse.getContentAsString();
+            LOGGER.info( "content response xml: {}", this.statsResponse );
         }
         catch ( Exception e )
         {

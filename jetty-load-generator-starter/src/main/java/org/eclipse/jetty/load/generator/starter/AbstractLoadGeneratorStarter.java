@@ -29,6 +29,7 @@ import org.eclipse.jetty.load.generator.latency.LatencyTimePerPathListener;
 import org.eclipse.jetty.load.generator.profile.ResourceProfile;
 import org.eclipse.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.load.generator.responsetime.TimePerPathListener;
+import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 
@@ -59,24 +60,48 @@ public abstract class AbstractLoadGeneratorStarter
         loadGenerator.run( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
 
         loadGenerator.interrupt();
+
+        writeStats( loadGenerator );
+
     }
 
-    protected void run(int iteration)
+    protected void run( int iteration )
         throws Exception
     {
-        this.run(iteration, false);
+        this.run( iteration, false );
     }
 
-    protected void run(int iteration, boolean interrupt)
+    protected void run( int iteration, boolean interrupt )
         throws Exception
     {
         LoadGenerator loadGenerator = getLoadGenerator();
 
         loadGenerator.run( iteration );
 
-        if (interrupt)
+        if ( interrupt )
         {
             loadGenerator.interrupt();
+            writeStats( loadGenerator );
+        }
+
+
+    }
+
+
+    protected void writeStats( LoadGenerator loadGenerator )
+        throws Exception
+    {
+        if ( starterArgs.getStatsFile() != null //
+            && StringUtil.isNotBlank( loadGenerator.getStatsResponse()) )
+        {
+            Path path = Paths.get( starterArgs.getStatsFile() );
+            if ( Files.notExists( path ) )
+            {
+                Files.createFile( path );
+            }
+
+            Files.write( path, loadGenerator.getStatsResponse().getBytes() );
+
         }
     }
 
@@ -97,22 +122,24 @@ public abstract class AbstractLoadGeneratorStarter
             .responseTimeListeners( getResponseTimeListeners() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ) //
             //.requestListeners( testRequestListener ) //
-            .executor( getExecutor() != null ? getExecutor() : null )
-            .build();
+            .executor( getExecutor() != null ? getExecutor() : null ).build();
 
         return loadGenerator;
     }
 
-    protected Executor getExecutor() {
-      return null;
+    protected Executor getExecutor()
+    {
+        return null;
     }
 
-    protected ResponseTimeListener[] getResponseTimeListeners() {
-        return new ResponseTimeListener[]{new TimePerPathListener()};
+    protected ResponseTimeListener[] getResponseTimeListeners()
+    {
+        return new ResponseTimeListener[]{ new TimePerPathListener() };
     }
 
-    protected LatencyTimeListener[] getLatencyTimeListeners() {
-        return new LatencyTimeListener[] {new LatencyTimePerPathListener()};
+    protected LatencyTimeListener[] getLatencyTimeListeners()
+    {
+        return new LatencyTimeListener[]{ new LatencyTimePerPathListener() };
     }
 
 
@@ -120,7 +147,7 @@ public abstract class AbstractLoadGeneratorStarter
         throws Exception
     {
 
-        if (starterArgs.getProfileJsonPath()!= null)
+        if ( starterArgs.getProfileJsonPath() != null )
         {
             Path profilePath = Paths.get( starterArgs.getProfileJsonPath() );
             if ( Files.exists( profilePath ) )
@@ -129,7 +156,7 @@ public abstract class AbstractLoadGeneratorStarter
                 return objectMapper.readValue( profilePath.toFile(), ResourceProfile.class );
             }
         }
-        if (starterArgs.getProfileXmlPath() != null)
+        if ( starterArgs.getProfileXmlPath() != null )
         {
             Path profilePath = Paths.get( starterArgs.getProfileXmlPath() );
             try (InputStream inputStream = Files.newInputStream( profilePath ))

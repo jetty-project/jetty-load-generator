@@ -71,6 +71,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--no-interrupt", "-notint"}, description = "Not Interrupt Loadgenerator after run" )
     private boolean notInterrupt = false;
 
+    @Parameter( names = { "--stats-to-file", "-stf" }, description = "Write stats to this file" )
+    private String statsFile;
+
     @Parameter( names = { "--help"}, description = "Display help" )
     private boolean help;
 
@@ -252,5 +255,15 @@ public class LoadGeneratorStarterArgs
     public void setNotInterrupt( boolean notInterrupt )
     {
         this.notInterrupt = notInterrupt;
+    }
+
+    public String getStatsFile()
+    {
+        return statsFile;
+    }
+
+    public void setStatsFile( String statsFile )
+    {
+        this.statsFile = statsFile;
     }
 }
