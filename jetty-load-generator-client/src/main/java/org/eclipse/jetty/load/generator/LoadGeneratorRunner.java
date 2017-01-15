@@ -160,7 +160,7 @@ public class LoadGeneratorRunner
             boolean finished = executorService.awaitTermination( resource.getChildrenTimeout(), TimeUnit.MILLISECONDS );
             if ( !finished )
             {
-                LOGGER.warn( "resourceGroup request not all completed" );
+                LOGGER.warn( "resourceGroup request not all completed for timeout " + resource.getChildrenTimeout() );
             }
         }
     }
