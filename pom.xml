@@ -24,6 +24,7 @@
     <groupId>org.eclipse.jetty</groupId>
     <artifactId>jetty-parent</artifactId>
     <version>20</version>
+    <relativePath></relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.eclipse.jetty.loadgenerator</groupId>
