@@ -29,7 +29,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>jetty-load-generator-client</artifactId>
   <packaging>jar</packaging>
-  <name>Jetty :: Load Generator Client</name>
+  <name>Jetty :: Load Generator :: Client</name>
 
   <properties>
     <bundle-symbolic-name>${project.groupId}.load.generator.client</bundle-symbolic-name>
