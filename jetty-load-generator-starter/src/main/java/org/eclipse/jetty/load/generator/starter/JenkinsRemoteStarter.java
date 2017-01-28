@@ -135,13 +135,13 @@ public class JenkinsRemoteStarter
         {
             LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs ){
                 @Override
-                protected ResponseTimeListener[] getResponseTimeListeners()
+                public ResponseTimeListener[] getResponseTimeListeners()
                 {
                     return responseTimeListeners.toArray(new ResponseTimeListener[responseTimeListeners.size()]);
                 }
 
                 @Override
-                protected LatencyTimeListener[] getLatencyTimeListeners()
+                public LatencyTimeListener[] getLatencyTimeListeners()
                 {
                     return latencyTimeListeners.toArray(new LatencyTimeListener[latencyTimeListeners.size()]);
                 }
