@@ -44,12 +44,14 @@ public class LoadGeneratorStarter
             if ( runnerArgs.isHelp() )
             {
                 jCommander.usage();
-                System.exit( 0 );
+                return;
             }
         }
         catch ( Exception e )
         {
+            e.printStackTrace();
             new JCommander( runnerArgs ).usage();
+            return;
         }
 
         try
