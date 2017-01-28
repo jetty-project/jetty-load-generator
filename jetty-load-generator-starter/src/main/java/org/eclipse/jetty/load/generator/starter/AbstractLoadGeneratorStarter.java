@@ -47,12 +47,14 @@ public abstract class AbstractLoadGeneratorStarter
 
     private LoadGeneratorStarterArgs starterArgs;
 
+    private Executor executor;
+
     public AbstractLoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
         this.starterArgs = runnerArgs;
     }
 
-    protected void run()
+    public void run()
         throws Exception
     {
         LoadGenerator loadGenerator = getLoadGenerator();
@@ -65,13 +67,13 @@ public abstract class AbstractLoadGeneratorStarter
 
     }
 
-    protected void run( int iteration )
+    public void run( int iteration )
         throws Exception
     {
         this.run( iteration, false );
     }
 
-    protected void run( int iteration, boolean interrupt )
+    public void run( int iteration, boolean interrupt )
         throws Exception
     {
         LoadGenerator loadGenerator = getLoadGenerator();
@@ -127,23 +129,34 @@ public abstract class AbstractLoadGeneratorStarter
         return loadGenerator;
     }
 
-    protected Executor getExecutor()
+    public Executor getExecutor()
     {
-        return null;
+        return executor;
     }
 
-    protected ResponseTimeListener[] getResponseTimeListeners()
+    public void setExecutor( Executor executor )
+    {
+        this.executor = executor;
+    }
+
+    public AbstractLoadGeneratorStarter executor( Executor executor )
+    {
+        this.executor = executor;
+        return this;
+    }
+
+    public ResponseTimeListener[] getResponseTimeListeners()
     {
         return new ResponseTimeListener[]{ new TimePerPathListener() };
     }
 
-    protected LatencyTimeListener[] getLatencyTimeListeners()
+    public LatencyTimeListener[] getLatencyTimeListeners()
     {
         return new LatencyTimeListener[]{ new LatencyTimePerPathListener() };
     }
 
 
-    protected ResourceProfile getResourceProfile()
+    public ResourceProfile getResourceProfile()
         throws Exception
     {
 
@@ -168,7 +181,7 @@ public abstract class AbstractLoadGeneratorStarter
     }
 
 
-    protected HttpClientTransport httpClientTransport()
+    public HttpClientTransport httpClientTransport()
     {
         switch ( starterArgs.getTransport() )
         {
@@ -196,7 +209,7 @@ public abstract class AbstractLoadGeneratorStarter
         throw new IllegalArgumentException( "unknown httpClientTransport" );
     }
 
-    protected SslContextFactory sslContextFactory()
+    public SslContextFactory sslContextFactory()
     {
         // FIXME make this more configurable
         SslContextFactory sslContextFactory = new SslContextFactory( true );
