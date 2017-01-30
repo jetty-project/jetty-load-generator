@@ -38,6 +38,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--profile-json-path", "-pjp" }, description = "Path to profile json file" )
     private String profileJsonPath;
 
+    @Parameter( names = { "--profile-groovy-path", "-pgp" }, description = "Path to profile groovy file" )
+    private String profileGroovyPath;
+
     @Parameter( names = { "--host", "-h" }, description = "Target host" )
     private String host = "localhost";
 
@@ -276,6 +279,16 @@ public class LoadGeneratorStarterArgs
     public Map<String, String> getParams()
     {
         return params;
+    }
+
+    public String getProfileGroovyPath()
+    {
+        return profileGroovyPath;
+    }
+
+    public void setProfileGroovyPath( String profileGroovyPath )
+    {
+        this.profileGroovyPath = profileGroovyPath;
     }
 
     public void setParams( Map<String, String> params )

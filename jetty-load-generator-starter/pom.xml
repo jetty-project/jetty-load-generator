@@ -44,6 +44,10 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy</artifactId>
+    </dependency>
     <!-- FIXME eclipse IP for that ?? -->
     <dependency>
       <groupId>com.beust</groupId>

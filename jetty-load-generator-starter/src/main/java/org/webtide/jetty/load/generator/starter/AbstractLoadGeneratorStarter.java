@@ -19,7 +19,12 @@
 package org.webtide.jetty.load.generator.starter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import groovy.lang.GroovyShell;
+import org.codehaus.groovy.control.CompilerConfiguration;
 import org.eclipse.jetty.client.HttpClientTransport;
+import org.eclipse.jetty.util.StringUtil;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.xml.XmlConfiguration;
 import org.webtide.jetty.load.generator.Http2TransportBuilder;
 import org.webtide.jetty.load.generator.HttpFCGITransportBuilder;
 import org.webtide.jetty.load.generator.HttpTransportBuilder;
@@ -29,11 +34,9 @@ import org.webtide.jetty.load.generator.latency.LatencyTimePerPathListener;
 import org.webtide.jetty.load.generator.profile.ResourceProfile;
 import org.webtide.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.webtide.jetty.load.generator.responsetime.TimePerPathListener;
-import org.eclipse.jetty.util.StringUtil;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.xml.XmlConfiguration;
 
 import java.io.InputStream;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,6 +51,8 @@ public abstract class AbstractLoadGeneratorStarter
     private LoadGeneratorStarterArgs starterArgs;
 
     private Executor executor;
+
+    private ResourceProfile resourceProfile;
 
     public AbstractLoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
@@ -94,7 +99,7 @@ public abstract class AbstractLoadGeneratorStarter
         throws Exception
     {
         if ( starterArgs.getStatsFile() != null //
-            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse()) )
+            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse() ) )
         {
             Path path = Paths.get( starterArgs.getStatsFile() );
             if ( Files.notExists( path ) )
@@ -159,6 +164,10 @@ public abstract class AbstractLoadGeneratorStarter
     public ResourceProfile getResourceProfile()
         throws Exception
     {
+        if ( resourceProfile != null )
+        {
+            return resourceProfile;
+        }
 
         if ( starterArgs.getProfileJsonPath() != null )
         {
@@ -166,7 +175,7 @@ public abstract class AbstractLoadGeneratorStarter
             if ( Files.exists( profilePath ) )
             {
                 ObjectMapper objectMapper = new ObjectMapper();
-                return objectMapper.readValue( profilePath.toFile(), ResourceProfile.class );
+                return resourceProfile = objectMapper.readValue( profilePath.toFile(), ResourceProfile.class );
             }
         }
         if ( starterArgs.getProfileXmlPath() != null )
@@ -174,12 +183,40 @@ public abstract class AbstractLoadGeneratorStarter
             Path profilePath = Paths.get( starterArgs.getProfileXmlPath() );
             try (InputStream inputStream = Files.newInputStream( profilePath ))
             {
-                return (ResourceProfile) new XmlConfiguration( inputStream ).configure();
+                return resourceProfile = (ResourceProfile) new XmlConfiguration( inputStream ).configure();
             }
         }
+        if ( starterArgs.getProfileGroovyPath() != null )
+        {
+            Path profilePath = Paths.get( starterArgs.getProfileGroovyPath() );
+
+            try (Reader reader = Files.newBufferedReader( profilePath ))
+            {
+                return resourceProfile = (ResourceProfile) evaluateScript( reader );
+            }
+        }
+
+
         throw new IllegalArgumentException( "not resource profile file defined" );
     }
 
+    private Object evaluateScript( Reader script )
+        throws Exception
+    {
+
+        CompilerConfiguration config = new CompilerConfiguration( CompilerConfiguration.DEFAULT );
+        config.setDebug( true );
+        config.setVerbose( true );
+
+        GroovyShell interpreter = new GroovyShell( config );
+
+        return interpreter.evaluate( script );
+    }
+
+    public void setResourceProfile( ResourceProfile resourceProfile )
+    {
+        this.resourceProfile = resourceProfile;
+    }
 
     public HttpClientTransport httpClientTransport()
     {
