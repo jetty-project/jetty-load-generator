@@ -18,9 +18,12 @@
 
 package org.webtide.jetty.load.generator.starter;
 
+import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.internal.Maps;
 import org.webtide.jetty.load.generator.LoadGenerator;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,6 +76,9 @@ public class LoadGeneratorStarterArgs
 
     @Parameter( names = { "--stats-to-file", "-stf" }, description = "Write stats to this file" )
     private String statsFile;
+
+    @DynamicParameter(names = "-D", description = "Dynamic parameters go here")
+    public Map<String, String> params = Maps.newHashMap();
 
     @Parameter( names = { "--help"}, description = "Display help" )
     private boolean help;
@@ -265,5 +271,15 @@ public class LoadGeneratorStarterArgs
     public void setStatsFile( String statsFile )
     {
         this.statsFile = statsFile;
+    }
+
+    public Map<String, String> getParams()
+    {
+        return params;
+    }
+
+    public void setParams( Map<String, String> params )
+    {
+        this.params = params;
     }
 }
