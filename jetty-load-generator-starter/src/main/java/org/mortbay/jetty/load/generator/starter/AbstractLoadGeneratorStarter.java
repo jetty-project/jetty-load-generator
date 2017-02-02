@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -76,6 +77,22 @@ public abstract class AbstractLoadGeneratorStarter
         throws Exception
     {
         this.run( iteration, false );
+    }
+
+    public void run( long time, TimeUnit timeUnit, boolean interrupt )
+        throws Exception
+    {
+
+        LoadGenerator loadGenerator = getLoadGenerator();
+
+        loadGenerator.run( time, timeUnit);
+
+        if ( interrupt )
+        {
+            loadGenerator.interrupt();
+            writeStats( loadGenerator );
+        }
+
     }
 
     public void run( int iteration, boolean interrupt )
