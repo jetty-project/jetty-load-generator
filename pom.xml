@@ -30,7 +30,7 @@ under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mortbay.jetty.loadgenerator</groupId>
   <artifactId>jetty-load-generator</artifactId>
-  <version>0.1</version>
+  <version>0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Jetty :: Load Generator</name>
 
