@@ -54,6 +54,13 @@ under the License.
     </license>
   </licenses>
 
+  <scm>
+    <connection>scm:git:https://github.com/jetty-project/jetty-load-generator.git</connection>
+    <developerConnection>scm:git:git@github.com:jetty-project/jetty-load-generator.git</developerConnection>
+    <url>https://github.com/jetty-project/jetty-load-generator.git</url>
+    <tag>HEAD</tag>
+  </scm>
+
   <modules>
     <module>jetty-load-generator-client</module>
     <module>jetty-load-generator-collector</module>
@@ -61,6 +68,11 @@ under the License.
   </modules>
 
   <repositories>
+    <repository>
+      <id>oss.sonatype.org</id>
+      <name>Jetty Staging Repository</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
     <repository>
       <id>sonatype.snapshots</id>
       <url>https://oss.sonatype.org/content/repositories/jetty-snapshots</url>
@@ -500,6 +512,58 @@ under the License.
       <properties>
         <alpn.version>8.1.11.v20170118</alpn.version>
       </properties>
+    </profile>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <inherited>true</inherited>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+              <updateReleaseInfo>true</updateReleaseInfo>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 
