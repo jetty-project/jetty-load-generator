@@ -107,7 +107,7 @@ public class LoadGeneratorStarterTest
         args.add( "--users");
         args.add( "3");
         args.add( "--profile-groovy-path");
-        args.add( "src/main/resources/loadgenerator_profile.groovy");
+        args.add( "src/test/resources/loadgenerator_profile.groovy");
 
         LoadGeneratorStarter.main( args.toArray(new String[args.size()]) );
 
