@@ -295,4 +295,16 @@ public class LoadGeneratorStarterArgs
     {
         this.params = params;
     }
+
+    @Override
+    public String toString()
+    {
+        return "LoadGeneratorStarterArgs{" + "profileXmlPath='" + profileXmlPath + '\'' + ", profileJsonPath='"
+            + profileJsonPath + '\'' + ", profileGroovyPath='" + profileGroovyPath + '\'' + ", host='" + host + '\''
+            + ", port=" + port + ", users=" + users + ", transactionRate=" + transactionRate + ", transport='"
+            + transport + '\'' + ", selectors=" + selectors + ", runningTime=" + runningTime + ", runningTimeUnit='"
+            + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='" + reportHost + '\''
+            + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt + ", statsFile='" + statsFile + '\''
+            + ", params=" + params + ", help=" + help + '}';
+    }
 }
