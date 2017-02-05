@@ -80,7 +80,7 @@ public class LoadGeneratorRunNumberTest
     public void simpleTestLimitedRunTwo()
         throws Exception
     {
-        int number = 2, expected =  number * usersNumber;
+        int number = 2;
 
         responsePerPath = new ResponsePerPath();
 
@@ -102,11 +102,62 @@ public class LoadGeneratorRunNumberTest
             .responseTimeListeners( responsePerPath ) //
             .httpVersion( httpVersion() ) //
             .build();
-        loadGenerator.run( number );
+
+        runWithNumber( number, loadGenerator );
 
         scheduler.stop();
 
-        //Assert.assertEquals( 2, responsePerPath.getResponseTimePerPath().size() );
+    }
+
+
+    @Test
+    public void simpleTestLimitedRunTwoButTwice()
+        throws Exception
+    {
+        int number = 2;
+
+        responsePerPath = new ResponsePerPath();
+
+        ResourceProfile resourceProfile = //
+            new ResourceProfile( new Resource( "/index.html" ) );//, new Resource( "/foo.html" ).wait( true ) );
+
+        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
+
+        LoadGenerator loadGenerator = new LoadGenerator.Builder() //
+            .host( "localhost" ) //
+            .port( connector.getLocalPort() ) //
+            .users( this.usersNumber ) //
+            .scheduler( scheduler ) //
+            .transactionRate( 1 ) //
+            .transport( this.transport ) //
+            .httpClientTransport( this.httpClientTransport() ) //
+            .loadProfile( resourceProfile ) //
+            .sslContextFactory( sslContextFactory ) //
+            .responseTimeListeners( responsePerPath ) //
+            .httpVersion( httpVersion() ) //
+            .build();
+
+        runWithNumber( number, loadGenerator );
+
+        responsePerPath.getRecorderPerPath().clear();
+
+        runWithNumber( number, loadGenerator );
+
+        scheduler.stop();
+
+    }
+
+
+    public void runWithNumber(int number, LoadGenerator loadGenerator)
+        throws Exception
+    {
+        int expected =  number * usersNumber;
+
+        loadGenerator.run( number );
+
+        Assert.assertEquals( 1, responsePerPath.getRecorderPerPath().size() );
+
+        Assert.assertEquals( 2, responsePerPath.getRecorderPerPath().get( "/index.html" ).intValue() );
 
         for ( Map.Entry<String, AtomicLong> entry : responsePerPath.getRecorderPerPath().entrySet() )
         {

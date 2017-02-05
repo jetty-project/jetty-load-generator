@@ -399,12 +399,11 @@ public class LoadGenerator
 
         if ( transactionNumber > 0 )
         {
-
+            // TODO any timeout here or maxWait time?
             while ( !globaleFuture.isDone() )
             {
                 Thread.sleep( 1 );
             }
-            executorService.shutdownNow();
         }
     }
 
