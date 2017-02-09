@@ -4,6 +4,8 @@ LoadGenerator will generate some load on an http server using the Jetty HttpClie
 
 You can generate load for both HTTP/1.1 and HTTP/2
 
+More documentation https://jetty-project.github.io/jetty-load-generator/
+
 ## Documentation
 
 ### Profile
