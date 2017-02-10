@@ -60,6 +60,13 @@ under the License.
     <tag>HEAD</tag>
   </scm>
 
+  <distributionManagement>
+    <site>
+      <id>github</id>
+      <url>scm:git:https://github.com/jetty-project/jetty-load-generator.git</url>
+    </site>
+  </distributionManagement>
+
   <modules>
     <module>jetty-load-generator-client</module>
     <module>jetty-load-generator-collector</module>
@@ -67,11 +74,6 @@ under the License.
   </modules>
 
   <repositories>
-    <repository>
-      <id>oss.sonatype.org</id>
-      <name>Jetty Staging Repository</name>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
     <repository>
       <id>sonatype.snapshots</id>
       <url>https://oss.sonatype.org/content/repositories/jetty-snapshots</url>
@@ -219,9 +221,37 @@ under the License.
             <argLine>-Dcom.sun.management.jmxremote -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=duration=120s,filename=${project.build.directory}/myrecording.jfr -XX:+PrintGCDetails</argLine>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.6</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>2.9</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-scm-publish-plugin</artifactId>
+          <version>1.1</version>
+          <configuration>
+            <scmBranch>gh-pages</scmBranch>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.10.4</version>
+      </plugin>
+    </plugins>
+  </reporting>
 
   <profiles>
     <profile>
