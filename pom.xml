@@ -243,6 +243,21 @@ under the License.
     </pluginManagement>
   </build>
 
+  <developers>
+    <developer>
+      <id>olamy</id>
+      <email>olamy@apache.org</email>
+      <name>Olivier Lamy</name>
+      <organization>Webtide</organization>
+      <organizationUrl>https://www.webtide.com</organizationUrl>
+      <roles>
+        <role>hacker</role>
+      </roles>
+      <timezone>Australia/Melbourne</timezone>
+    </developer>
+  </developers>
+  <contributors></contributors>
+
   <profiles>
     <profile>
       <id>reporting</id>
