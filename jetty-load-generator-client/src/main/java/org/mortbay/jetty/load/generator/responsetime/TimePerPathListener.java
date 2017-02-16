@@ -108,7 +108,10 @@ public class TimePerPathListener
     @Override
     public void onLatencyTimeValue( Values values )
     {
-        System.out.println( "onLatencyTimeValue:" + values.toString() );
+        if ( LOGGER.isDebugEnabled() )
+        {
+            LOGGER.debug( "onLatencyTimeValue:" + values.toString() );
+        }
         String path = values.getPath();
         long time = values.getTime();
         Recorder recorder = latencyTimePerPath.get( path );

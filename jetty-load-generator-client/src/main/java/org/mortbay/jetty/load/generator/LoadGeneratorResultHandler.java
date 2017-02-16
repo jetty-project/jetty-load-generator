@@ -21,11 +21,11 @@ package org.mortbay.jetty.load.generator;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 import java.util.Collections;
 import java.util.List;
@@ -124,7 +124,7 @@ public class LoadGeneratorResultHandler
 
         long end = System.nanoTime();
 
-        String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER);
+        String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER );
 
         if ( !StringUtil.isBlank( startTime ) )
         {
@@ -137,8 +137,10 @@ public class LoadGeneratorResultHandler
                 .status( response.getStatus() ) //
                 .eventTimestamp( System.currentTimeMillis() );
 
-            System.out.println( "onBegin:" + response.hashCode() );
-
+            if ( LOGGER.isDebugEnabled() )
+            {
+                LOGGER.debug( "onBegin:" + response.hashCode() );
+            }
             for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
             {
                 latencyTimeListener.onLatencyTimeValue( values );
