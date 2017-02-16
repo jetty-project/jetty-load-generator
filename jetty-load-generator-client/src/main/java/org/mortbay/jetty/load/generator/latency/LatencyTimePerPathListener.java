@@ -47,7 +47,7 @@ public class LatencyTimePerPathListener
 
     private long lowestDiscernibleValue = RecorderConstants.LOWEST_DISCERNIBLE_VALUE;
     private long highestTrackableValue = RecorderConstants.HIGHEST_TRACKABLE_VALUE;
-    private int numberOfSignificantValueDigits = RecorderConstants.NUMBER_OF_SIHNIFICANT_VALUE_DIGITS;
+    private int numberOfSignificantValueDigits = RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS;
 
 
     public LatencyTimePerPathListener( Map<String, Recorder> recorderPerPath, boolean printOnEnd,
@@ -105,7 +105,7 @@ public class LatencyTimePerPathListener
             StringBuilder message =  //
                 new StringBuilder( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ) //
-                    .append( "   Response Time Summary    " ).append( System.lineSeparator() ) //
+                    .append( "   Latency Time Summary               " ).append( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
             for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )

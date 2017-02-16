@@ -63,6 +63,12 @@ public class LoadGenerator
 
     private int users;
 
+    /**
+     * number of transactions send per minute (transaction means the whole {@link ResourceProfile}
+     * <p>
+     *     if < 0, the generator will not apply any regulation and send as many he can (will be resources dependant)
+     * </p>
+     */
     private volatile int transactionRate;
 
     private AtomicBoolean stop;
@@ -746,11 +752,6 @@ public class LoadGenerator
             if ( users < 1 )
             {
                 throw new IllegalArgumentException( "users number must be at least 1" );
-            }
-
-            if ( transactionRate < 0 )
-            {
-                throw new IllegalArgumentException( "users number must be at least 0" );
             }
 
             if ( StringUtil.isBlank( host ) )

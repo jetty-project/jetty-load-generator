@@ -67,14 +67,14 @@ public class CollectorInformations
     {
         this.informationType = informationType;
         this.totalCount = histogram.getTotalCount();
-        this.minValue = TimeUnit.NANOSECONDS.toMillis( histogram.getMinValue() );
-        this.maxValue = TimeUnit.NANOSECONDS.toMillis( histogram.getMaxValue() );
-        this.mean = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getMean() ) );
-        this.value50 = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getValueAtPercentile( 50D ) ) );
-        this.value90 = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getValueAtPercentile( 90D ) ) );
+        this.minValue = histogram.getMinValue();
+        this.maxValue = histogram.getMaxValue();
+        this.mean = histogram.getMean();
+        this.value50 = histogram.getValueAtPercentile( 50D );
+        this.value90 = histogram.getValueAtPercentile( 90D );
         this.startTimeStamp = histogram.getStartTimeStamp();
         this.endTimeStamp = histogram.getEndTimeStamp();
-        this.stdDeviation = TimeUnit.NANOSECONDS.toMillis( Math.round( histogram.getStdDeviation() ) );
+        this.stdDeviation = histogram.getStdDeviation();
     }
 
     public long getEndTimeStamp()
@@ -242,15 +242,43 @@ public class CollectorInformations
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
         return "CollectorInformations:" + ( ls ? System.lineSeparator() : "" ) //
             + "informationType=" + informationType + ( ls ? System.lineSeparator() : "" ) //
-            + ",totalCount=" + totalCount + ( ls ? System.lineSeparator() : "" ) //
-            + ", minValue=" + minValue + ( ls ? System.lineSeparator() : "" ) //
-            + ", maxValue=" + maxValue + ( ls ? System.lineSeparator() : "" ) //
-            + ", mean=" + mean + ( ls ? System.lineSeparator() : "" ) //
-            + ", stdDeviation=" + stdDeviation + ( ls ? System.lineSeparator() : "" ) //
-            + ", value 50%=" + value50 + ( ls ? System.lineSeparator() : "" ) //
-            + ", value 90%=" + value90 + ( ls ? System.lineSeparator() : "" ) //
+            + ",totalCount=" + totalCount //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", minValue=" + TimeUnit.NANOSECONDS.toMillis( getMinValue() ) //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", maxValue=" + TimeUnit.NANOSECONDS.toMillis( getMaxValue() ) + ( ls ? System.lineSeparator() : "" ) //
+            + ", mean=" + TimeUnit.NANOSECONDS.toMillis( Math.round( getMean() ) ) //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", stdDeviation=" + TimeUnit.NANOSECONDS.toMillis( Math.round( getStdDeviation() ) ) //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", value 50%=" + TimeUnit.NANOSECONDS.toMillis( Math.round( getValue50() ) ) //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", value 90%=" + TimeUnit.NANOSECONDS.toMillis( Math.round( getValue90() ) ) //
+            + ( ls ? System.lineSeparator() : "" ) //
             + ", startTimeStamp=" + simpleDateFormat.format( startTimeStamp ) + ( ls ? System.lineSeparator() : "" ) //
             + ", endTimeStamp=" + simpleDateFormat.format( endTimeStamp );
     }
 
+
+    public String toStringInNanos( boolean ls )
+    {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
+        return "CollectorInformations:" + ( ls ? System.lineSeparator() : "" ) //
+            + "informationType=" + informationType + ( ls ? System.lineSeparator() : "" ) //
+            + ",totalCount=" + totalCount //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", minValue=" + getMinValue()  //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", maxValue=" + getMaxValue() + ( ls ? System.lineSeparator() : "" ) //
+            + ", mean=" + Math.round( getMean() )  //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", stdDeviation=" + Math.round( getStdDeviation() ) //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", value 50%=" + Math.round( getValue50() )  //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", value 90%=" + Math.round( getValue90() )  //
+            + ( ls ? System.lineSeparator() : "" ) //
+            + ", startTimeStamp=" + simpleDateFormat.format( startTimeStamp ) + ( ls ? System.lineSeparator() : "" ) //
+            + ", endTimeStamp=" + simpleDateFormat.format( endTimeStamp );
+    }
 }

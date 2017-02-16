@@ -86,6 +86,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--help"}, description = "Display help" )
     private boolean help;
 
+    @Parameter( names = { "--display-stats-end", "-dse"}, description = "Display stats at the end" )
+    private boolean displayStatsAtEnd;
+
     public LoadGeneratorStarterArgs()
     {
         // no op
@@ -296,6 +299,16 @@ public class LoadGeneratorStarterArgs
         this.params = params;
     }
 
+    public boolean isDisplayStatsAtEnd()
+    {
+        return displayStatsAtEnd;
+    }
+
+    public void setDisplayStatsAtEnd( boolean displayStatsAtEnd )
+    {
+        this.displayStatsAtEnd = displayStatsAtEnd;
+    }
+
     @Override
     public String toString()
     {
@@ -305,6 +318,6 @@ public class LoadGeneratorStarterArgs
             + transport + '\'' + ", selectors=" + selectors + ", runningTime=" + runningTime + ", runningTimeUnit='"
             + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='" + reportHost + '\''
             + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt + ", statsFile='" + statsFile + '\''
-            + ", params=" + params + ", help=" + help + '}';
+            + ", params=" + params + ", help=" + help + ", displayStatsAtEnd=" + displayStatsAtEnd + '}';
     }
 }

@@ -69,6 +69,13 @@ public class LoadGeneratorStarter
             {
                 runner.run();
             }
+
+            if (runnerArgs.isDisplayStatsAtEnd())
+            {
+
+            }
+
+            runner.getLoadGenerator().interrupt();
         }
         catch ( Exception e )
         {

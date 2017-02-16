@@ -20,9 +20,9 @@ package org.mortbay.jetty.load.generator.responsetime;
 
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
-import org.mortbay.jetty.load.generator.CollectorInformations;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.CollectorInformations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,7 +60,7 @@ public class ResponseTimeDisplayListener
     {
         this( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
               RecorderConstants.HIGHEST_TRACKABLE_VALUE,  //
-              RecorderConstants.NUMBER_OF_SIHNIFICANT_VALUE_DIGITS,  //
+              RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS,  //
               initial, //
               delay,  //
               timeUnit, //
@@ -165,7 +165,7 @@ public class ResponseTimeDisplayListener
             StringBuilder message = new StringBuilder( "Path:" ).append( path ).append( System.lineSeparator() );
             message.append( new CollectorInformations( histogram, //
                                                        CollectorInformations.InformationType.REQUEST ) //
-                                .toString( true ) ) //
+                                .toStringInNanos( true ) ) //
                 .append( System.lineSeparator() );
             LOGGER.info( message.toString() );
         }

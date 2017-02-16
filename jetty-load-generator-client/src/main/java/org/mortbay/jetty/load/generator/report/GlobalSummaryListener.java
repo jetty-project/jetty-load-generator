@@ -53,11 +53,11 @@ public class GlobalSummaryListener
     {
         this.responseTimeRecorder = new Recorder( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
                                                   RecorderConstants.HIGHEST_TRACKABLE_VALUE, //
-                                                  RecorderConstants.NUMBER_OF_SIHNIFICANT_VALUE_DIGITS );
+                                                  RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
 
         this.latencyTimeRecorder = new Recorder( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
                                                  RecorderConstants.HIGHEST_TRACKABLE_VALUE, //
-                                                 RecorderConstants.NUMBER_OF_SIHNIFICANT_VALUE_DIGITS );
+                                                 RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
     }
 
     @Override

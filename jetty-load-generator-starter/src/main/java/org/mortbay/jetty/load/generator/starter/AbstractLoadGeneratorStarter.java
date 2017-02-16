@@ -26,12 +26,12 @@ import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.mortbay.jetty.load.generator.Http2TransportBuilder;
-import org.mortbay.jetty.load.generator.HttpTransportBuilder;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 import org.mortbay.jetty.load.generator.HttpFCGITransportBuilder;
+import org.mortbay.jetty.load.generator.HttpTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimePerPathListener;
+import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 
@@ -85,7 +85,7 @@ public abstract class AbstractLoadGeneratorStarter
 
         LoadGenerator loadGenerator = getLoadGenerator();
 
-        loadGenerator.run( time, timeUnit);
+        loadGenerator.run( time, timeUnit );
 
         if ( interrupt )
         {
@@ -93,6 +93,12 @@ public abstract class AbstractLoadGeneratorStarter
             writeStats( loadGenerator );
         }
 
+    }
+
+    public void displayStats()
+        throws Exception
+    {
+        writeStats( getLoadGenerator() );
     }
 
     public void run( int iteration, boolean interrupt )
@@ -212,7 +218,6 @@ public abstract class AbstractLoadGeneratorStarter
                 return resourceProfile = (ResourceProfile) evaluateScript( reader );
             }
         }
-
 
         throw new IllegalArgumentException( "not resource profile file defined" );
     }

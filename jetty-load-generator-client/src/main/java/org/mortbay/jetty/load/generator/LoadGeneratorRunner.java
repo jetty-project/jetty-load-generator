@@ -29,7 +29,6 @@ import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.profile.Resource;
 
 import java.net.HttpCookie;
-
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -88,25 +87,27 @@ public class LoadGeneratorRunner
                     handleResource( resource );
                 }
 
-                long waitTime = 1000 / loadGenerator.getTransactionRate();
-
-                PLATFORM_TIMER.sleep( TimeUnit.MILLISECONDS.toMicros( waitTime ) );
+                int transactionRate = loadGenerator.getTransactionRate();
+                if ( transactionRate > 0 )
+                {
+                    long waitTime = 1000 / transactionRate;
+                    PLATFORM_TIMER.sleep( TimeUnit.MILLISECONDS.toMicros( waitTime ) );
+                }
 
                 if ( transactionNumber > -1 )
                 {
                     transactionNumber--;
                 }
 
-            } while ( true && transactionNumber != 0 );
+            }
+            while ( true && transactionNumber != 0 );
 
-
-            HttpDestination destination =
-                (HttpDestination) httpClient.getDestination( loadGenerator.getScheme(), //
-                                                             loadGenerator.getHost(), //
-                                                             loadGenerator.getPort() );
+            HttpDestination destination = (HttpDestination) httpClient.getDestination( loadGenerator.getScheme(), //
+                                                                                       loadGenerator.getHost(), //
+                                                                                       loadGenerator.getPort() );
 
             //wait until the end of all requests
-            while (!destination.getHttpExchanges().isEmpty())
+            while ( !destination.getHttpExchanges().isEmpty() )
             {
                 Thread.sleep( 1 );
             }
@@ -118,7 +119,9 @@ public class LoadGeneratorRunner
         }
     }
 
-    private void handleResource( Resource resource ) throws Exception {
+    private void handleResource( Resource resource )
+        throws Exception
+    {
 
         // so we have sync call if we have children or resource marked as wait
         if ( !resource.getResources().isEmpty() || resource.isWait() )
@@ -130,8 +133,7 @@ public class LoadGeneratorRunner
             buildRequest( resource ).send( loadGeneratorResultHandler );
         }
 
-
-        if (!resource.getResources().isEmpty())
+        if ( !resource.getResources().isEmpty() )
         {
             // it's a group so we can request in parallel but wait all responses before next step
             ExecutorService executorService = Executors.newWorkStealingPool();
@@ -189,10 +191,11 @@ public class LoadGeneratorRunner
 
         //request.onResponseContentAsync( loadGeneratorResultHandler );
 
-        request.onRequestBegin( beginRequest -> {
-            beginRequest.header( LoadGeneratorResultHandler.START_LATENCY_TIME_HEADER, //
-                Long.toString( System.nanoTime() ));
-        } );
+        request.onRequestBegin( beginRequest ->
+                                {
+                                    beginRequest.header( LoadGeneratorResultHandler.START_LATENCY_TIME_HEADER, //
+                                                         Long.toString( System.nanoTime() ) );
+                                } );
 
         request.onResponseBegin( loadGeneratorResultHandler );
 

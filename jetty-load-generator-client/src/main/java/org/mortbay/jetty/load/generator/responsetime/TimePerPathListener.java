@@ -19,10 +19,10 @@
 package org.mortbay.jetty.load.generator.responsetime;
 
 import org.HdrHistogram.Recorder;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.CollectorInformations;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.CollectorInformations;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -51,8 +51,9 @@ public class TimePerPathListener
 
     private long highestTrackableValue = RecorderConstants.HIGHEST_TRACKABLE_VALUE;
 
-    private int numberOfSignificantValueDigits = RecorderConstants.NUMBER_OF_SIHNIFICANT_VALUE_DIGITS;
+    private int numberOfSignificantValueDigits = RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS;
 
+    private boolean nanoDisplay = true;
 
     public TimePerPathListener( boolean printOnEnd, long lowestDiscernibleValue, long highestTrackableValue,
                                 int numberOfSignificantValueDigits )
@@ -61,6 +62,13 @@ public class TimePerPathListener
         this.lowestDiscernibleValue = lowestDiscernibleValue;
         this.highestTrackableValue = highestTrackableValue;
         this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
+    }
+
+
+    public TimePerPathListener( boolean printOnEnd, boolean nanoDisplay )
+    {
+        this.printOnEnd = printOnEnd;
+        this.nanoDisplay = nanoDisplay;
     }
 
     public TimePerPathListener( boolean printOnEnd )
@@ -128,15 +136,18 @@ public class TimePerPathListener
             StringBuilder responseTimeMessage =  //
                 new StringBuilder( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ) //
-                    .append( "   Response Time Summary              " ).append( System.lineSeparator() ) //
+                    .append( "   Latency Time Summary               " ).append( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
-            for ( Map.Entry<String, Recorder> entry : responseTimePerPath.entrySet() )
+            for ( Map.Entry<String, Recorder> entry : latencyTimePerPath.entrySet() )
             {
                 responseTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
-                responseTimeMessage.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                                       CollectorInformations.InformationType.REQUEST ) //
-                                                .toString( true ) ) //
+                CollectorInformations collectorInformations =
+                    new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                               CollectorInformations.InformationType.REQUEST );
+                responseTimeMessage.append( nanoDisplay
+                                                ? collectorInformations.toStringInNanos( true )
+                                                : collectorInformations.toString( true ) ) //
                     .append( System.lineSeparator() );
 
             }
@@ -146,15 +157,19 @@ public class TimePerPathListener
             StringBuilder latencyTimeMessage =  //
                 new StringBuilder( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ) //
-                    .append( "   Latency Time Summary               " ).append( System.lineSeparator() ) //
+                    .append( "   Response Time Summary              " ).append( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
             for ( Map.Entry<String, Recorder> entry : responseTimePerPath.entrySet() )
             {
                 latencyTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
-                latencyTimeMessage.append( new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                                      CollectorInformations.InformationType.REQUEST ) //
-                                               .toString( true ) ) //
+                CollectorInformations collectorInformations =
+                    new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                               CollectorInformations.InformationType.REQUEST );
+
+                latencyTimeMessage.append( nanoDisplay
+                                               ? collectorInformations.toStringInNanos( true )
+                                               : collectorInformations.toString( true ) ) //
                     .append( System.lineSeparator() );
 
             }
