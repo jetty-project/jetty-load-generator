@@ -133,51 +133,58 @@ public class TimePerPathListener
     {
         if ( printOnEnd )
         {
-            StringBuilder responseTimeMessage =  //
-                new StringBuilder( System.lineSeparator() ) //
-                    .append( "--------------------------------------" ).append( System.lineSeparator() ) //
+            StringBuilder latencyTimeMessage = new StringBuilder();
+            if ( !latencyTimePerPath.isEmpty() )
+            {
+                latencyTimeMessage.append( "--------------------------------------" ).append(
+                    System.lineSeparator() ) //
                     .append( "   Latency Time Summary               " ).append( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
-            for ( Map.Entry<String, Recorder> entry : latencyTimePerPath.entrySet() )
-            {
-                responseTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
-                CollectorInformations collectorInformations =
-                    new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                               CollectorInformations.InformationType.REQUEST );
-                responseTimeMessage.append( nanoDisplay
-                                                ? collectorInformations.toStringInNanos( true )
-                                                : collectorInformations.toString( true ) ) //
-                    .append( System.lineSeparator() );
+                for ( Map.Entry<String, Recorder> entry : latencyTimePerPath.entrySet() )
+                {
+                    latencyTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
+                    CollectorInformations collectorInformations =
+                        new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                   CollectorInformations.InformationType.REQUEST );
+                    latencyTimeMessage.append( nanoDisplay
+                                                    ? collectorInformations.toStringInNanos( true )
+                                                    : collectorInformations.toString( true ) ) //
+                        .append( System.lineSeparator() );
 
+                }
+
+                latencyTimeMessage.append( System.lineSeparator() );
             }
 
-            responseTimeMessage.append( System.lineSeparator() );
-
-            StringBuilder latencyTimeMessage =  //
-                new StringBuilder( System.lineSeparator() ) //
-                    .append( "--------------------------------------" ).append( System.lineSeparator() ) //
-                    .append( "   Response Time Summary              " ).append( System.lineSeparator() ) //
-                    .append( "--------------------------------------" ).append( System.lineSeparator() ); //
-
-            for ( Map.Entry<String, Recorder> entry : responseTimePerPath.entrySet() )
+            if ( !responseTimePerPath.isEmpty() )
             {
-                latencyTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
-                CollectorInformations collectorInformations =
-                    new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                               CollectorInformations.InformationType.REQUEST );
 
-                latencyTimeMessage.append( nanoDisplay
-                                               ? collectorInformations.toStringInNanos( true )
-                                               : collectorInformations.toString( true ) ) //
-                    .append( System.lineSeparator() );
+                StringBuilder responseTimeMessage =  //
+                    new StringBuilder( System.lineSeparator() ) //
+                        .append( "--------------------------------------" ).append( System.lineSeparator() ) //
+                        .append( "   Response Time Summary              " ).append( System.lineSeparator() ) //
+                        .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
-            }
+                for ( Map.Entry<String, Recorder> entry : responseTimePerPath.entrySet() )
+                {
+                    responseTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
+                    CollectorInformations collectorInformations =
+                        new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                                                   CollectorInformations.InformationType.REQUEST );
 
-            latencyTimeMessage.append( System.lineSeparator() );
+                    responseTimeMessage.append( nanoDisplay
+                                                   ? collectorInformations.toStringInNanos( true )
+                                                   : collectorInformations.toString( true ) ) //
+                        .append( System.lineSeparator() );
 
-            System.out.println( responseTimeMessage.append( latencyTimeMessage ) );
+                }
+
+                responseTimeMessage.append( System.lineSeparator() );
+                responseTimeMessage.append( responseTimeMessage );
+            } System.out.println( latencyTimeMessage );
         }
+
     }
 
     public Map<String, Recorder> getResponseTimePerPath()

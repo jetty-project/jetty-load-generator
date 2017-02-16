@@ -27,14 +27,6 @@ import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
-import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeDisplayListener;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.latency.LatencyTimePerPathListener;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -58,6 +50,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeDisplayListener;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.profile.Resource;
+import org.mortbay.jetty.load.generator.profile.ResourceProfile;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -210,8 +209,9 @@ public abstract class AbstractLoadGeneratorTest
         return Arrays.asList( new ResponseTimeDisplayListener(), new TimePerPathListener() );
     }
 
-    protected List<LatencyTimeListener> getLatencyTimeListeners() {
-        return Arrays.asList( new LatencyTimeDisplayListener(), new LatencyTimePerPathListener());
+    protected List<LatencyTimeListener> getLatencyTimeListeners()
+    {
+        return Arrays.asList( new LatencyTimeDisplayListener(), new TimePerPathListener() );
     }
 
     protected LoadGenerator build( ResourceProfile profile )
@@ -240,7 +240,7 @@ public abstract class AbstractLoadGeneratorTest
             .responseTimeListeners(
                 responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()] ) ) //
             .latencyTimeListeners(
-                latencyTimeListeners.toArray(new LatencyTimeListener[latencyTimeListeners.size()]) ) //
+                latencyTimeListeners.toArray( new LatencyTimeListener[latencyTimeListeners.size()] ) ) //
             .requestListeners( testRequestListener ) //
             .httpVersion( httpVersion() ) //
             //.executor( new QueuedThreadPool() )

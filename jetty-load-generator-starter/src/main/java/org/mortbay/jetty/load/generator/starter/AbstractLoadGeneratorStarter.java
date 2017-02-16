@@ -30,7 +30,6 @@ import org.mortbay.jetty.load.generator.HttpFCGITransportBuilder;
 import org.mortbay.jetty.load.generator.HttpTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.latency.LatencyTimePerPathListener;
 import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
@@ -180,7 +179,7 @@ public abstract class AbstractLoadGeneratorStarter
 
     public LatencyTimeListener[] getLatencyTimeListeners()
     {
-        return new LatencyTimeListener[]{ new LatencyTimePerPathListener() };
+        return new LatencyTimeListener[]{ new TimePerPathListener() };
     }
 
 
