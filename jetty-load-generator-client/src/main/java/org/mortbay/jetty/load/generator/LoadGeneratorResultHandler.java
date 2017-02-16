@@ -130,12 +130,14 @@ public class LoadGeneratorResultHandler
         {
             long time = end - Long.parseLong( startTime );
 
-            ValueListener.Values values = new ResponseTimeListener.Values() //
+            ValueListener.Values values = new ValueListener.Values() //
                 .time( time ) //
                 .path( response.getRequest().getPath() ) //
                 .method( response.getRequest().getMethod() ) //
                 .status( response.getStatus() ) //
                 .eventTimestamp( System.currentTimeMillis() );
+
+            System.out.println( "onBegin:" + response.hashCode() );
 
             for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
             {

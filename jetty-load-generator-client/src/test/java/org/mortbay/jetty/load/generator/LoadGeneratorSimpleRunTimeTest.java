@@ -19,15 +19,16 @@
 package org.mortbay.jetty.load.generator;
 
 
+import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
+import org.eclipse.jetty.util.thread.Scheduler;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.profile.Resource;
 import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
-import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
-import org.eclipse.jetty.util.thread.Scheduler;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.concurrent.TimeUnit;
 
@@ -48,9 +49,11 @@ public class LoadGeneratorSimpleRunTimeTest
     {
 
         ResourceProfile resourceProfile = //
-            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ));
+            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ) );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
+
+        TimePerPathListener latency = new TimePerPathListener();
 
         new LoadGenerator.Builder() //
             .host( "localhost" ) //
@@ -61,6 +64,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
             .loadProfile( resourceProfile ) //
+            .latencyTimeListeners( latency ) //
             .responseTimeListeners( new ResponseTimeDisplayListener(), new TimePerPathListener() ) //
             .httpVersion( httpVersion() ) //
             .build() //
@@ -70,6 +74,79 @@ public class LoadGeneratorSimpleRunTimeTest
     }
 
 
+    @Test
+    public void simple_test_limited_number_run()
+        throws Exception
+    {
 
+        int requestNumber = 2;
+
+        ResourceProfile resourceProfile = //
+            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ) );
+
+        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
+
+        TimePerPathListener result = new TimePerPathListener();
+
+        new LoadGenerator.Builder() //
+            .host( "localhost" ) //
+            .port( connector.getLocalPort() ) //
+            .users( this.usersNumber ) //
+            .scheduler( scheduler ) //
+            .transactionRate( 1 ) //
+            .transport( this.transport ) //
+            .httpClientTransport( this.httpClientTransport() ) //
+            .loadProfile( resourceProfile ) //
+            .latencyTimeListeners( result ) //
+            .responseTimeListeners( result ) //
+            .httpVersion( httpVersion() ) //
+            .build() //
+            .run( requestNumber );
+
+        Assert.assertEquals( requestNumber,
+                             result.getResponseTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
+
+        Assert.assertEquals( requestNumber,
+                             result.getLatencyTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
+
+        scheduler.stop();
+    }
+
+    @Test
+    public void simple_test_limited_number_run_sync_call()
+        throws Exception
+    {
+
+        int requestNumber = 2;
+        ResourceProfile resourceProfile = //
+            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ).wait( true ) );
+
+        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
+
+        TimePerPathListener result = new TimePerPathListener();
+
+        new LoadGenerator.Builder() //
+            .host( "localhost" ) //
+            .port( connector.getLocalPort() ) //
+            .users( this.usersNumber ) //
+            .scheduler( scheduler ) //
+            .transactionRate( 1 ) //
+            .transport( this.transport ) //
+            .httpClientTransport( this.httpClientTransport() ) //
+            .loadProfile( resourceProfile ) //
+            .latencyTimeListeners( result ) //
+            .responseTimeListeners( result ) //
+            .httpVersion( httpVersion() ) //
+            .build() //
+            .run( requestNumber );
+
+        Assert.assertEquals( requestNumber,
+                             result.getResponseTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
+
+        Assert.assertEquals( requestNumber,
+                             result.getLatencyTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
+
+        scheduler.stop();
+    }
 
 }

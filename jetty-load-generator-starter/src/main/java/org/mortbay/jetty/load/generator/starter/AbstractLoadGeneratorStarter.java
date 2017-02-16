@@ -75,7 +75,7 @@ public abstract class AbstractLoadGeneratorStarter
     public void run( int iteration )
         throws Exception
     {
-        this.run( iteration, false );
+        this.run( iteration, true );
     }
 
     public void run( long time, TimeUnit timeUnit, boolean interrupt )
@@ -150,7 +150,6 @@ public abstract class AbstractLoadGeneratorStarter
             .loadProfile( resourceProfile ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ) //
-            //.requestListeners( testRequestListener ) //
             .executor( getExecutor() != null ? getExecutor() : null ).build();
 
         return loadGenerator;

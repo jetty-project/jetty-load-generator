@@ -108,6 +108,7 @@ public class TimePerPathListener
     @Override
     public void onLatencyTimeValue( Values values )
     {
+        System.out.println( "onLatencyTimeValue:" + values.toString() );
         String path = values.getPath();
         long time = values.getTime();
         Recorder recorder = latencyTimePerPath.get( path );
@@ -133,11 +134,11 @@ public class TimePerPathListener
     {
         if ( printOnEnd )
         {
-            StringBuilder latencyTimeMessage = new StringBuilder();
+            StringBuilder reportMessage = new StringBuilder();
             if ( !latencyTimePerPath.isEmpty() )
             {
-                latencyTimeMessage.append( "--------------------------------------" ).append(
-                    System.lineSeparator() ) //
+                StringBuilder latencyTimeMessage = new StringBuilder( "--------------------------------------" ) //
+                    .append( System.lineSeparator() ) //
                     .append( "   Latency Time Summary               " ).append( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
@@ -148,13 +149,15 @@ public class TimePerPathListener
                         new CollectorInformations( entry.getValue().getIntervalHistogram(), //
                                                    CollectorInformations.InformationType.REQUEST );
                     latencyTimeMessage.append( nanoDisplay
-                                                    ? collectorInformations.toStringInNanos( true )
-                                                    : collectorInformations.toString( true ) ) //
+                                                   ? collectorInformations.toStringInNanos( true )
+                                                   : collectorInformations.toString( true ) ) //
                         .append( System.lineSeparator() );
 
                 }
 
                 latencyTimeMessage.append( System.lineSeparator() );
+
+                reportMessage.append( latencyTimeMessage );
             }
 
             if ( !responseTimePerPath.isEmpty() )
@@ -174,15 +177,16 @@ public class TimePerPathListener
                                                    CollectorInformations.InformationType.REQUEST );
 
                     responseTimeMessage.append( nanoDisplay
-                                                   ? collectorInformations.toStringInNanos( true )
-                                                   : collectorInformations.toString( true ) ) //
+                                                    ? collectorInformations.toStringInNanos( true )
+                                                    : collectorInformations.toString( true ) ) //
                         .append( System.lineSeparator() );
 
                 }
 
                 responseTimeMessage.append( System.lineSeparator() );
-                responseTimeMessage.append( responseTimeMessage );
-            } System.out.println( latencyTimeMessage );
+                reportMessage.append( responseTimeMessage );
+            }
+            System.out.println( reportMessage );
         }
 
     }
