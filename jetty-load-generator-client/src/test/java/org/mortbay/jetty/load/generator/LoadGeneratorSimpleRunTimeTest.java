@@ -67,6 +67,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .latencyTimeListeners( latency ) //
             .responseTimeListeners( new ResponseTimeDisplayListener(), new TimePerPathListener() ) //
             .httpVersion( httpVersion() ) //
+            .sslContextFactory( sslContextFactory ) //
             .build() //
             .run( 5, TimeUnit.SECONDS );
 
@@ -75,7 +76,7 @@ public class LoadGeneratorSimpleRunTimeTest
 
 
     @Test
-    public void simple_test_limited_number_run()
+    public void simple_test_limited_number_run_async_call()
         throws Exception
     {
 
@@ -88,25 +89,31 @@ public class LoadGeneratorSimpleRunTimeTest
 
         TimePerPathListener result = new TimePerPathListener();
 
-        new LoadGenerator.Builder() //
-            .host( "localhost" ) //
-            .port( connector.getLocalPort() ) //
-            .users( this.usersNumber ) //
-            .scheduler( scheduler ) //
-            .transactionRate( 1 ) //
-            .transport( this.transport ) //
-            .httpClientTransport( this.httpClientTransport() ) //
-            .loadProfile( resourceProfile ) //
-            .latencyTimeListeners( result ) //
-            .responseTimeListeners( result ) //
-            .httpVersion( httpVersion() ) //
-            .build() //
-            .run( requestNumber );
+        LoadGenerator loadGenerator = //
+            new LoadGenerator.Builder() //
+                .host( "localhost" ) //
+                .port( connector.getLocalPort() ) //
+                .users( this.usersNumber ) //
+                .scheduler( scheduler ) //
+                .transactionRate( 1 ) //
+                .transport( this.transport ) //
+                .httpClientTransport( this.httpClientTransport() ) //
+                .loadProfile( resourceProfile ) //
+                .latencyTimeListeners( result ) //
+                .responseTimeListeners( result ) //
+                .httpVersion( httpVersion() ) //
+                .sslContextFactory( sslContextFactory ) //
+                .build();
 
-        Assert.assertEquals( requestNumber,
+        loadGenerator.run( requestNumber );
+        loadGenerator.interrupt();
+
+        Assert.assertEquals( this.transport + " with " + this.usersNumber + " users", //
+                             requestNumber, //
                              result.getResponseTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
 
-        Assert.assertEquals( requestNumber,
+        Assert.assertEquals( this.transport + " with " + this.usersNumber + " users", //
+                             requestNumber, //
                              result.getLatencyTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
 
         scheduler.stop();
@@ -125,25 +132,31 @@ public class LoadGeneratorSimpleRunTimeTest
 
         TimePerPathListener result = new TimePerPathListener();
 
-        new LoadGenerator.Builder() //
-            .host( "localhost" ) //
-            .port( connector.getLocalPort() ) //
-            .users( this.usersNumber ) //
-            .scheduler( scheduler ) //
-            .transactionRate( 1 ) //
-            .transport( this.transport ) //
-            .httpClientTransport( this.httpClientTransport() ) //
-            .loadProfile( resourceProfile ) //
-            .latencyTimeListeners( result ) //
-            .responseTimeListeners( result ) //
-            .httpVersion( httpVersion() ) //
-            .build() //
-            .run( requestNumber );
+        LoadGenerator loadGenerator = //
+            new LoadGenerator.Builder() //
+                .host( "localhost" ) //
+                .port( connector.getLocalPort() ) //
+                .users( this.usersNumber ) //
+                .scheduler( scheduler ) //
+                .transactionRate( 1 ) //
+                .transport( this.transport ) //
+                .httpClientTransport( this.httpClientTransport() ) //
+                .loadProfile( resourceProfile ) //
+                .latencyTimeListeners( result ) //
+                .responseTimeListeners( result ) //
+                .httpVersion( httpVersion() ) //
+                .sslContextFactory( sslContextFactory ) //
+                .build();
 
-        Assert.assertEquals( requestNumber,
+        loadGenerator.run( requestNumber );
+        loadGenerator.interrupt();
+
+        Assert.assertEquals( this.transport + " with " + this.usersNumber + " users", //
+                             requestNumber, //
                              result.getResponseTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
 
-        Assert.assertEquals( requestNumber,
+        Assert.assertEquals( this.transport + " with " + this.usersNumber + " users", //
+                             requestNumber, //
                              result.getLatencyTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
 
         scheduler.stop();
