@@ -64,7 +64,9 @@ With all listeners we have, we can take measure in different places
 
 The responseTime exposed using ResponseTimeListener is the time taken just before 1. and 9.
 
+#### Latency Time
 
+The latencyTime exposed using LatencyTimeListener is the time taken just before 2. and 6.
 
 ### Exposed results
 The LoadGenerator start a collector server you can query to get some informations as: 
