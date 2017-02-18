@@ -25,9 +25,6 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http.HttpVersion;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
@@ -38,6 +35,9 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.profile.ResourceProfile;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -121,6 +121,11 @@ public class LoadGenerator
     private HttpVersion httpVersion = HttpVersion.HTTP_1_1;
 
     private String endStatsResponse;
+
+    /**
+     * call {@link org.eclipse.jetty.servlet.StatisticsServlet} on server side to reset
+     */
+    private boolean collectServerStats;
 
     /**
      * path of the {@link org.eclipse.jetty.servlet.StatisticsServlet} on server side
@@ -233,6 +238,10 @@ public class LoadGenerator
         return latencyTimeListeners;
     }
 
+    public boolean isCollectServerStats()
+    {
+        return collectServerStats;
+    }
 
     /**
      * will return <code>null</code> if used before {@link #interrupt()}
@@ -242,7 +251,8 @@ public class LoadGenerator
     {
         return endStatsResponse;
     }
-//--------------------------------------------------------------
+
+    //--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
 
@@ -277,20 +287,25 @@ public class LoadGenerator
         }
         this.stop.set( true );
 
-        collectStats();
+        if ( collectServerStats )
+        {
+            collectStats();
+        }
 
         try
         {
             this.runnersExecutorService.shutdown();
             // wait the end?
-            while( !runnersExecutorService.isTerminated()) {
+            while ( !runnersExecutorService.isTerminated() )
+            {
                 Thread.sleep( 2 );
             }
 
             this.executorService.shutdown();
 
             // wait the end?
-            while( !executorService.isTerminated()) {
+            while ( !executorService.isTerminated() )
+            {
                 Thread.sleep( 2 );
             }
 
@@ -351,7 +366,10 @@ public class LoadGenerator
 
         final List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
 
-        statsReset();
+        if ( this.collectServerStats )
+        {
+            statsReset();
+        }
 
 
         Future globaleFuture = executorService.submit( () ->
@@ -614,6 +632,8 @@ public class LoadGenerator
 
         private HttpVersion httpVersion = HttpVersion.HTTP_1_1;
 
+        private boolean collectServerStats;
+
         public Builder()
         {
             // no op
@@ -725,6 +745,14 @@ public class LoadGenerator
             return this;
         }
 
+        public Builder collectServerStats( boolean collectServerStats )
+        {
+            this.collectServerStats = collectServerStats;
+            return this;
+        }
+
+
+
         public LoadGenerator build()
         {
             this.validate();
@@ -744,6 +772,7 @@ public class LoadGenerator
             loadGenerator.executor = executor;
             loadGenerator.httpVersion = httpVersion;
             loadGenerator.latencyTimeListeners = latencyTimeListeners;
+            loadGenerator.collectServerStats = collectServerStats;
             return loadGenerator.startIt();
         }
 
