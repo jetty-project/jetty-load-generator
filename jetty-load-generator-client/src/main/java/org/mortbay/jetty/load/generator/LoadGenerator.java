@@ -412,6 +412,7 @@ public class LoadGenerator
                         // wait until stopped
                         Thread.sleep( 1 );
                     }
+                    LOGGER.debug( "all futures done" );
                 }
                 catch ( Throwable e )
                 {
@@ -429,6 +430,8 @@ public class LoadGenerator
                 Thread.sleep( 1 );
             }
         }
+
+        LOGGER.debug( "run {} finished", transactionNumber );
     }
 
     public void run( )

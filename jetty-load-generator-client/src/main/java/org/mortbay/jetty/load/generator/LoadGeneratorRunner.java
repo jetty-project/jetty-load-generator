@@ -111,6 +111,7 @@ public class LoadGeneratorRunner
             {
                 Thread.sleep( 1 );
             }
+            LOGGER.debug( "run finish" );
         }
         catch ( Throwable e )
         {
