@@ -89,6 +89,10 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--display-stats-end", "-dse"}, description = "Display stats at the end" )
     private boolean displayStatsAtEnd;
 
+    @Parameter( names = { "--collect-server-stats", "-css"}, description = "Collect server stats on remote StatisticsServlet" )
+    private boolean collectServerStats;
+
+
     public LoadGeneratorStarterArgs()
     {
         // no op
@@ -309,6 +313,16 @@ public class LoadGeneratorStarterArgs
         this.displayStatsAtEnd = displayStatsAtEnd;
     }
 
+    public boolean isCollectServerStats()
+    {
+        return collectServerStats;
+    }
+
+    public void setCollectServerStats( boolean collectServerStats )
+    {
+        this.collectServerStats = collectServerStats;
+    }
+
     @Override
     public String toString()
     {
@@ -318,6 +332,7 @@ public class LoadGeneratorStarterArgs
             + transport + '\'' + ", selectors=" + selectors + ", runningTime=" + runningTime + ", runningTimeUnit='"
             + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='" + reportHost + '\''
             + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt + ", statsFile='" + statsFile + '\''
-            + ", params=" + params + ", help=" + help + ", displayStatsAtEnd=" + displayStatsAtEnd + '}';
+            + ", params=" + params + ", help=" + help + ", displayStatsAtEnd=" + displayStatsAtEnd
+            + ", collectServerStats=" + collectServerStats + '}';
     }
 }
