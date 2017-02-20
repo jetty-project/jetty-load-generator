@@ -257,6 +257,22 @@ public class LoadGenerator
         return endStatsResponse;
     }
 
+    private List<ValueListener> getAllListeners()
+    {
+        List<ValueListener> allValueListeners = new ArrayList<>();
+        List<? extends ValueListener> listeners = getResponseTimeListeners();
+        if ( listeners != null )
+        {
+            allValueListeners.addAll( listeners );
+        }
+        listeners = getLatencyTimeListeners();
+        if ( listeners != null )
+        {
+            allValueListeners.addAll( listeners );
+        }
+        return allValueListeners;
+    }
+
     //--------------------------------------------------------------
     //  component implementation
     //--------------------------------------------------------------
@@ -276,10 +292,7 @@ public class LoadGenerator
 
         _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners );
 
-        final List<ValueListener> allListeners = new ArrayList<>( getLatencyTimeListeners() );
-        allListeners.addAll( getResponseTimeListeners() );
-
-        for(ValueListener valueListener : allListeners)
+        for(ValueListener valueListener : getAllListeners())
         {
             valueListener.onLoadGeneratorStart( this );
         }
@@ -384,10 +397,7 @@ public class LoadGenerator
             statsReset();
         }
 
-        final List<ValueListener> allListeners = new ArrayList<>( getLatencyTimeListeners() );
-        allListeners.addAll( getResponseTimeListeners() );
-
-        for(ValueListener valueListener : allListeners)
+        for(ValueListener valueListener : getAllListeners())
         {
             valueListener.beforeRun( this );
         }
