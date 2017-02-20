@@ -238,6 +238,11 @@ public class LoadGenerator
         return latencyTimeListeners;
     }
 
+    public List<ResponseTimeListener> getResponseTimeListeners()
+    {
+        return responseTimeListeners;
+    }
+
     public boolean isCollectServerStats()
     {
         return collectServerStats;
@@ -270,6 +275,14 @@ public class LoadGenerator
         this.runnersExecutorService = Executors.newFixedThreadPool( parallelism - 1 < 1 ? 1 : parallelism - 1);
 
         _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners );
+
+        final List<ValueListener> allListeners = new ArrayList<>( getLatencyTimeListeners() );
+        allListeners.addAll( getResponseTimeListeners() );
+
+        for(ValueListener valueListener : allListeners)
+        {
+            valueListener.onLoadGeneratorStart( this );
+        }
 
         return this;
 
@@ -371,6 +384,13 @@ public class LoadGenerator
             statsReset();
         }
 
+        final List<ValueListener> allListeners = new ArrayList<>( getLatencyTimeListeners() );
+        allListeners.addAll( getResponseTimeListeners() );
+
+        for(ValueListener valueListener : allListeners)
+        {
+            valueListener.beforeRun( this );
+        }
 
         Future globaleFuture = executorService.submit( () ->
             {
@@ -429,6 +449,11 @@ public class LoadGenerator
             {
                 Thread.sleep( 1 );
             }
+        }
+
+        for(ValueListener valueListener : allListeners)
+        {
+            valueListener.afterRun( this );
         }
 
         LOGGER.debug( "run {} finished", transactionNumber );

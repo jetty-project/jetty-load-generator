@@ -26,6 +26,33 @@ public interface ValueListener
 {
 
     /**
+     * triggered when building {@link LoadGenerator} instance
+     * @since 0.3
+     */
+    default void onLoadGeneratorStart( LoadGenerator loadGenerator )
+    {
+        //no op
+    }
+
+    /**
+     * triggered before starting a {@link LoadGenerator} run
+     * @since 0.3
+     */
+    default void beforeRun( LoadGenerator loadGenerator )
+    {
+        // no op
+    }
+
+    /**
+     * triggered after finishing a {@link LoadGenerator} run
+     * @since 0.3
+     */
+    default void afterRun( LoadGenerator loadGenerator )
+    {
+        // no op
+    }
+
+    /**
      * triggered when the load generator is stopped
      */
     void onLoadGeneratorStop();

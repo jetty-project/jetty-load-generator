@@ -22,9 +22,12 @@ import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.CollectorInformations;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.profile.Resource;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -81,6 +84,33 @@ public class TimePerPathListener
     {
         this( true );
     }
+
+    @Override
+    public void onLoadGeneratorStart( LoadGenerator loadGenerator )
+    {
+        // we initialize Maps to avoid concurrent issues
+        responseTimePerPath = new ConcurrentHashMap<>();
+        initializeMap( responseTimePerPath, loadGenerator.getProfile().getResources() );
+        latencyTimePerPath = new ConcurrentHashMap<>();
+        initializeMap( latencyTimePerPath, loadGenerator.getProfile().getResources() );
+    }
+
+    private void initializeMap( Map<String, Recorder> recorderMap, List<Resource> resources )
+    {
+        for ( Resource resource : resources )
+        {
+            Recorder recorder = recorderMap.get( resource.getPath() );
+            if ( recorder == null )
+            {
+                recorder = new Recorder( lowestDiscernibleValue, //
+                                         highestTrackableValue, //
+                                         numberOfSignificantValueDigits );
+                recorderMap.put( resource.getPath(), recorder );
+            }
+            initializeMap( recorderMap, resource.getResources() );
+        }
+    }
+
 
     @Override
     public void onResponseTimeValue( Values values )
