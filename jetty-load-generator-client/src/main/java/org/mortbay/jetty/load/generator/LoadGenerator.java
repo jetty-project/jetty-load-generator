@@ -461,7 +461,7 @@ public class LoadGenerator
             }
         }
 
-        for(ValueListener valueListener : allListeners)
+        for ( ValueListener valueListener : getAllListeners() )
         {
             valueListener.afterRun( this );
         }

@@ -18,7 +18,7 @@ node {
 
   try
   {
-    stage 'Test'
+    stage 'Build'
     withEnv(mvnEnv) {
       timeout(60) {
         // Run test phase / ignore test failures
