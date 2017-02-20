@@ -23,6 +23,8 @@ import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.CollectorInformations;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.profile.Resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +44,7 @@ public class ResponseTimeDisplayListener
 
     private static final Logger LOGGER = Log.getLogger( ResponseTimeDisplayListener.class );
 
-    private final Map<String, Recorder> recorderPerPath;
+    private Map<String, Recorder> recorderPerPath;
 
     private ScheduledExecutorService scheduledExecutorService;
 
@@ -80,6 +82,30 @@ public class ResponseTimeDisplayListener
         this.lowestDiscernibleValue = lowestDiscernibleValue;
         this.highestTrackableValue = highestTrackableValue;
         this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
+    }
+
+    @Override
+    public void onLoadGeneratorStart( LoadGenerator loadGenerator )
+    {
+        // we initialize Maps to avoid concurrent issues
+        recorderPerPath = new ConcurrentHashMap<>();
+        initializeMap( recorderPerPath, loadGenerator.getProfile().getResources() );
+    }
+
+    private void initializeMap( Map<String, Recorder> recorderMap, List<Resource> resources )
+    {
+        for ( Resource resource : resources )
+        {
+            Recorder recorder = recorderMap.get( resource.getPath() );
+            if ( recorder == null )
+            {
+                recorder = new Recorder( lowestDiscernibleValue, //
+                                         highestTrackableValue, //
+                                         numberOfSignificantValueDigits );
+                recorderMap.put( resource.getPath(), recorder );
+            }
+            initializeMap( recorderMap, resource.getResources() );
+        }
     }
 
     public ResponseTimeDisplayListener()
