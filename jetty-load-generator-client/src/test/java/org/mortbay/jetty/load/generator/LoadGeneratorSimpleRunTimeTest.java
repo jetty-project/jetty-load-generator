@@ -53,7 +53,7 @@ public class LoadGeneratorSimpleRunTimeTest
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
-        TimePerPathListener latency = new TimePerPathListener();
+        TimePerPathListener latency = new TimePerPathListener( false );
 
         new LoadGenerator.Builder() //
             .host( "localhost" ) //
@@ -87,7 +87,7 @@ public class LoadGeneratorSimpleRunTimeTest
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
-        TimePerPathListener result = new TimePerPathListener();
+        TimePerPathListener result = new TimePerPathListener( false );
 
         LoadGenerator loadGenerator = //
             new LoadGenerator.Builder() //
@@ -130,7 +130,7 @@ public class LoadGeneratorSimpleRunTimeTest
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
-        TimePerPathListener result = new TimePerPathListener();
+        TimePerPathListener result = new TimePerPathListener( false );
 
         LoadGenerator loadGenerator = //
             new LoadGenerator.Builder() //
