@@ -295,6 +295,11 @@ public abstract class AbstractLoadGeneratorTest
     {
         Set<String> paths = new HashSet<>();
 
+        if (profile.getPath() != null)
+        {
+            paths.add( profile.getPath() );
+        }
+
         for ( Resource resource : profile.getResources() )
         {
             paths.addAll( paths( resource ) );

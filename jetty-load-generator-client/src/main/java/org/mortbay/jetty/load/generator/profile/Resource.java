@@ -99,7 +99,7 @@ public class Resource
 
     public Resource path( String path )
     {
-        this.path = StringUtil.startsWithIgnoreCase( path, "/" ) ? path : "/" + path;
+        this.path = path !=null ? StringUtil.startsWithIgnoreCase( path, "/" ) ? path : "/" + path : null;
         return this;
     }
 
