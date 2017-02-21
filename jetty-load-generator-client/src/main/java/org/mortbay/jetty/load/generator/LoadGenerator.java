@@ -43,6 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -408,7 +409,9 @@ public class LoadGenerator
                 {
                     HttpClientTransport httpClientTransport = getHttpClientTransport();
 
-                    List<Future<?>> futures = new ArrayList<Future<?>>( getUsers() );
+
+
+                    List<Callable<Void>> callables = new ArrayList<>( getUsers() );
 
                     for ( int i = getUsers(); i > 0; i-- )
                     {
@@ -427,7 +430,7 @@ public class LoadGenerator
                                 new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
                                                           transactionNumber);
 
-                            futures.add( this.runnersExecutorService.submit( loadGeneratorRunner ));
+                            callables.add( loadGeneratorRunner );
 
                         }
                         catch ( Throwable e )
@@ -436,6 +439,8 @@ public class LoadGenerator
                             this.stop.set( true );
                         }
                     }
+
+                    List<Future<Void>> futures = this.runnersExecutorService.invokeAll( callables );
 
                     while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ))
                     {

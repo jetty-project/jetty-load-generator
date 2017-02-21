@@ -29,16 +29,19 @@ import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.profile.Resource;
 
 import java.net.HttpCookie;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class LoadGeneratorRunner
-    implements Runnable
+    implements Callable<Void>
 {
 
     private static final Logger LOGGER = Log.getLogger( LoadGeneratorRunner.class );
@@ -67,8 +70,9 @@ public class LoadGeneratorRunner
         this.transactionNumber = transactionNumber;
     }
 
+
     @Override
-    public void run()
+    public Void call()
     {
         LOGGER.debug( "loadGenerator#run" );
         try
@@ -118,6 +122,7 @@ public class LoadGeneratorRunner
             LOGGER.warn( "ignoring exception:" + e.getMessage(), e );
             // TODO record error in generator report
         }
+        return null;
     }
 
     private void handleResource( Resource resource )
@@ -139,25 +144,28 @@ public class LoadGeneratorRunner
             // it's a group so we can request in parallel but wait all responses before next step
             ExecutorService executorService = Executors.newWorkStealingPool();
 
+            List<Callable<Void>> callables = new ArrayList<>( resource.getResources().size() );
+
+
             for ( Resource children : resource.getResources() )
             {
-                executorService.execute( () ->
-                                         {
-                                             try
-                                             {
-                                                 handleResource( children );
-                                             }
-                                             catch ( Exception e )
-                                             {
-                                                 LOGGER.debug( e.getMessage(), e );
-                                             }
-                                         } );
+                callables.add(  () ->
+                                {
+                                    try
+                                    {
+                                        handleResource( children );
+                                    }
+                                    catch ( Exception e )
+                                    {
+                                        LOGGER.debug( e.getMessage(), e );
+                                    }
+                                    return null;
+                                } );
             }
 
-            executorService.shutdown();
+            List<Future<Void>> futures = executorService.invokeAll( callables, resource.getChildrenTimeout(), TimeUnit.MILLISECONDS );
+            boolean finished = futures.stream().allMatch( voidFuture -> voidFuture.isDone() );
 
-            // TODO make this configurable??
-            boolean finished = executorService.awaitTermination( resource.getChildrenTimeout(), TimeUnit.MILLISECONDS );
             if ( !finished )
             {
                 LOGGER.warn( "resourceGroup request not all completed for timeout " + resource.getChildrenTimeout() );
