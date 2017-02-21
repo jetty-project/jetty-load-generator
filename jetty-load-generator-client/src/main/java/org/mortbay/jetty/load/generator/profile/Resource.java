@@ -61,6 +61,16 @@ public class Resource
         // no op
     }
 
+    public Resource(Resource... resources)
+    {
+        this(null, resources);
+    }
+
+    public Resource(List<Resource> resources)
+    {
+        this.resources = resources;
+    }
+
     public Resource( String path )
     {
         this.path( path );

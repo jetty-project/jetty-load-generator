@@ -90,9 +90,9 @@ public class TimePerPathListener
     {
         // we initialize Maps to avoid concurrent issues
         responseTimePerPath = new ConcurrentHashMap<>();
-        initializeMap( responseTimePerPath, loadGenerator.getProfile().getResources() );
+        initializeMap( responseTimePerPath, loadGenerator.getResource().getResources() );
         latencyTimePerPath = new ConcurrentHashMap<>();
-        initializeMap( latencyTimePerPath, loadGenerator.getProfile().getResources() );
+        initializeMap( latencyTimePerPath, loadGenerator.getResource().getResources() );
     }
 
     private void initializeMap( Map<String, Recorder> recorderMap, List<Resource> resources )

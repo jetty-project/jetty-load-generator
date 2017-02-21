@@ -9,29 +9,29 @@ More documentation https://jetty-project.github.io/jetty-load-generator/
 ## Documentation
 
 ### Profile
-You can use the API to define a running profile (steps with url to hit)
+You can use the API to define a running resource (steps with url to hit)
 
 ```java
-        ResourceProfile resourceProfile =
-            new ResourceProfile( //
+        Resource resource =
+            new Resource( //
                 new Resource( "/index.html" ) //
             ); 
 ```
 
 ### Load Generator 
-Then you run the load generator with this profile
+Then you run the load generator with this resource
 
 ```java
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( your host ) //
             .port( the port ) //
             .users( a users number ) //
-            .transactionRate( 1 ) // number of transaction per second. Transaction means all the request from the ResourceProfile
+            .transactionRate( 1 ) // number of transaction per second. Transaction means all the request from the Resource
             .transport( transport ) // the type of transport.
             .httpClientTransport( HttpClientTransport instance have a look at the various builder ) //
             .scheduler( scheduler ) //
             .sslContextFactory( sslContextFactory ) //
-            .loadProfile( profile ) //
+            .resource( resource ) //
             .responseTimeListeners( some listeners you can build your own or use existing one ) // some listeners you can build your own
             .requestListeners( some listeners you can build your own or use existing one ) //
             .build();
@@ -112,9 +112,8 @@ See --help for usage
 
 ```
 import org.mortbay.jetty.load.generator.profile.Resource
-import org.mortbay.jetty.load.generator.profile.ResourceProfile
 
-return new ResourceProfile(new Resource( "index.html",
+return new Resource(new Resource( "index.html",
                                          new Resource( "/css/bootstrap.css",
                                                        new Resource( "/css/bootstrap-theme.css" ),
                                                        new Resource( "/js/jquery-3.1.1.min.js"),

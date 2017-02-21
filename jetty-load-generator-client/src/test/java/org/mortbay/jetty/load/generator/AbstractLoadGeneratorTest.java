@@ -53,7 +53,6 @@ import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeDisplayListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
@@ -214,7 +213,7 @@ public abstract class AbstractLoadGeneratorTest
         return Arrays.asList( new LatencyTimeDisplayListener(), new TimePerPathListener() );
     }
 
-    protected LoadGenerator build( ResourceProfile profile )
+    protected LoadGenerator build( Resource profile )
         throws Exception
     {
 
@@ -236,7 +235,7 @@ public abstract class AbstractLoadGeneratorTest
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
             .sslContextFactory( sslContextFactory ) //
-            .loadProfile( profile ) //
+            .resource( profile ) //
             .responseTimeListeners(
                 responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()] ) ) //
             .latencyTimeListeners(
@@ -257,7 +256,7 @@ public abstract class AbstractLoadGeneratorTest
         // no op
     }
 
-    protected void runProfile( ResourceProfile profile )
+    protected void runResource( Resource profile )
         throws Exception
     {
 
@@ -292,7 +291,7 @@ public abstract class AbstractLoadGeneratorTest
 
     }
 
-    private Collection<String> paths( ResourceProfile profile )
+    private Collection<String> paths( Resource profile )
     {
         Set<String> paths = new HashSet<>();
 
@@ -301,17 +300,6 @@ public abstract class AbstractLoadGeneratorTest
             paths.addAll( paths( resource ) );
         }
 
-        return paths;
-    }
-
-    private Collection<String> paths( Resource resource )
-    {
-        Set<String> paths = new HashSet<>();
-        paths.add( resource.getPath() );
-        for ( Resource child : resource.getResources() )
-        {
-            paths.addAll( paths( child ) );
-        }
         return paths;
     }
 

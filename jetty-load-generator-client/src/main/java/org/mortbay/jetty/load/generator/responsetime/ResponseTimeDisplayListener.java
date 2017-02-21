@@ -89,7 +89,7 @@ public class ResponseTimeDisplayListener
     {
         // we initialize Maps to avoid concurrent issues
         recorderPerPath = new ConcurrentHashMap<>();
-        initializeMap( recorderPerPath, loadGenerator.getProfile().getResources() );
+        initializeMap( recorderPerPath, loadGenerator.getResource().getResources() );
     }
 
     private void initializeMap( Map<String, Recorder> recorderMap, List<Resource> resources )

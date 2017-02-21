@@ -1,4 +1,4 @@
-<Configure id="ResourceProfile" class="org.mortbay.jetty.load.generator.profile.ResourceProfile">
+<Configure id="Resource" class="org.mortbay.jetty.load.generator.profile.Resource">
   <Call name="addResource">
     <Arg>
       <New class="org.mortbay.jetty.load.generator.profile.Resource">

@@ -80,7 +80,7 @@ public class LoadGeneratorRunner
                     break;
                 }
 
-                List<Resource> resources = loadGenerator.getProfile().getResources();
+                List<Resource> resources = loadGenerator.getResource().getResources();
 
                 for ( Resource resource : resources )
                 {

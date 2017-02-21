@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 
@@ -48,8 +47,8 @@ public class LoadGeneratorSimpleRunTimeTest
         throws Exception
     {
 
-        ResourceProfile resourceProfile = //
-            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ) );
+        Resource resourceProfile = //
+            new Resource( new Resource( "/index.html" ).size( 1024 ) );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -63,7 +62,7 @@ public class LoadGeneratorSimpleRunTimeTest
             .transactionRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
-            .loadProfile( resourceProfile ) //
+            .resource( resourceProfile ) //
             .latencyTimeListeners( latency ) //
             .responseTimeListeners( new ResponseTimeDisplayListener(), new TimePerPathListener() ) //
             .httpVersion( httpVersion() ) //
@@ -82,8 +81,8 @@ public class LoadGeneratorSimpleRunTimeTest
 
         int requestNumber = 2;
 
-        ResourceProfile resourceProfile = //
-            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ) );
+        Resource resourceProfile = //
+            new Resource( new Resource( "/index.html" ).size( 1024 ) );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -98,7 +97,7 @@ public class LoadGeneratorSimpleRunTimeTest
                 .transactionRate( 1 ) //
                 .transport( this.transport ) //
                 .httpClientTransport( this.httpClientTransport() ) //
-                .loadProfile( resourceProfile ) //
+                .resource( resourceProfile ) //
                 .latencyTimeListeners( result ) //
                 .responseTimeListeners( result ) //
                 .httpVersion( httpVersion() ) //
@@ -125,8 +124,8 @@ public class LoadGeneratorSimpleRunTimeTest
     {
 
         int requestNumber = 2;
-        ResourceProfile resourceProfile = //
-            new ResourceProfile( new Resource( "/index.html" ).size( 1024 ).wait( true ) );
+        Resource resourceProfile = //
+            new Resource( new Resource( "/index.html" ).size( 1024 ).wait( true ) );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -141,7 +140,7 @@ public class LoadGeneratorSimpleRunTimeTest
                 .transactionRate( 1 ) //
                 .transport( this.transport ) //
                 .httpClientTransport( this.httpClientTransport() ) //
-                .loadProfile( resourceProfile ) //
+                .resource( resourceProfile ) //
                 .latencyTimeListeners( result ) //
                 .responseTimeListeners( result ) //
                 .httpVersion( httpVersion() ) //

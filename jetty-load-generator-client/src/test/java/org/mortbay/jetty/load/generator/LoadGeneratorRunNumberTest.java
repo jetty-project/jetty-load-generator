@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -84,8 +83,8 @@ public class LoadGeneratorRunNumberTest
 
         responsePerPath = new ResponsePerPath();
 
-        ResourceProfile resourceProfile = //
-            new ResourceProfile( new Resource( "/index.html" ) );//, new Resource( "/foo.html" ).wait( true ) );
+        Resource resourceProfile = //
+            new Resource( new Resource( "/index.html" ) );//, new Resource( "/foo.html" ).wait( true ) );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -97,7 +96,7 @@ public class LoadGeneratorRunNumberTest
             .transactionRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
-            .loadProfile( resourceProfile ) //
+            .resource( resourceProfile ) //
             .sslContextFactory( sslContextFactory ) //
             .responseTimeListeners( responsePerPath ) //
             .httpVersion( httpVersion() ) //
@@ -118,8 +117,8 @@ public class LoadGeneratorRunNumberTest
 
         responsePerPath = new ResponsePerPath();
 
-        ResourceProfile resourceProfile = //
-            new ResourceProfile( new Resource( "/index.html" ) );//, new Resource( "/foo.html" ).wait( true ) );
+        Resource resourceProfile = //
+            new Resource( new Resource( "/index.html" ) );//, new Resource( "/foo.html" ).wait( true ) );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -131,7 +130,7 @@ public class LoadGeneratorRunNumberTest
             .transactionRate( 1 ) //
             .transport( this.transport ) //
             .httpClientTransport( this.httpClientTransport() ) //
-            .loadProfile( resourceProfile ) //
+            .resource( resourceProfile ) //
             .sslContextFactory( sslContextFactory ) //
             .responseTimeListeners( responsePerPath ) //
             .httpVersion( httpVersion() ) //
@@ -178,7 +177,7 @@ public class LoadGeneratorRunNumberTest
         try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(
             "website_profile.xml" ))
         {
-            ResourceProfile resourceProfile = (ResourceProfile) new XmlConfiguration( inputStream ).configure();
+            Resource resourceProfile = (Resource) new XmlConfiguration( inputStream ).configure();
 
             responsePerPath = new ResponsePerPath();
 
@@ -193,7 +192,7 @@ public class LoadGeneratorRunNumberTest
                 .sslContextFactory( sslContextFactory ) //
                 .transport( this.transport ) //
                 .httpClientTransport( this.httpClientTransport() ) //
-                .loadProfile( resourceProfile ) //
+                .resource( resourceProfile ) //
                 .responseTimeListeners( responsePerPath ) //
                 .httpVersion( httpVersion() ) //
                 .build();

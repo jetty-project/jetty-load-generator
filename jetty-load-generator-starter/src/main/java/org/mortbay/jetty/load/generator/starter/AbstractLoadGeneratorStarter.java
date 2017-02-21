@@ -30,7 +30,7 @@ import org.mortbay.jetty.load.generator.HttpFCGITransportBuilder;
 import org.mortbay.jetty.load.generator.HttpTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
+import org.mortbay.jetty.load.generator.profile.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 
@@ -52,7 +52,7 @@ public abstract class AbstractLoadGeneratorStarter
 
     private Executor executor;
 
-    private ResourceProfile resourceProfile;
+    private Resource resource;
 
     public AbstractLoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
@@ -137,7 +137,7 @@ public abstract class AbstractLoadGeneratorStarter
     protected LoadGenerator getLoadGenerator()
         throws Exception
     {
-        ResourceProfile resourceProfile = getResourceProfile();
+        Resource resourceProfile = getResource();
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( starterArgs.getHost() ) //
@@ -147,7 +147,7 @@ public abstract class AbstractLoadGeneratorStarter
             .transport( starterArgs.getTransport() ) //
             .httpClientTransport( httpClientTransport() ) //
             .sslContextFactory( sslContextFactory() ) //
-            .loadProfile( resourceProfile ) //
+            .resource( resourceProfile ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ) //
             .executor( getExecutor() != null ? getExecutor() : null ).build();
@@ -182,12 +182,12 @@ public abstract class AbstractLoadGeneratorStarter
     }
 
 
-    public ResourceProfile getResourceProfile()
+    public Resource getResource()
         throws Exception
     {
-        if ( resourceProfile != null )
+        if ( resource != null )
         {
-            return resourceProfile;
+            return resource;
         }
 
         if ( starterArgs.getProfileJsonPath() != null )
@@ -196,7 +196,7 @@ public abstract class AbstractLoadGeneratorStarter
             if ( Files.exists( profilePath ) )
             {
                 ObjectMapper objectMapper = new ObjectMapper();
-                return resourceProfile = objectMapper.readValue( profilePath.toFile(), ResourceProfile.class );
+                return resource = objectMapper.readValue( profilePath.toFile(), Resource.class );
             }
         }
         if ( starterArgs.getProfileXmlPath() != null )
@@ -204,7 +204,7 @@ public abstract class AbstractLoadGeneratorStarter
             Path profilePath = Paths.get( starterArgs.getProfileXmlPath() );
             try (InputStream inputStream = Files.newInputStream( profilePath ))
             {
-                return resourceProfile = (ResourceProfile) new XmlConfiguration( inputStream ).configure();
+                return resource = (Resource) new XmlConfiguration( inputStream ).configure();
             }
         }
         if ( starterArgs.getProfileGroovyPath() != null )
@@ -213,7 +213,7 @@ public abstract class AbstractLoadGeneratorStarter
 
             try (Reader reader = Files.newBufferedReader( profilePath ))
             {
-                return resourceProfile = (ResourceProfile) evaluateScript( reader );
+                return resource = (Resource) evaluateScript( reader );
             }
         }
 
@@ -233,9 +233,9 @@ public abstract class AbstractLoadGeneratorStarter
         return interpreter.evaluate( script );
     }
 
-    public void setResourceProfile( ResourceProfile resourceProfile )
+    public void setResource( Resource resource )
     {
-        this.resourceProfile = resourceProfile;
+        this.resource = resource;
     }
 
     public HttpClientTransport httpClientTransport()

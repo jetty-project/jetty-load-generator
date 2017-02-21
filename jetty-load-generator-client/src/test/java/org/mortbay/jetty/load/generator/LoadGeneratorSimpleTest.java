@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 
 @RunWith( Parameterized.class )
 public class LoadGeneratorSimpleTest
@@ -39,14 +38,13 @@ public class LoadGeneratorSimpleTest
     public void simple_test()
         throws Exception
     {
-
-        ResourceProfile resourceProfile =
-            new ResourceProfile( //
+        Resource resourceProfile =
+            new Resource( //
                                  new Resource( "/index.html" )//, //
                                  //new Resource( "/foo.html" ).wait( true )
             );
 
-        runProfile( resourceProfile );
+        runResource( resourceProfile );
 
     }
 

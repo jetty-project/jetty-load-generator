@@ -19,9 +19,6 @@
 package org.mortbay.jetty.load.collector;
 
 import org.eclipse.jetty.client.api.Request;
-import org.mortbay.jetty.load.generator.CollectorServer;
-import org.mortbay.jetty.load.generator.HttpTransportBuilder;
-import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -41,8 +38,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mortbay.jetty.load.generator.CollectorServer;
+import org.mortbay.jetty.load.generator.HttpTransportBuilder;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -104,22 +103,20 @@ public class CollectorTest
     public void collect_informations()
         throws Exception
     {
-        ResourceProfile resourceProfile = new ResourceProfile( //
-                                                               new Resource( "/index.html" )
-        );
+        Resource resource = new Resource( new Resource( "/index.html" ) );
 
-        runProfile( resourceProfile );
+        runProfile( resource );
     }
 
-    protected void runProfile( ResourceProfile profile )
+    protected void runProfile( Resource profile )
         throws Exception
     {
 
         List<LoadGenerator> loadGenerators = new ArrayList<>( serverNumbers );
-        List<CollectorClient> collectorClients = new CopyOnWriteArrayList<>( );
+        List<CollectorClient> collectorClients = new CopyOnWriteArrayList<>();
         List<TestRequestListener> testRequestListeners = new ArrayList<>( serverNumbers );
 
-        List<CollectorResultHandler> collectorResultHandlers = Arrays.asList( new LoggerCollectorResultHandler());
+        List<CollectorResultHandler> collectorResultHandlers = Arrays.asList( new LoggerCollectorResultHandler() );
 
         for ( Server server : servers )
         {
@@ -139,20 +136,19 @@ public class CollectorTest
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .httpClientTransport( new HttpTransportBuilder().build() ) //
                 .scheduler( scheduler ) //
-                .loadProfile( profile ) //
+                .resource( profile ) //
                 .responseTimeListeners( collectorServer ) //
                 .requestListeners( testRequestListener ) //
                 .build();
 
             loadGenerator.run();
 
-
             loadGenerators.add( loadGenerator );
 
             CollectorClient collectorClient = new CollectorClient.Builder() //
                 .addAddress( "localhost:" + collectorServer.getPort() ) //
                 .scheduleDelayInMillis( 500 ) //
-                .collectorResultHandlers(collectorResultHandlers) //
+                .collectorResultHandlers( collectorResultHandlers ) //
                 .build();
 
             collectorClient.start();

@@ -21,7 +21,6 @@ package org.mortbay.jetty.load.generator;
 
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
 import org.mortbay.jetty.load.generator.responsetime.JMXResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.util.log.Log;
@@ -67,11 +66,8 @@ public class LoadGeneratorJmxSimpleTest
     public void simple_test()
         throws Exception
     {
-
-        ResourceProfile resourceProfile = new ResourceProfile( new Resource( "/index.html" ) );
-
-        runProfile( resourceProfile );
-
+        Resource resourceProfile = new Resource( new Resource( "/index.html" ) );
+        runResource( resourceProfile );
     }
 
 

@@ -34,15 +34,15 @@ import java.util.stream.Collectors;
 /**
  *
  */
-public class ResourceProfileBuildTest
+public class ResourceBuildTest
 {
 
     @Test
     public void simple_build()
         throws Exception
     {
-        ResourceProfile resourceProfile = //
-            new ResourceProfile( //
+        Resource resourceProfile = //
+            new Resource( //
                                  new Resource( "/index.html" ).size( 1024 ) //
             );
 
@@ -57,8 +57,8 @@ public class ResourceProfileBuildTest
     public void simple_two_resources()
         throws Exception
     {
-        ResourceProfile resourceProfile = //
-            new ResourceProfile( //
+        Resource resourceProfile = //
+            new Resource( //
                                  new Resource( "/index.html" ).size( 1024 ), //
                                  new Resource( "/beer.html" ).size( 2048 ).method( HttpMethod.POST.asString() )  //
             );
@@ -79,8 +79,8 @@ public class ResourceProfileBuildTest
         throws Exception
     {
 
-        ResourceProfile sample = //
-            new ResourceProfile( //
+        Resource sample = //
+            new Resource( //
                                  new Resource( "index.html", //
                                                new Resource( "/style.css", //
                                                              new Resource( "/logo.gif" ), //
@@ -107,7 +107,7 @@ public class ResourceProfileBuildTest
     {
         try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream( "website_profile.xml" ))
         {
-            ResourceProfile sample = (ResourceProfile) new XmlConfiguration( inputStream ).configure();
+            Resource sample = (Resource) new XmlConfiguration( inputStream ).configure();
             web_profile_assert( sample );
         }
     }
@@ -125,7 +125,7 @@ public class ResourceProfileBuildTest
     {
         try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream( "website_profile.groovy" ))
         {
-            ResourceProfile sample = (ResourceProfile) evaluateScript( read( inputStream ) );
+            Resource sample = (Resource) evaluateScript( read( inputStream ) );
             web_profile_assert( sample );
         }
     }
@@ -145,7 +145,7 @@ public class ResourceProfileBuildTest
     }
 
 
-    protected void web_profile_assert(ResourceProfile sample) {
+    protected void web_profile_assert(Resource sample) {
 
 
         /*

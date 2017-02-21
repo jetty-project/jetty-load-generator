@@ -36,7 +36,7 @@ import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.profile.ResourceProfile;
+import org.mortbay.jetty.load.generator.profile.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 import javax.servlet.http.HttpServletResponse;
@@ -64,7 +64,7 @@ public class LoadGenerator
     private int users;
 
     /**
-     * number of transactions send per minute (transaction means the whole {@link ResourceProfile}
+     * number of transactions send per minute (transaction means the whole {@link Resource}
      * <p>
      *     if < 0, the generator will not apply any regulation and send as many he can (will be resources dependant)
      * </p>
@@ -88,7 +88,7 @@ public class LoadGenerator
      */
     private int port;
 
-    private ResourceProfile profile;
+    private Resource resource;
 
     private HttpClientTransport httpClientTransport;
 
@@ -141,14 +141,14 @@ public class LoadGenerator
         FCGI
     }
 
-    LoadGenerator( int users, int transactionRate, String host, int port, ResourceProfile profile )
+    LoadGenerator( int users, int transactionRate, String host, int port, Resource resource )
     {
         this.users = users;
         this.transactionRate = transactionRate;
         this.host = host;
         this.port = port;
         this.stop = new AtomicBoolean( false );
-        this.profile = profile;
+        this.resource = resource;
 
 
     }
@@ -213,9 +213,9 @@ public class LoadGenerator
         return socketAddressResolver;
     }
 
-    public ResourceProfile getProfile()
+    public Resource getResource()
     {
-        return profile;
+        return resource;
     }
 
     public String getScheme()
@@ -368,7 +368,7 @@ public class LoadGenerator
     public String toString()
     {
         return "LoadGenerator{" + "users=" + users + ", transactionRate=" + transactionRate + ", scheme='" + scheme
-            + '\'' + ", host='" + host + '\'' + ", port=" + port + ", profile=" + profile + ", requestListeners="
+            + '\'' + ", host='" + host + '\'' + ", port=" + port + ", resource=" + resource + ", requestListeners="
             + requestListeners + ", scheduler=" + scheduler + ", responseTimeListeners=" + responseTimeListeners
             + ", httpProxies=" + httpProxies + ", transport=" + transport + ", httpVersion=" + httpVersion
             + ", statisticsPath='" + statisticsPath + '\'' + '}';
@@ -656,7 +656,7 @@ public class LoadGenerator
 
         private SocketAddressResolver socketAddressResolver;
 
-        private ResourceProfile profile;
+        private Resource resource;
 
         private List<ResponseTimeListener> responseTimeListeners;
 
@@ -741,9 +741,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder loadProfile( ResourceProfile resourceProfile )
+        public Builder resource( Resource resource )
         {
-            this.profile = resourceProfile;
+            this.resource = resource;
             return this;
         }
 
@@ -795,7 +795,7 @@ public class LoadGenerator
         {
             this.validate();
             LoadGenerator loadGenerator =
-                new LoadGenerator( users, transactionRate, host, port, this.profile );
+                new LoadGenerator( users, transactionRate, host, port, this.resource );
             loadGenerator.requestListeners = this.requestListeners == null ? new ArrayList<>() // //
                 : this.requestListeners;
             loadGenerator.httpClientTransport = httpClientTransport;
@@ -831,7 +831,7 @@ public class LoadGenerator
                 throw new IllegalArgumentException( "port must be a positive integer" );
             }
 
-            if ( this.profile == null )
+            if ( this.resource == null )
             {
                 throw new IllegalArgumentException( "a profile is mandatory" );
             }
