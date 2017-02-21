@@ -32,6 +32,7 @@ import java.net.HttpCookie;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -56,27 +57,33 @@ public class LoadGeneratorRunner
 
     private int transactionNumber = -1;
 
+    private CyclicBarrier cyclicBarrier;
+
     // maintain a session/cookie per httpClient
     // FIXME olamy: not sure we really need that??
     private final HttpCookie httpCookie = new HttpCookie( "XXX-Jetty-LoadGenerator", //
                                                           Long.toString( System.nanoTime() ) );
 
     public LoadGeneratorRunner( HttpClient httpClient, LoadGenerator loadGenerator,
-                                LoadGeneratorResultHandler loadGeneratorResultHandler, int transactionNumber )
+                                LoadGeneratorResultHandler loadGeneratorResultHandler, int transactionNumber,
+                                CyclicBarrier cyclicBarrier)
     {
         this.httpClient = httpClient;
         this.loadGenerator = loadGenerator;
         this.loadGeneratorResultHandler = loadGeneratorResultHandler;
         this.transactionNumber = transactionNumber;
+        this.cyclicBarrier = cyclicBarrier;
     }
 
 
     @Override
     public Void call()
     {
+
         LOGGER.debug( "loadGenerator#run" );
         try
         {
+            this.cyclicBarrier.await();
             do
             {
                 if ( this.loadGenerator.getStop().get() || httpClient.isStopped() )
@@ -84,12 +91,8 @@ public class LoadGeneratorRunner
                     break;
                 }
 
-                List<Resource> resources = loadGenerator.getResource().getResources();
-
-                for ( Resource resource : resources )
-                {
-                    handleResource( resource );
-                }
+                Resource resource = loadGenerator.getResource();
+                handleResource( resource, true );
 
                 int transactionRate = loadGenerator.getTransactionRate();
                 if ( transactionRate > 0 )
@@ -104,7 +107,7 @@ public class LoadGeneratorRunner
                 }
 
             }
-            while ( true && transactionNumber != 0 );
+            while ( transactionNumber != 0 );
 
             HttpDestination destination = (HttpDestination) httpClient.getDestination( loadGenerator.getScheme(), //
                                                                                        loadGenerator.getHost(), //
@@ -116,6 +119,7 @@ public class LoadGeneratorRunner
                 Thread.sleep( 1 );
             }
             LOGGER.debug( "run finish" );
+            cyclicBarrier.await();
         }
         catch ( Throwable e )
         {
@@ -125,12 +129,12 @@ public class LoadGeneratorRunner
         return null;
     }
 
-    private void handleResource( Resource resource )
+    private void handleResource( Resource resource, boolean isRoot )
         throws Exception
     {
 
         // so we have sync call if we have children or resource marked as wait
-        if ( !resource.getResources().isEmpty() || resource.isWait() )
+        if ( isRoot )
         {
             loadGeneratorResultHandler.onComplete( buildRequest( resource ).send() );
         }
@@ -153,7 +157,7 @@ public class LoadGeneratorRunner
                                 {
                                     try
                                     {
-                                        handleResource( children );
+                                        handleResource( children, false );
                                     }
                                     catch ( Exception e )
                                     {

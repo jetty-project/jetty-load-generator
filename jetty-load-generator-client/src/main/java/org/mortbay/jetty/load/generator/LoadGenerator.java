@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -409,9 +410,9 @@ public class LoadGenerator
                 {
                     HttpClientTransport httpClientTransport = getHttpClientTransport();
 
+                    CyclicBarrier cyclicBarrier = new CyclicBarrier( getUsers() + 1 );
 
-
-                    List<Callable<Void>> callables = new ArrayList<>( getUsers() );
+                    // Cyclic barrier new getUsers + 1
 
                     for ( int i = getUsers(); i > 0; i-- )
                     {
@@ -428,9 +429,9 @@ public class LoadGenerator
 
                             LoadGeneratorRunner loadGeneratorRunner = //
                                 new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
-                                                          transactionNumber);
+                                                          transactionNumber, cyclicBarrier);
 
-                            callables.add( loadGeneratorRunner );
+                            runnersExecutorService.submit( loadGeneratorRunner );
 
                         }
                         catch ( Throwable e )
@@ -440,14 +441,12 @@ public class LoadGenerator
                         }
                     }
 
-                    List<Future<Void>> futures = this.runnersExecutorService.invokeAll( callables );
+                    // Cyclic barrier await  START
+                    cyclicBarrier.await();
+                    // Cyclic barrier await WAIT
+                    cyclicBarrier.await();
 
-                    while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ))
-                    {
-                        // wait until stopped
-                        Thread.sleep( 1 );
-                    }
-                    LOGGER.debug( "all futures done" );
+                    LOGGER.debug( "all runners done" );
                 }
                 catch ( Throwable e )
                 {
