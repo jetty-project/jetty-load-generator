@@ -80,12 +80,10 @@ public class LoadGeneratorRunner
                     break;
                 }
 
-                List<Resource> resources = loadGenerator.getResource().getResources();
+                Resource resource = loadGenerator.getResource();
 
-                for ( Resource resource : resources )
-                {
-                    handleResource( resource );
-                }
+                handleResource( resource );
+
 
                 int transactionRate = loadGenerator.getTransactionRate();
                 if ( transactionRate > 0 )
@@ -100,7 +98,7 @@ public class LoadGeneratorRunner
                 }
 
             }
-            while ( true && transactionNumber != 0 );
+            while ( transactionNumber != 0 );
 
             HttpDestination destination = (HttpDestination) httpClient.getDestination( loadGenerator.getScheme(), //
                                                                                        loadGenerator.getHost(), //
@@ -123,17 +121,18 @@ public class LoadGeneratorRunner
     private void handleResource( Resource resource )
         throws Exception
     {
-
-        // so we have sync call if we have children or resource marked as wait
-        if ( !resource.getResources().isEmpty() || resource.isWait() )
+        if (resource.getPath() != null)
         {
-            loadGeneratorResultHandler.onComplete( buildRequest( resource ).send() );
+            // so we have sync call if we have children or resource marked as wait
+            if ( !resource.getResources().isEmpty() || resource.isWait() )
+            {
+                loadGeneratorResultHandler.onComplete( buildRequest( resource ).send() );
+            }
+            else
+            {
+                buildRequest( resource ).send( loadGeneratorResultHandler );
+            }
         }
-        else
-        {
-            buildRequest( resource ).send( loadGeneratorResultHandler );
-        }
-
         if ( !resource.getResources().isEmpty() )
         {
             // it's a group so we can request in parallel but wait all responses before next step
