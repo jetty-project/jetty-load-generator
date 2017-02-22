@@ -43,7 +43,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
@@ -133,6 +132,8 @@ public class LoadGenerator
      * path of the {@link org.eclipse.jetty.servlet.StatisticsServlet} on server side
      */
     private String statisticsPath = "/stats";
+
+    //private CyclicBarrier _globalRunBarrier;
 
     public enum Transport
     {
@@ -404,15 +405,22 @@ public class LoadGenerator
             valueListener.beforeRun( this );
         }
 
+        /*if ( transactionNumber < 1 )
+        {
+            this._globalRunBarrier = new CyclicBarrier( 2 );
+        }*/
+
+        CyclicBarrier cyclicBarrier = new CyclicBarrier( getUsers() + 1 );
+
         Future globaleFuture = executorService.submit( () ->
             {
                 try
                 {
+                    /*if ( transactionNumber < 1 )
+                    {
+                        this._globalRunBarrier.await();
+                    }*/
                     HttpClientTransport httpClientTransport = getHttpClientTransport();
-
-                    CyclicBarrier cyclicBarrier = new CyclicBarrier( getUsers() + 1 );
-
-                    // Cyclic barrier new getUsers + 1
 
                     for ( int i = getUsers(); i > 0; i-- )
                     {
@@ -442,9 +450,20 @@ public class LoadGenerator
                     }
 
                     // Cyclic barrier await  START
-                    cyclicBarrier.await();
+                    int num = cyclicBarrier.await();
                     // Cyclic barrier await WAIT
-                    cyclicBarrier.await();
+                    num = cyclicBarrier.await();
+                    
+                    /*
+                    if ( transactionNumber < 1 )
+                    {
+                        this._globalRunBarrier.await();
+                    }*/
+
+                    // Cyclic barrier await WAIT
+                    //cyclicBarrier.await();
+
+
 
                     LOGGER.debug( "all runners done" );
                 }
@@ -470,6 +489,11 @@ public class LoadGenerator
             valueListener.afterRun( this );
         }
 
+        /*
+        if ( transactionNumber < 1 )
+        {
+            this._globalRunBarrier.await();
+        }*/
         LOGGER.debug( "run {} finished", transactionNumber );
     }
 
@@ -489,15 +513,16 @@ public class LoadGenerator
      *
      * @param time
      * @param timeUnit
-     * @param interupt if <code>true</code>
+     * @param interrupt if <code>true</code>
      * @throws Exception
      */
-    public void run( long time, TimeUnit timeUnit, boolean interupt )
+    public void run( long time, TimeUnit timeUnit, boolean interrupt )
         throws Exception
     {
         this.run( -1 );
+        //this._globalRunBarrier.await();
         PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
-        if (interupt)
+        if (interrupt)
         {
             this.interrupt();
         }

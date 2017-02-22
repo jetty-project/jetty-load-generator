@@ -83,7 +83,7 @@ public class LoadGeneratorRunner
         LOGGER.debug( "loadGenerator#run" );
         try
         {
-            this.cyclicBarrier.await();
+            int num = this.cyclicBarrier.await();
             do
             {
                 if ( this.loadGenerator.getStop().get() || httpClient.isStopped() )
@@ -134,13 +134,16 @@ public class LoadGeneratorRunner
     {
 
         // so we have sync call if we have children or resource marked as wait
-        if ( isRoot )
+        if (resource.getPath() != null)
         {
-            loadGeneratorResultHandler.onComplete( buildRequest( resource ).send() );
-        }
-        else
-        {
-            buildRequest( resource ).send( loadGeneratorResultHandler );
+            if ( isRoot )
+            {
+                loadGeneratorResultHandler.onComplete( buildRequest( resource ).send() );
+            }
+            else
+            {
+                buildRequest( resource ).send( loadGeneratorResultHandler );
+            }
         }
 
         if ( !resource.getResources().isEmpty() )

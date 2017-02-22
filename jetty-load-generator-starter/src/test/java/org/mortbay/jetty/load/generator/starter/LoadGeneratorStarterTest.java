@@ -59,77 +59,88 @@ public class LoadGeneratorStarterTest
     TestHandler testHandler;
 
     @Before
-    public void startJetty() throws Exception {
-      QueuedThreadPool serverThreads = new QueuedThreadPool();
-      serverThreads.setName( "server" );
-      server = new Server( serverThreads );
-      server.setSessionIdManager( new HashSessionIdManager() );
-      connector = new ServerConnector( server, new HttpConnectionFactory( new HttpConfiguration() ) );
-      server.addConnector( connector );
+    public void startJetty()
+        throws Exception
+    {
+        QueuedThreadPool serverThreads = new QueuedThreadPool();
+        serverThreads.setName( "server" );
+        server = new Server( serverThreads );
+        server.setSessionIdManager( new HashSessionIdManager() );
+        connector = new ServerConnector( server, new HttpConnectionFactory( new HttpConfiguration() ) );
+        server.addConnector( connector );
 
-      server.setHandler( statisticsHandler );
+        server.setHandler( statisticsHandler );
 
-      ServletContextHandler statsContext = new ServletContextHandler( statisticsHandler, "/" );
+        ServletContextHandler statsContext = new ServletContextHandler( statisticsHandler, "/" );
 
-      statsContext.addServlet( new ServletHolder( new StatisticsServlet() ), "/stats" );
+        statsContext.addServlet( new ServletHolder( new StatisticsServlet() ), "/stats" );
 
-      testHandler = new TestHandler();
+        testHandler = new TestHandler();
 
-      statsContext.addServlet( new ServletHolder( testHandler ), "/" );
+        statsContext.addServlet( new ServletHolder( testHandler ), "/" );
 
-      statsContext.setSessionHandler( new SessionHandler() );
+        statsContext.setSessionHandler( new SessionHandler() );
 
-      server.start();
+        server.start();
     }
 
     @After
-    public void stopJetty() throws Exception {
+    public void stopJetty()
+        throws Exception
+    {
         server.stop();
     }
 
     @Test
-    public void simpletest() throws Exception {
+    public void simpletest()
+        throws Exception
+    {
 
-        List<String> args = new ArrayList<>(  );
+        List<String> args = new ArrayList<>();
         args.add( "-Dwarmup.number=10" );
         args.add( "-h" );
         args.add( "localhost" );
         args.add( "--port" );
-        args.add( Integer.toString( connector.getLocalPort()) );
-        args.add( "--running-time");
-        args.add( "10");
-        args.add( "--running-time-unit");
+        args.add( Integer.toString( connector.getLocalPort() ) );
+        args.add( "--running-time" );
+        args.add( "10" );
+        args.add( "--running-time-unit" );
         args.add( "s" );
         args.add( "--transaction-rate" );
         args.add( "3" );
-        args.add( "--transport");
-        args.add( "http");
-        args.add( "--users");
-        args.add( "3");
-        args.add( "--profile-groovy-path");
-        args.add( "src/test/resources/loadgenerator_profile.groovy");
+        args.add( "--transport" );
+        args.add( "http" );
+        args.add( "--users" );
+        args.add( "3" );
+        args.add( "--profile-groovy-path" );
+        args.add( "src/test/resources/loadgenerator_profile.groovy" );
 
-        LoadGeneratorStarter.main( args.toArray(new String[args.size()]) );
+        LoadGeneratorStarter.main( args.toArray( new String[args.size()] ) );
 
         int getNumber = testHandler.getNumber.get();
 
-        Assert.assertTrue( getNumber > 10);
+        Assert.assertTrue( getNumber > 10 );
     }
 
 
-    static class TestHandler extends HttpServlet {
+    static class TestHandler
+        extends HttpServlet
+    {
 
-      AtomicInteger getNumber = new AtomicInteger( 0 ), postNumber = new AtomicInteger( 0 );
+        AtomicInteger getNumber = new AtomicInteger( 0 ), postNumber = new AtomicInteger( 0 );
 
-      @Override
-      protected void service( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
+        @Override
+        protected void service( HttpServletRequest request, HttpServletResponse response )
+            throws ServletException, IOException
+        {
 
-        String method = request.getMethod().toUpperCase( Locale.ENGLISH );
+            String method = request.getMethod().toUpperCase( Locale.ENGLISH );
 
-        HttpSession httpSession = request.getSession();
+            HttpSession httpSession = request.getSession();
 
-        switch ( method ) {
-          case "GET":
+            switch ( method )
+            {
+                case "GET":
                 {
                     response.getOutputStream().write( "Jetty rocks!!".getBytes() );
                     response.flushBuffer();

@@ -113,7 +113,7 @@ See --help for usage
 ```
 import org.mortbay.jetty.load.generator.profile.Resource
 
-return new Resource(new Resource( "index.html",
+return new Resource("index.html",
                                          new Resource( "/css/bootstrap.css",
                                                        new Resource( "/css/bootstrap-theme.css" ),
                                                        new Resource( "/js/jquery-3.1.1.min.js"),
