@@ -118,47 +118,4 @@ public class LoadGeneratorSimpleRunTimeTest
         scheduler.stop();
     }
 
-    @Test
-    public void simple_test_limited_number_run_sync_call()
-        throws Exception
-    {
-
-        int requestNumber = 2;
-        Resource resourceProfile = //
-            new Resource( new Resource( "/index.html" ).size( 1024 ).wait( true ) );
-
-        Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
-
-        TimePerPathListener result = new TimePerPathListener( false );
-
-        LoadGenerator loadGenerator = //
-            new LoadGenerator.Builder() //
-                .host( "localhost" ) //
-                .port( connector.getLocalPort() ) //
-                .users( this.usersNumber ) //
-                .scheduler( scheduler ) //
-                .transactionRate( 1 ) //
-                .transport( this.transport ) //
-                .httpClientTransport( this.httpClientTransport() ) //
-                .resource( resourceProfile ) //
-                .latencyTimeListeners( result ) //
-                .responseTimeListeners( result ) //
-                .httpVersion( httpVersion() ) //
-                .sslContextFactory( sslContextFactory ) //
-                .build();
-
-        loadGenerator.run( requestNumber );
-        loadGenerator.interrupt();
-
-        Assert.assertEquals( this.transport + " with " + this.usersNumber + " users", //
-                             requestNumber, //
-                             result.getResponseTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
-
-        Assert.assertEquals( this.transport + " with " + this.usersNumber + " users", //
-                             requestNumber, //
-                             result.getLatencyTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
-
-        scheduler.stop();
-    }
-
 }

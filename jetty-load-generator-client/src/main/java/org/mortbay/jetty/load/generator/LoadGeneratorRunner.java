@@ -210,10 +210,10 @@ public class LoadGeneratorRunner
                                                          Long.toString( System.nanoTime() ) );
                                 } );
 
-        if (resource.isWait())
-        {
-            request.onResponseBegin( loadGeneratorResultHandler );
-        }
+        //if (resource.isWait())
+        //{
+        //    request.onResponseBegin( loadGeneratorResultHandler );
+        //}
         //request.onComplete( loadGeneratorResultHandler );
 
         request.header( LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER, //
