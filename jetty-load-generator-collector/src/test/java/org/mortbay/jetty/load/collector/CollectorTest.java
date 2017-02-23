@@ -121,7 +121,7 @@ public class CollectorTest
         for ( Server server : servers )
         {
             CollectorServer collectorServer = new CollectorServer( 0 ).start();
-            Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
+            //Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
             int port = ( (ServerConnector) server.getConnectors()[0] ).getLocalPort();
 
             TestRequestListener testRequestListener = new TestRequestListener();
@@ -135,7 +135,7 @@ public class CollectorTest
                 .transactionRate( 5 ) //
                 .transport( LoadGenerator.Transport.HTTP ) //
                 .httpClientTransport( new HttpTransportBuilder().build() ) //
-                .scheduler( scheduler ) //
+                //.scheduler( scheduler ) //
                 .resource( profile ) //
                 .responseTimeListeners( collectorServer ) //
                 .requestListeners( testRequestListener ) //

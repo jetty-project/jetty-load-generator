@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -410,6 +411,8 @@ public class LoadGenerator
 
                     List<Future<?>> futures = new ArrayList<Future<?>>( getUsers() );
 
+                    CyclicBarrier cyclicBarrier = new CyclicBarrier( getUsers() );
+
                     for ( int i = getUsers(); i > 0; i-- )
                     {
                         try
@@ -425,7 +428,7 @@ public class LoadGenerator
 
                             LoadGeneratorRunner loadGeneratorRunner = //
                                 new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
-                                                          transactionNumber);
+                                                          transactionNumber, cyclicBarrier);
 
                             futures.add( this.runnersExecutorService.submit( loadGeneratorRunner ));
 

@@ -83,7 +83,7 @@ public class LoadGeneratorRunNumberTest
 
         responsePerPath = new ResponsePerPath();
 
-        Resource resourceProfile = new Resource( "/index.html" );//, new Resource( "/foo.html" ).wait( true ) );
+        Resource resourceProfile = new Resource( "/index.html" );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -116,7 +116,7 @@ public class LoadGeneratorRunNumberTest
 
         responsePerPath = new ResponsePerPath();
 
-        Resource resourceProfile = new Resource( "/index.html" );//, new Resource( "/foo.html" ).wait( true ) );
+        Resource resourceProfile = new Resource( "/index.html" );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 

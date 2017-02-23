@@ -44,12 +44,6 @@ public class Resource
 
 
     /**
-     * wait the responses for the provided {{@link #resources} before going to next resource
-     * default to <code>false</code>
-     */
-    private boolean wait = false;
-
-    /**
      * timeout in ms to wait to load all children {@link Resource} if any
      */
     private long childrenTimeout = 30000;
@@ -168,22 +162,6 @@ public class Resource
             this.resources = new ArrayList<>();
         }
         this.resources.add( resource );
-    }
-
-    public boolean isWait()
-    {
-        return wait;
-    }
-
-    public void setWait( boolean wait )
-    {
-        this.wait = wait;
-    }
-
-    public Resource wait( boolean wait )
-    {
-        this.wait = wait;
-        return this;
     }
 
     public long getChildrenTimeout()

@@ -30,6 +30,7 @@ import org.mortbay.jetty.load.generator.profile.Resource;
 
 import java.net.HttpCookie;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -53,18 +54,22 @@ public class LoadGeneratorRunner
 
     private int transactionNumber = -1;
 
+    private final CyclicBarrier _cyclicBarrier;
+
     // maintain a session/cookie per httpClient
     // FIXME olamy: not sure we really need that??
     private final HttpCookie httpCookie = new HttpCookie( "XXX-Jetty-LoadGenerator", //
                                                           Long.toString( System.nanoTime() ) );
 
     public LoadGeneratorRunner( HttpClient httpClient, LoadGenerator loadGenerator,
-                                LoadGeneratorResultHandler loadGeneratorResultHandler, int transactionNumber )
+                                LoadGeneratorResultHandler loadGeneratorResultHandler, int transactionNumber,
+                                CyclicBarrier cyclicBarrier )
     {
         this.httpClient = httpClient;
         this.loadGenerator = loadGenerator;
         this.loadGeneratorResultHandler = loadGeneratorResultHandler;
         this.transactionNumber = transactionNumber;
+        this._cyclicBarrier = cyclicBarrier;
     }
 
     @Override
@@ -73,6 +78,7 @@ public class LoadGeneratorRunner
         LOGGER.debug( "loadGenerator#run" );
         try
         {
+            _cyclicBarrier.await();
             do
             {
                 if ( this.loadGenerator.getStop().get() || httpClient.isStopped() )
@@ -124,7 +130,7 @@ public class LoadGeneratorRunner
         if (resource.getPath() != null)
         {
             // so we have sync call if we have children or resource marked as wait
-            if ( !resource.getResources().isEmpty() || resource.isWait() )
+            if ( !resource.getResources().isEmpty() )
             {
                 loadGeneratorResultHandler.onComplete( buildRequest( resource ).send() );
             }
@@ -197,7 +203,7 @@ public class LoadGeneratorRunner
                                                          Long.toString( System.nanoTime() ) );
                                 } );
 
-        if (resource.isWait())
+        if (!resource.getResources().isEmpty())
         {
             request.onResponseBegin( loadGeneratorResultHandler );
         }
