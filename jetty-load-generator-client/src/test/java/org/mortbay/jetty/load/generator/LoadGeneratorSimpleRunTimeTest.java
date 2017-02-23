@@ -47,8 +47,7 @@ public class LoadGeneratorSimpleRunTimeTest
         throws Exception
     {
 
-        Resource resourceProfile = //
-            new Resource( new Resource( "/index.html" ).size( 1024 ) );
+        Resource resourceProfile = new Resource( "/index.html" ).size( 1024 );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -81,8 +80,7 @@ public class LoadGeneratorSimpleRunTimeTest
 
         int requestNumber = 2;
 
-        Resource resourceProfile = //
-            new Resource( new Resource( "/index.html" ).size( 1024 ) );
+        Resource resourceProfile = new Resource( "/index.html" ).size( 1024 );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 
@@ -124,8 +122,7 @@ public class LoadGeneratorSimpleRunTimeTest
     {
 
         int requestNumber = 2;
-        Resource resourceProfile = //
-            new Resource( new Resource( "/index.html" ).size( 1024 ).wait( true ) );
+        Resource resourceProfile = new Resource( "/index.html" ).size( 1024 ).wait( true );
 
         Scheduler scheduler = new ScheduledExecutorScheduler( getClass().getName() + "-scheduler", false );
 

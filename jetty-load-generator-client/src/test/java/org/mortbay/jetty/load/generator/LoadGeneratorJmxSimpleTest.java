@@ -66,7 +66,7 @@ public class LoadGeneratorJmxSimpleTest
     public void simple_test()
         throws Exception
     {
-        Resource resourceProfile = new Resource( new Resource( "/index.html" ) );
+        Resource resourceProfile = new Resource( "/index.html" );
         runResource( resourceProfile );
     }
 

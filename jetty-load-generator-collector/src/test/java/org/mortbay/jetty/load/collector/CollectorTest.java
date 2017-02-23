@@ -103,7 +103,7 @@ public class CollectorTest
     public void collect_informations()
         throws Exception
     {
-        Resource resource = new Resource( new Resource( "/index.html" ) );
+        Resource resource = new Resource( "/index.html" );
 
         runProfile( resource );
     }

@@ -42,11 +42,11 @@ public class LoadGeneratorGroupTest
     public void simple_with_group()
         throws Exception
     {
-        Resource resourceProfile = new Resource( new Resource( "/index.html", //
+        Resource resourceProfile = new Resource( "/index.html", //
                                                                new Resource( "/foo.html" ), //
-                                                               new Resource( "/cider.html" ) ),
+                                                               new Resource( "/cider.html" ),
                                                  new Resource( "/wine.html", //
-                                                               new Resource( "/beer.html" ) ) );
+                                                               new Resource( "/beer.html" )));
 
         runResource( resourceProfile );
 

@@ -38,11 +38,7 @@ public class LoadGeneratorSimpleTest
     public void simple_test()
         throws Exception
     {
-        Resource resourceProfile =
-            new Resource( //
-                                 new Resource( "/index.html" )//, //
-                                 //new Resource( "/foo.html" ).wait( true )
-            );
+        Resource resourceProfile = new Resource( "/index.html" );
 
         runResource( resourceProfile );
 
