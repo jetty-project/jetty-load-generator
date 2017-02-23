@@ -289,7 +289,9 @@ public class LoadGenerator
 
         this.executorService = Executors.newFixedThreadPool( 1 );
 
-        this.runnersExecutorService = Executors.newFixedThreadPool( parallelism - 1 < 1 ? 1 : parallelism - 1);
+        int nThreads = parallelism - 1 < 1 ? 1 : parallelism - 1;
+
+        this.runnersExecutorService = Executors.newFixedThreadPool( nThreads );
 
         _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners );
 
@@ -440,7 +442,8 @@ public class LoadGenerator
                         }
                     }
 
-                    while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ))
+
+                    while ( !LoadGenerator.this.stop.get() || !futures.stream().allMatch( future -> future.isDone() ))
                     {
                         // wait until stopped
                         Thread.sleep( 1 );

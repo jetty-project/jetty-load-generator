@@ -125,7 +125,7 @@ public class CollectorClient
                         LOGGER.warn( e );
                     }
 
-                }, 10, this.scheduleDelayInMillis, TimeUnit.MILLISECONDS );
+                }, 1, this.scheduleDelayInMillis, TimeUnit.MILLISECONDS );
         }
 
         return this;
