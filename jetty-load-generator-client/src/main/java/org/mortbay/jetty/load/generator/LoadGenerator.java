@@ -286,7 +286,7 @@ public class LoadGenerator
         this.scheme = scheme( this.transport );
 
         this.executorService = Executors.newFixedThreadPool( 1 );
-        
+
         this.runnersExecutorService = Executors.newFixedThreadPool( getUsers() );
 
         _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners );
@@ -379,13 +379,22 @@ public class LoadGenerator
         LOGGER.info( "Configuration dump: {}", this );
     }
 
+    public void run( int transactionNumber )
+        throws Exception
+    {
+        this.doRun( transactionNumber );
+        for ( ValueListener valueListener : getAllListeners() )
+        {
+            valueListener.afterRun( this );
+        }
+    }
 
 
     /**
      * run the defined load (users / request numbers)
      * @param transactionNumber the total transaction to run if lower than 0 will run infinite
      */
-    public void run( int transactionNumber )
+    protected void doRun( int transactionNumber )
         throws Exception
     {
 
@@ -438,7 +447,7 @@ public class LoadGenerator
                         }
                     }
 
-                    while ( !LoadGenerator.this.stop.get() || !futures.stream().allMatch( future -> future.isDone() ))
+                    while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ))
                     {
                         // wait until stopped
                         Thread.sleep( 10 );
@@ -461,11 +470,6 @@ public class LoadGenerator
             {
                 Thread.sleep( 1 );
             }
-        }
-
-        for ( ValueListener valueListener : getAllListeners() )
-        {
-            valueListener.afterRun( this );
         }
 
         LOGGER.debug( "run {} finished", transactionNumber );
@@ -494,6 +498,10 @@ public class LoadGenerator
     {
         this.run( -1 );
         PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
+        for ( ValueListener valueListener : getAllListeners() )
+        {
+            valueListener.afterRun( this );
+        }
         if ( interupt )
         {
             this.interrupt();

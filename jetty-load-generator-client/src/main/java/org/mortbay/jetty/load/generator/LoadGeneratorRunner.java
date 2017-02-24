@@ -145,7 +145,7 @@ public class LoadGeneratorRunner
         if ( !resource.getResources().isEmpty() )
         {
             // it's a group so we can request in parallel but wait all responses before next step
-            ExecutorService executorService = Executors.newWorkStealingPool();
+            ExecutorService executorService = Executors.newFixedThreadPool(resource.getResources().size());
 
             for ( Resource children : resource.getResources() )
             {
