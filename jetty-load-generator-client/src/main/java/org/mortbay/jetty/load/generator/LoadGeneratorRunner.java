@@ -152,18 +152,14 @@ public class LoadGeneratorRunner
     {
         if (resource.getPath() != null)
         {
-            // so we have sync call if we have children or resource marked as wait
             if ( !resource.getResources().isEmpty() )
             {
 
                 Request request = buildRequest( resource ).onResponseBegin(
 
                     response -> {
-                        // it's a group so we can request in parallel but wait all responses before next step
-
 
                         CyclicBarrier cyclicBarrier = new CyclicBarrier( resource.getResources().size() );
-
                         for ( Resource children : resource.getResources() )
                         {
                             executor.execute( () ->
@@ -184,28 +180,11 @@ public class LoadGeneratorRunner
                                                      } );
                         }
 
-                        /*
-                        executorService.shutdown();
-
-                        try
-                        {
-                            // TODO make this configurable??
-                            boolean finished = executorService.awaitTermination( resource.getChildrenTimeout(), TimeUnit.MILLISECONDS );
-                            if ( !finished )
-                            {
-                                LOGGER.warn( "resourceGroup request not all completed for timeout " + resource.getChildrenTimeout() );
-                            }
-                        }
-                        catch ( InterruptedException e )
-                        {
-                            Thread.currentThread().interrupt();
-                            LOGGER.warn( e.getMessage(), e );
-                        }
-                        */
                     }
                 );
 
-                loadGeneratorResultHandler.onComplete( request.send() );
+                request.send( loadGeneratorResultHandler );
+                //loadGeneratorResultHandler.onComplete( request.send() );
 
             }
             else
