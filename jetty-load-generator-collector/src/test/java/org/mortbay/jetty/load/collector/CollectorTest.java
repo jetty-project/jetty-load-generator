@@ -101,7 +101,7 @@ public class CollectorTest
     }
 
     @Test
-    @Ignore("ATM not a priority ATM")
+    //@Ignore("ATM not a priority ATM")
     public void collect_informations()
         throws Exception
     {

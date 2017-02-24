@@ -78,7 +78,10 @@ public class LoadGeneratorRunner
         LOGGER.debug( "loadGenerator#run" );
         try
         {
-            _cyclicBarrier.await();
+            if (_cyclicBarrier != null)
+            {
+                _cyclicBarrier.await();
+            }
             do
             {
                 if ( this.loadGenerator.getStop().get() || httpClient.isStopped() )

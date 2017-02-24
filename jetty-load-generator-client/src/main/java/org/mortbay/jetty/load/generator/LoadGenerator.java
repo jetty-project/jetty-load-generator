@@ -285,13 +285,9 @@ public class LoadGenerator
     {
         this.scheme = scheme( this.transport );
 
-        int parallelism = Math.min( Runtime.getRuntime().availableProcessors(), getUsers() );
-
         this.executorService = Executors.newFixedThreadPool( 1 );
-
-        int nThreads = parallelism - 1 < 1 ? 1 : parallelism - 1;
-
-        this.runnersExecutorService = Executors.newFixedThreadPool( nThreads );
+        
+        this.runnersExecutorService = Executors.newFixedThreadPool( getUsers() );
 
         _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners );
 
@@ -442,12 +438,12 @@ public class LoadGenerator
                         }
                     }
 
-
                     while ( !LoadGenerator.this.stop.get() || !futures.stream().allMatch( future -> future.isDone() ))
                     {
                         // wait until stopped
-                        Thread.sleep( 1 );
+                        Thread.sleep( 10 );
                     }
+
                     LOGGER.debug( "all futures done" );
                 }
                 catch ( Throwable e )
@@ -475,7 +471,7 @@ public class LoadGenerator
         LOGGER.debug( "run {} finished", transactionNumber );
     }
 
-    public void run( )
+    public void run()
         throws Exception
     {
         this.run( -1 );
@@ -484,11 +480,10 @@ public class LoadGenerator
     public void run( long time, TimeUnit timeUnit )
         throws Exception
     {
-        this.run( time, timeUnit, true);
+        this.run( time, timeUnit, true );
     }
 
     /**
-     *
      * @param time
      * @param timeUnit
      * @param interupt if <code>true</code>
@@ -499,7 +494,7 @@ public class LoadGenerator
     {
         this.run( -1 );
         PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
-        if (interupt)
+        if ( interupt )
         {
             this.interrupt();
         }
