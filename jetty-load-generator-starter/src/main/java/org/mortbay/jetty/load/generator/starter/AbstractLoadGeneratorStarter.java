@@ -40,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,7 +51,7 @@ public abstract class AbstractLoadGeneratorStarter
 
     private LoadGeneratorStarterArgs starterArgs;
 
-    private Executor executor;
+    private ExecutorService executorService;
 
     private Resource resource;
 
@@ -150,24 +151,24 @@ public abstract class AbstractLoadGeneratorStarter
             .resource( resourceProfile ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ) //
-            .executor( getExecutor() != null ? getExecutor() : null ).build();
+            .executorService( getExecutorService() != null ? getExecutorService() : null ).build();
 
         return loadGenerator;
     }
 
-    public Executor getExecutor()
+    public ExecutorService getExecutorService()
     {
-        return executor;
+        return executorService;
     }
 
-    public void setExecutor( Executor executor )
+    public void setExecutorService( ExecutorService executor )
     {
-        this.executor = executor;
+        this.executorService = executor;
     }
 
-    public AbstractLoadGeneratorStarter executor( Executor executor )
+    public AbstractLoadGeneratorStarter executorService( ExecutorService executor )
     {
-        this.executor = executor;
+        this.executorService = executor;
         return this;
     }
 
