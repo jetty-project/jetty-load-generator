@@ -26,6 +26,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
+import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.annotation.ManagedObject;
@@ -34,6 +35,7 @@ import org.eclipse.jetty.util.component.ContainerLifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 import org.eclipse.jetty.util.thread.Scheduler;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.profile.Resource;
@@ -45,10 +47,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -99,13 +101,9 @@ public class LoadGenerator
 
     private ExecutorService executorService;
 
-    private ExecutorService runnersExecutorService;
-
     private CopyOnWriteArrayList<HttpClient> clients = new CopyOnWriteArrayList<>();
 
     private Scheduler scheduler;
-
-    private Executor executor;
 
     private SocketAddressResolver socketAddressResolver;
 
@@ -224,9 +222,9 @@ public class LoadGenerator
         return scheme;
     }
 
-    public Executor getExecutor()
+    public ExecutorService getExecutorService()
     {
-        return executor;
+        return executorService;
     }
 
     public HttpVersion getHttpVersion()
@@ -284,14 +282,23 @@ public class LoadGenerator
     protected LoadGenerator startIt()
     {
         this.scheme = scheme( this.transport );
+        // so we use processors number - 1
+        int processors = Runtime.getRuntime().availableProcessors();
+        if ( this.executorService == null )
+        {
 
-        this.executorService = Executors.newFixedThreadPool( 1 );
+            ThreadPoolExecutor threadPoolExecutor =  // similar to Executors.newCachedThreadPool( );
+                new ThreadPoolExecutor( 256, Integer.MAX_VALUE,
+                                        60L, TimeUnit.SECONDS,
+                                        new SynchronousQueue<>());
+            //threadPoolExecutor.prestartCoreThread();
+            this.executorService =  threadPoolExecutor;
 
-        this.runnersExecutorService = Executors.newFixedThreadPool( getUsers() );
+        }
 
         _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners );
 
-        for(ValueListener valueListener : getAllListeners())
+        for ( ValueListener valueListener : getAllListeners() )
         {
             valueListener.onLoadGeneratorStart( this );
         }
@@ -319,19 +326,11 @@ public class LoadGenerator
 
         try
         {
-            this.runnersExecutorService.shutdown();
-            // wait the end?
-            while ( !runnersExecutorService.isTerminated() )
-            {
-                Thread.sleep( 2 );
-            }
-
             this.executorService.shutdown();
-
             // wait the end?
-            while ( !executorService.isTerminated() )
+            if ( !executorService.isTerminated() )
             {
-                Thread.sleep( 2 );
+                executorService.shutdownNow();
             }
 
             if ( responseTimeListeners != null )
@@ -416,7 +415,7 @@ public class LoadGenerator
                 {
                     HttpClientTransport httpClientTransport = getHttpClientTransport();
 
-                    List<Future<?>> futures = new ArrayList<Future<?>>( getUsers() );
+                    List<LoadGeneratorRunner> futures = new ArrayList<LoadGeneratorRunner>( getUsers() );
 
                     CyclicBarrier cyclicBarrier = new CyclicBarrier( getUsers() );
 
@@ -429,15 +428,17 @@ public class LoadGenerator
                             httpClient.setMaxRequestsQueuedPerDestination( 2048 );
                             httpClient.setSocketAddressResolver( getSocketAddressResolver() );
                             httpClient.getRequestListeners().addAll( listeners );
-                            if (this.httpProxies != null) {
+                            if ( this.httpProxies != null )
+                            {
                                 httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
                             }
 
                             LoadGeneratorRunner loadGeneratorRunner = //
                                 new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
-                                                          transactionNumber, cyclicBarrier);
+                                                         transactionNumber, cyclicBarrier, this.getExecutorService() );
 
-                            futures.add( this.runnersExecutorService.submit( loadGeneratorRunner ));
+                            this.getExecutorService().execute( loadGeneratorRunner );
+                            futures.add( loadGeneratorRunner );
 
                         }
                         catch ( Throwable e )
@@ -447,13 +448,22 @@ public class LoadGenerator
                         }
                     }
 
-                    while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ))
+                    while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ) )
                     {
                         // wait until stopped
                         Thread.sleep( 10 );
                     }
 
                     LOGGER.debug( "all futures done" );
+                } catch ( InterruptedException e )
+                {
+                    Thread.currentThread().interrupt();
+                    // this exception can happen when interrupting the generator so ignore
+                    if ( !getStop().get() )
+                    {
+                        LOGGER.warn( "ignoring exception:" + e.getMessage(), e );
+                    }
+                    return;
                 }
                 catch ( Throwable e )
                 {
@@ -608,9 +618,9 @@ public class LoadGenerator
         {
             httpClient.setScheduler( this.getScheduler() );
         }
-        if (this.getExecutor() != null)
+        if (this.getExecutorService() != null)
         {
-            httpClient.setExecutor( this.getExecutor() );
+            httpClient.setExecutor( this.getExecutorService() );
         }
 
         clients.add( httpClient );
@@ -661,7 +671,7 @@ public class LoadGenerator
 
         private Scheduler httpScheduler;
 
-        private Executor executor;
+        private ExecutorService executorService;
 
         private SocketAddressResolver socketAddressResolver;
 
@@ -738,9 +748,9 @@ public class LoadGenerator
             return this;
         }
 
-        public Builder executor( Executor Executor )
+        public Builder executorService( ExecutorService executorService )
         {
-            this.executor = executor;
+            this.executorService = executorService;
             return this;
         }
 
@@ -816,7 +826,7 @@ public class LoadGenerator
             loadGenerator.httpProxies = httpProxies;
             loadGenerator.transport = transport;
             loadGenerator.statisticsPath = statisticsPath;
-            loadGenerator.executor = executor;
+            loadGenerator.executorService = executorService;
             loadGenerator.httpVersion = httpVersion;
             loadGenerator.latencyTimeListeners = latencyTimeListeners;
             loadGenerator.collectServerStats = collectServerStats;

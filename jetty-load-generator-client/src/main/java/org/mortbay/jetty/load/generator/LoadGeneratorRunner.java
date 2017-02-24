@@ -29,11 +29,11 @@ import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.profile.Resource;
 
 import java.net.HttpCookie;
-import java.util.List;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
@@ -61,19 +61,26 @@ public class LoadGeneratorRunner
     private final HttpCookie httpCookie = new HttpCookie( "XXX-Jetty-LoadGenerator", //
                                                           Long.toString( System.nanoTime() ) );
 
-    private ExecutorService executorService;
+    private Executor executor;
+
+    private AtomicBoolean done = new AtomicBoolean(false);
 
     public LoadGeneratorRunner( HttpClient httpClient, LoadGenerator loadGenerator,
                                 LoadGeneratorResultHandler loadGeneratorResultHandler, int transactionNumber,
-                                CyclicBarrier cyclicBarrier )
+                                CyclicBarrier cyclicBarrier, Executor executor )
     {
         this.httpClient = httpClient;
         this.loadGenerator = loadGenerator;
         this.loadGeneratorResultHandler = loadGeneratorResultHandler;
         this.transactionNumber = transactionNumber;
         this._cyclicBarrier = cyclicBarrier;
-        // FIXME share this?
-        this.executorService = Executors.newCachedThreadPool();
+        this.executor = executor == null ? Executors.newCachedThreadPool() : executor;
+    }
+
+    // TODO implements Future ?
+    public boolean isDone()
+    {
+        return this.done.get();
     }
 
     @Override
@@ -82,7 +89,7 @@ public class LoadGeneratorRunner
         LOGGER.debug( "loadGenerator#run" );
         try
         {
-            if (_cyclicBarrier != null)
+            if ( _cyclicBarrier != null )
             {
                 _cyclicBarrier.await();
             }
@@ -94,9 +101,7 @@ public class LoadGeneratorRunner
                 }
 
                 Resource resource = loadGenerator.getResource();
-
                 handleResource( resource );
-
 
                 int transactionRate = loadGenerator.getTransactionRate();
                 if ( transactionRate > 0 )
@@ -122,11 +127,22 @@ public class LoadGeneratorRunner
             {
                 Thread.sleep( 1 );
             }
+            done.set( true );
             LOGGER.debug( "run finish" );
+        }
+        catch ( InterruptedException e )
+        {
+            Thread.currentThread().interrupt();
+            // this exception can happen when interrupting the generator so ignore
+            if ( !this.loadGenerator.getStop().get() )
+            {
+                LOGGER.warn( "ignoring InterruptedException:" + e.getMessage(), e );
+            }
+            return;
         }
         catch ( Throwable e )
         {
-            LOGGER.warn( "ignoring exception:" + e.getMessage(), e );
+            LOGGER.warn( "ignoring Throwable:" + e.getMessage(), e );
             // TODO record error in generator report
         }
     }
@@ -150,7 +166,7 @@ public class LoadGeneratorRunner
 
                         for ( Resource children : resource.getResources() )
                         {
-                            executorService.execute( () ->
+                            executor.execute( () ->
                                                      {
                                                          try
                                                          {

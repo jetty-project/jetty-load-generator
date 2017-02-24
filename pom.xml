@@ -40,6 +40,7 @@ under the License.
     <jetty-94-version>9.4.1.v20170120</jetty-94-version>
     <jackson2-version>2.8.1</jackson2-version>
     <jetty.version>${jetty-93-version}</jetty.version> <!-- 9.3.17-SNAPSHOT ${jetty-93-version} ${jetty-94-version} -->
+    <argLine>-Xmx1g -Xms1g -XX:+HeapDumpOnOutOfMemoryError</argLine>
   </properties>
 
   <licenses>
@@ -210,7 +211,8 @@ under the License.
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.19.1</version>
           <configuration>
-            <argLine>-Dcom.sun.management.jmxremote -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=duration=120s,filename=${project.build.directory}/myrecording.jfr -XX:+PrintGCDetails</argLine>
+            <reuseForks>false</reuseForks>
+            <argLine>${argLine} -Dcom.sun.management.jmxremote -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:StartFlightRecording=duration=120s,filename=${project.build.directory}/myrecording.jfr -XX:+PrintGCDetails</argLine>
           </configuration>
         </plugin>
         <plugin>

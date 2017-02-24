@@ -149,7 +149,7 @@ under the License.
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>-Xbootclasspath/p:${project.build.directory}/alpn/alpn-boot-${alpn.version}.jar</argLine>
+          <argLine>${argLine} -Xbootclasspath/p:${project.build.directory}/alpn/alpn-boot-${alpn.version}.jar</argLine>
           <systemPropertyVariables>
             <test.users>${test.users}</test.users>
           </systemPropertyVariables>
