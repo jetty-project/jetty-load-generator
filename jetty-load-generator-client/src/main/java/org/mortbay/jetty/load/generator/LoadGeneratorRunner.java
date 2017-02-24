@@ -61,6 +61,8 @@ public class LoadGeneratorRunner
     private final HttpCookie httpCookie = new HttpCookie( "XXX-Jetty-LoadGenerator", //
                                                           Long.toString( System.nanoTime() ) );
 
+    private ExecutorService executorService;
+
     public LoadGeneratorRunner( HttpClient httpClient, LoadGenerator loadGenerator,
                                 LoadGeneratorResultHandler loadGeneratorResultHandler, int transactionNumber,
                                 CyclicBarrier cyclicBarrier )
@@ -70,6 +72,8 @@ public class LoadGeneratorRunner
         this.loadGeneratorResultHandler = loadGeneratorResultHandler;
         this.transactionNumber = transactionNumber;
         this._cyclicBarrier = cyclicBarrier;
+        // FIXME share this?
+        this.executorService = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -135,40 +139,62 @@ public class LoadGeneratorRunner
             // so we have sync call if we have children or resource marked as wait
             if ( !resource.getResources().isEmpty() )
             {
-                loadGeneratorResultHandler.onComplete( buildRequest( resource ).send() );
+
+                Request request = buildRequest( resource ).onResponseBegin(
+
+                    response -> {
+                        // it's a group so we can request in parallel but wait all responses before next step
+
+
+                        CyclicBarrier cyclicBarrier = new CyclicBarrier( resource.getResources().size() );
+
+                        for ( Resource children : resource.getResources() )
+                        {
+                            executorService.execute( () ->
+                                                     {
+                                                         try
+                                                         {
+                                                             cyclicBarrier.await();
+                                                             handleResource( children );
+                                                         } catch ( InterruptedException e )
+                                                         {
+                                                             Thread.currentThread().interrupt();
+                                                             LOGGER.warn( e.getMessage(), e );
+                                                         }
+                                                         catch ( Exception e )
+                                                         {
+                                                             LOGGER.debug( e.getMessage(), e );
+                                                         }
+                                                     } );
+                        }
+
+                        /*
+                        executorService.shutdown();
+
+                        try
+                        {
+                            // TODO make this configurable??
+                            boolean finished = executorService.awaitTermination( resource.getChildrenTimeout(), TimeUnit.MILLISECONDS );
+                            if ( !finished )
+                            {
+                                LOGGER.warn( "resourceGroup request not all completed for timeout " + resource.getChildrenTimeout() );
+                            }
+                        }
+                        catch ( InterruptedException e )
+                        {
+                            Thread.currentThread().interrupt();
+                            LOGGER.warn( e.getMessage(), e );
+                        }
+                        */
+                    }
+                );
+
+                loadGeneratorResultHandler.onComplete( request.send() );
+
             }
             else
             {
                 buildRequest( resource ).send( loadGeneratorResultHandler );
-            }
-        }
-        if ( !resource.getResources().isEmpty() )
-        {
-            // it's a group so we can request in parallel but wait all responses before next step
-            ExecutorService executorService = Executors.newFixedThreadPool(resource.getResources().size());
-
-            for ( Resource children : resource.getResources() )
-            {
-                executorService.execute( () ->
-                                         {
-                                             try
-                                             {
-                                                 handleResource( children );
-                                             }
-                                             catch ( Exception e )
-                                             {
-                                                 LOGGER.debug( e.getMessage(), e );
-                                             }
-                                         } );
-            }
-
-            executorService.shutdown();
-
-            // TODO make this configurable??
-            boolean finished = executorService.awaitTermination( resource.getChildrenTimeout(), TimeUnit.MILLISECONDS );
-            if ( !finished )
-            {
-                LOGGER.warn( "resourceGroup request not all completed for timeout " + resource.getChildrenTimeout() );
             }
         }
     }
@@ -210,7 +236,6 @@ public class LoadGeneratorRunner
         {
             request.onResponseBegin( loadGeneratorResultHandler );
         }
-        //request.onComplete( loadGeneratorResultHandler );
 
         request.header( LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER, //
                         Long.toString( System.nanoTime() ) );

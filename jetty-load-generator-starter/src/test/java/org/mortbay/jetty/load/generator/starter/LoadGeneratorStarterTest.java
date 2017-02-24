@@ -113,7 +113,7 @@ public class LoadGeneratorStarterTest
 
         int getNumber = testHandler.getNumber.get();
 
-        Assert.assertTrue( getNumber > 10);
+        Assert.assertTrue("getNumber return: " + getNumber, getNumber > 10);
     }
 
 

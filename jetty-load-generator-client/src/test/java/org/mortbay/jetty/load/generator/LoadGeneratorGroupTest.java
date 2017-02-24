@@ -62,9 +62,7 @@ public class LoadGeneratorGroupTest
     public void website_like()
         throws Exception
     {
-        Resource sample = //
-            new Resource( //
-                          new Resource( "index.html", //
+        Resource sample = new Resource( "index.html", //
                                         new Resource( "/style.css", //
                                                       new Resource( "/logo.gif" ), //
                                                       new Resource( "/spacer.png" ) //
@@ -78,7 +76,7 @@ public class LoadGeneratorGroupTest
                                         new Resource( "/iframeContents.html" ), //
                                         new Resource( "/moreIframeContents.html" ), //
                                         new Resource( "/favicon.ico" ) //
-                          ) );
+                          );
 
         runResource( sample );
 

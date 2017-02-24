@@ -240,7 +240,7 @@ public class CollectorInformations
     public String toString( boolean ls )
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
-        return "CollectorInformations:" + ( ls ? System.lineSeparator() : "" ) //
+        return "CollectorInformations millis:" + ( ls ? System.lineSeparator() : "" ) //
             + "informationType=" + informationType + ( ls ? System.lineSeparator() : "" ) //
             + ",totalCount=" + totalCount //
             + ( ls ? System.lineSeparator() : "" ) //
@@ -263,7 +263,7 @@ public class CollectorInformations
     public String toStringInNanos( boolean ls )
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
-        return "CollectorInformations:" + ( ls ? System.lineSeparator() : "" ) //
+        return "CollectorInformations nanos:" + ( ls ? System.lineSeparator() : "" ) //
             + "informationType=" + informationType + ( ls ? System.lineSeparator() : "" ) //
             + ",totalCount=" + totalCount //
             + ( ls ? System.lineSeparator() : "" ) //
