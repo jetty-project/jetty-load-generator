@@ -152,45 +152,40 @@ public class LoadGeneratorRunner
     {
         if (resource.getPath() != null)
         {
+            Request request = buildRequest( resource );
             if ( !resource.getResources().isEmpty() )
             {
 
-                Request request = buildRequest( resource ).onResponseBegin(
+                request.onResponseBegin(
 
-                    response -> {
+                    response ->
+                    {
 
                         CyclicBarrier cyclicBarrier = new CyclicBarrier( resource.getResources().size() );
                         for ( Resource children : resource.getResources() )
                         {
                             executor.execute( () ->
-                                                     {
-                                                         try
-                                                         {
-                                                             cyclicBarrier.await();
-                                                             handleResource( children );
-                                                         } catch ( InterruptedException e )
-                                                         {
-                                                             Thread.currentThread().interrupt();
-                                                             LOGGER.warn( e.getMessage(), e );
-                                                         }
-                                                         catch ( Exception e )
-                                                         {
-                                                             LOGGER.debug( e.getMessage(), e );
-                                                         }
-                                                     } );
+                                              {
+                                                  try
+                                                  {
+                                                      cyclicBarrier.await();
+                                                      handleResource( children );
+                                                  }
+                                                  catch ( InterruptedException e )
+                                                  {
+                                                      Thread.currentThread().interrupt();
+                                                      LOGGER.warn( e.getMessage(), e );
+                                                  }
+                                                  catch ( Exception e )
+                                                  {
+                                                      LOGGER.debug( e.getMessage(), e );
+                                                  }
+                                              } );
                         }
 
-                    }
-                );
-
-                request.send( loadGeneratorResultHandler );
-                //loadGeneratorResultHandler.onComplete( request.send() );
-
+                    } );
             }
-            else
-            {
-                buildRequest( resource ).send( loadGeneratorResultHandler );
-            }
+            request.send( loadGeneratorResultHandler );
         }
     }
 
