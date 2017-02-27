@@ -55,6 +55,8 @@ public abstract class AbstractLoadGeneratorStarter
 
     private Resource resource;
 
+    private LoadGenerator loadGenerator;
+
     public AbstractLoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
         this.starterArgs = runnerArgs;
@@ -139,6 +141,11 @@ public abstract class AbstractLoadGeneratorStarter
         throws Exception
     {
         Resource resourceProfile = getResource();
+
+        if (this.loadGenerator != null)
+        {
+            return this.loadGenerator;
+        }
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( starterArgs.getHost() ) //

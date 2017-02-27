@@ -26,7 +26,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
-import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.annotation.ManagedObject;
@@ -35,7 +34,6 @@ import org.eclipse.jetty.util.component.ContainerLifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 import org.eclipse.jetty.util.thread.Scheduler;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.profile.Resource;
@@ -44,6 +42,7 @@ import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CyclicBarrier;
@@ -415,7 +414,7 @@ public class LoadGenerator
                 {
                     HttpClientTransport httpClientTransport = getHttpClientTransport();
 
-                    List<LoadGeneratorRunner> futures = new ArrayList<LoadGeneratorRunner>( getUsers() );
+                    List<LoadGeneratorRunner> futures = new ArrayList<>( getUsers() );
 
                     CyclicBarrier cyclicBarrier = new CyclicBarrier( getUsers() );
 
@@ -423,15 +422,10 @@ public class LoadGenerator
                     {
                         try
                         {
-                            HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
-                            // TODO dynamic depending on the rate??
-                            httpClient.setMaxRequestsQueuedPerDestination( 2048 );
-                            httpClient.setSocketAddressResolver( getSocketAddressResolver() );
-                            httpClient.getRequestListeners().addAll( listeners );
-                            if ( this.httpProxies != null )
-                            {
-                                httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
-                            }
+                            HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory(), //
+                                                                   listeners );
+
+
 
                             LoadGeneratorRunner loadGeneratorRunner = //
                                 new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
@@ -525,21 +519,27 @@ public class LoadGenerator
     {
         try
         {
-            HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory() );
+            HttpClient httpClient =
+                newHttpClient( httpClientTransport, getSslContextFactory(), Collections.emptyList() );
             final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?statsReset=true";
             Request request = httpClient.newRequest( uri );
             ContentResponse contentResponse = request.send();
-            if (LOGGER.isDebugEnabled())
+            if ( LOGGER.isDebugEnabled() )
             {
                 LOGGER.debug( "stats reset status: {}", contentResponse.getStatus() );
             }
-            if (contentResponse.getStatus() != HttpServletResponse.SC_OK ) {
+            if ( contentResponse.getStatus() != HttpServletResponse.SC_OK )
+            {
                 LOGGER.warn( "cannot reset stats on Server side" );
             }
         }
         catch ( Exception e )
         {
             LOGGER.warn( "skip error getting stats", e );
+        }
+        finally
+        {
+            this.clients.clear();
         }
     }
 
@@ -583,7 +583,8 @@ public class LoadGenerator
         }
     }
 
-    protected HttpClient newHttpClient( HttpClientTransport httpClientTransport, SslContextFactory sslContextFactory )
+    protected HttpClient newHttpClient( HttpClientTransport httpClientTransport, SslContextFactory sslContextFactory, //
+                                        List<Request.Listener> listeners )
         throws Exception
     {
         HttpClient httpClient = new HttpClient( httpClientTransport, sslContextFactory );
@@ -623,7 +624,18 @@ public class LoadGenerator
             httpClient.setExecutor( this.getExecutorService() );
         }
 
+        // TODO dynamic depending on the rate??
+        httpClient.setMaxRequestsQueuedPerDestination( 2048 );
+        httpClient.setSocketAddressResolver( getSocketAddressResolver() );
+        httpClient.getRequestListeners().addAll( listeners );
+        if ( this.httpProxies != null )
+        {
+            httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
+        }
+
+
         clients.add( httpClient );
+
         httpClient.start();
 
         return httpClient;
