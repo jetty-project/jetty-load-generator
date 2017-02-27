@@ -158,7 +158,8 @@ public abstract class AbstractLoadGeneratorStarter
             .resource( resourceProfile ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ) //
-            .executorService( getExecutorService() != null ? getExecutorService() : null ).build();
+            .executorService( getExecutorService() != null ? getExecutorService() : null ) //
+            .build();
 
         return loadGenerator;
     }
