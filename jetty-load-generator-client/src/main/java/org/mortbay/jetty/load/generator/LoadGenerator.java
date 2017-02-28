@@ -285,21 +285,18 @@ public class LoadGenerator
     protected LoadGenerator startIt()
     {
         this.scheme = scheme( this.transport );
-        // so we use processors number - 1
-        int processors = Runtime.getRuntime().availableProcessors();
+
         if ( this.executorService == null )
         {
-
             ThreadPoolExecutor threadPoolExecutor =  // similar to Executors.newCachedThreadPool( );
                 new ThreadPoolExecutor( 256, Integer.MAX_VALUE,
                                         60L, TimeUnit.SECONDS,
                                         new LinkedTransferQueue<>()); // BlockingArrayQueue
             //threadPoolExecutor.prestartCoreThread();
             this.executorService =  threadPoolExecutor;
-
         }
 
-        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners, //
+        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( this, //
                                                                       getExecutorService() );
 
         for ( ValueListener valueListener : getAllListeners() )
@@ -326,6 +323,18 @@ public class LoadGenerator
         if ( collectServerStats )
         {
             collectStats();
+        }
+
+        for ( HttpClient httpClient : this.clients )
+        {
+            try
+            {
+                httpClient.stop();
+            }
+            catch ( Exception e )
+            {
+                LOGGER.debug( "fail to stop httpclient: {}", e.getMessage() );
+            }
         }
 
         try
@@ -374,19 +383,6 @@ public class LoadGenerator
                     {
                         LOGGER.debug( "fail to latencyTimeListener.onLoadGeneratorStop(): {}", e.getMessage() );
                     }
-                }
-            }
-
-
-            for ( HttpClient httpClient : this.clients )
-            {
-                try
-                {
-                    httpClient.stop();
-                }
-                catch ( Exception e )
-                {
-                    LOGGER.debug( "fail to stop httpclient: {}", e.getMessage() );
                 }
             }
         }

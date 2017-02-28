@@ -56,19 +56,21 @@ public class LoadGeneratorResultHandler
 
     private Executor executor;
 
-    public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners, //
-                                       List<LatencyTimeListener> latencyTimeListeners, //
+    private final LoadGenerator loadGenerator;
+
+    public LoadGeneratorResultHandler( LoadGenerator loadGenerator, //
                                        Executor executor)
     {
-        this.responseTimeListeners = responseTimeListeners == null ? Collections.emptyList() //
-            : new CopyOnWriteArrayList<>( responseTimeListeners );
-        this.latencyTimeListeners = latencyTimeListeners == null ? Collections.emptyList() //
-            : new CopyOnWriteArrayList<>( latencyTimeListeners );
+        this.responseTimeListeners = loadGenerator.getResponseTimeListeners() == null ? Collections.emptyList() //
+            : new CopyOnWriteArrayList<>( loadGenerator.getResponseTimeListeners() );
+        this.latencyTimeListeners = loadGenerator.getLatencyTimeListeners() == null ? Collections.emptyList() //
+            : new CopyOnWriteArrayList<>( loadGenerator.getLatencyTimeListeners() );
         this.executor = executor;
         if (executor == null)
         {
             this.executor = Executors.newCachedThreadPool();
         }
+        this.loadGenerator = loadGenerator;
     }
 
     private static class LatencyValueProducer implements ExecutionStrategy.Producer
@@ -101,7 +103,7 @@ public class LoadGeneratorResultHandler
         }
 
         String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
-        if ( !StringUtil.isBlank( startTime ) )
+        if ( !StringUtil.isBlank( startTime ) && !loadGenerator.getStop().get() )
         {
             // we calculate now time outside of the Runnable as we don't when it will happen
             long end = System.nanoTime();
@@ -156,7 +158,7 @@ public class LoadGeneratorResultHandler
         }
 
         String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER );
-        if ( !StringUtil.isBlank( startTime ) )
+        if ( !StringUtil.isBlank( startTime ) && !loadGenerator.getStop().get() )
         {
             // we calculate now time outside of the Runnable as we don't when it will happen
             long end = System.nanoTime();
