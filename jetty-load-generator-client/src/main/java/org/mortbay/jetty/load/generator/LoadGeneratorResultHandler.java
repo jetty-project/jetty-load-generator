@@ -24,11 +24,15 @@ import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.thread.ExecutionStrategy;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  *
@@ -50,12 +54,37 @@ public class LoadGeneratorResultHandler
 
     private final List<LatencyTimeListener> latencyTimeListeners;
 
+    private Executor executor;
 
-    public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners,
-                                       List<LatencyTimeListener> latencyTimeListeners )
+    public LoadGeneratorResultHandler( List<ResponseTimeListener> responseTimeListeners, //
+                                       List<LatencyTimeListener> latencyTimeListeners, //
+                                       Executor executor)
     {
-        this.responseTimeListeners = responseTimeListeners == null ? Collections.emptyList() : responseTimeListeners;
-        this.latencyTimeListeners = latencyTimeListeners == null ? Collections.emptyList() : latencyTimeListeners;
+        this.responseTimeListeners = responseTimeListeners == null ? Collections.emptyList() //
+            : new CopyOnWriteArrayList<>( responseTimeListeners );
+        this.latencyTimeListeners = latencyTimeListeners == null ? Collections.emptyList() //
+            : new CopyOnWriteArrayList<>( latencyTimeListeners );
+        this.executor = executor;
+        if (executor == null)
+        {
+            this.executor = Executors.newCachedThreadPool();
+        }
+    }
+
+    private static class LatencyValueProducer implements ExecutionStrategy.Producer
+    {
+        private ValueListener.Values values;
+
+        public LatencyValueProducer( ValueListener.Values values )
+        {
+            this.values = values;
+        }
+
+        @Override
+        public Runnable produce()
+        {
+            return null;
+        }
     }
 
     @Override
@@ -70,26 +99,29 @@ public class LoadGeneratorResultHandler
         {
             return;
         }
-        // TODO olamy: call to listeners in an async way?
-        long end = System.nanoTime();
 
-        String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
-        if ( !StringUtil.isBlank( startTime ) )
-        {
-            long time = end - Long.parseLong( startTime );
+        this.executor.execute( () ->
+                               {
+                                   long end = System.nanoTime();
 
-            ValueListener.Values values = new ResponseTimeListener.Values() //
-                .time( time ) //
-                .path( response.getRequest().getPath() ) //
-                .method( response.getRequest().getMethod() ) //
-                .status( response.getStatus() ) //
-                .eventTimestamp( System.currentTimeMillis() );
+                                   String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
+                                   if ( !StringUtil.isBlank( startTime ) )
+                                   {
+                                       long time = end - Long.parseLong( startTime );
 
-            for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
-            {
-                responseTimeListener.onResponseTimeValue( values );
-            }
-        }
+                                       ValueListener.Values values = new ResponseTimeListener.Values() //
+                                           .time( time ) //
+                                           .path( response.getRequest().getPath() ) //
+                                           .method( response.getRequest().getMethod() ) //
+                                           .status( response.getStatus() ) //
+                                           .eventTimestamp( System.currentTimeMillis() );
+
+                                       for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
+                                       {
+                                           responseTimeListener.onResponseTimeValue( values );
+                                       }
+                                   }
+                               });
 
         /*
 
@@ -122,30 +154,32 @@ public class LoadGeneratorResultHandler
             return;
         }
 
-        long end = System.nanoTime();
+        this.executor.execute( () -> {
+            long end = System.nanoTime();
 
-        String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER );
+            String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER );
 
-        if ( !StringUtil.isBlank( startTime ) )
-        {
-            long time = end - Long.parseLong( startTime );
-
-            ValueListener.Values values = new ValueListener.Values() //
-                .time( time ) //
-                .path( response.getRequest().getPath() ) //
-                .method( response.getRequest().getMethod() ) //
-                .status( response.getStatus() ) //
-                .eventTimestamp( System.currentTimeMillis() );
-
-            if ( LOGGER.isDebugEnabled() )
+            if ( !StringUtil.isBlank( startTime ) )
             {
-                LOGGER.debug( "onBegin:" + response.hashCode() );
+                long time = end - Long.parseLong( startTime );
+
+                ValueListener.Values values = new ValueListener.Values() //
+                    .time( time ) //
+                    .path( response.getRequest().getPath() ) //
+                    .method( response.getRequest().getMethod() ) //
+                    .status( response.getStatus() ) //
+                    .eventTimestamp( System.currentTimeMillis() );
+
+                if ( LOGGER.isDebugEnabled() )
+                {
+                    LOGGER.debug( "onBegin:" + response.hashCode() );
+                }
+                for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
+                {
+                    latencyTimeListener.onLatencyTimeValue( values );
+                }
             }
-            for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
-            {
-                latencyTimeListener.onLatencyTimeValue( values );
-            }
-        }
+        } );
     }
 
     //@Override

@@ -299,7 +299,8 @@ public class LoadGenerator
 
         }
 
-        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners );
+        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( responseTimeListeners, latencyTimeListeners, //
+                                                                      getExecutorService() );
 
         for ( ValueListener valueListener : getAllListeners() )
         {
