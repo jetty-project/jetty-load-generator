@@ -26,6 +26,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
+import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.annotation.ManagedObject;
@@ -46,8 +47,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +77,7 @@ public class LoadGenerator
      */
     private volatile int transactionRate;
 
-    private AtomicBoolean stop;
+    private volatile AtomicBoolean stop;
 
     /**
      * target host scheme
@@ -289,7 +293,7 @@ public class LoadGenerator
             ThreadPoolExecutor threadPoolExecutor =  // similar to Executors.newCachedThreadPool( );
                 new ThreadPoolExecutor( 256, Integer.MAX_VALUE,
                                         60L, TimeUnit.SECONDS,
-                                        new SynchronousQueue<>());
+                                        new LinkedTransferQueue<>()); // BlockingArrayQueue
             //threadPoolExecutor.prestartCoreThread();
             this.executorService =  threadPoolExecutor;
 
@@ -325,18 +329,35 @@ public class LoadGenerator
 
         try
         {
-            this.executorService.shutdown();
-            // wait the end?
-            if ( !executorService.isTerminated() )
+            try
             {
-                executorService.shutdownNow();
+                this.executorService.shutdown();
+                // wait the end?
+                if ( !executorService.isTerminated() )
+                {
+                    executorService.shutdownNow();
+                }
             }
+            catch ( Exception e )
+            {
+                // maybe not supported by some implementation of BlockingQueue
+                // but we don't care of the result here
+                LOGGER.debug( "fail to shutdownNow the executorService: {}", e.getMessage() );
+            }
+
 
             if ( responseTimeListeners != null )
             {
                 for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
                 {
-                    responseTimeListener.onLoadGeneratorStop();
+                    try
+                    {
+                        responseTimeListener.onLoadGeneratorStop();
+                    }
+                    catch ( Exception e )
+                    {
+                        LOGGER.debug( "fail to responseTimeListener.onLoadGeneratorStop(): {}", e.getMessage() );
+                    }
                 }
             }
 
@@ -344,20 +365,33 @@ public class LoadGenerator
             {
                 for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
                 {
-                    latencyTimeListener.onLoadGeneratorStop();
+                    try
+                    {
+                        latencyTimeListener.onLoadGeneratorStop();
+                    }
+                    catch ( Exception e )
+                    {
+                        LOGGER.debug( "fail to latencyTimeListener.onLoadGeneratorStop(): {}", e.getMessage() );
+                    }
                 }
             }
 
 
             for ( HttpClient httpClient : this.clients )
             {
-                httpClient.stop();
+                try
+                {
+                    httpClient.stop();
+                }
+                catch ( Exception e )
+                {
+                    LOGGER.debug( "fail to stop httpclient: {}", e.getMessage() );
+                }
             }
         }
         catch ( Exception e )
         {
             LOGGER.warn( e.getMessage(), e );
-            throw new RuntimeException( e.getMessage(), e.getCause() );
         }
     }
 
@@ -408,7 +442,9 @@ public class LoadGenerator
             valueListener.beforeRun( this );
         }
 
-        Future globaleFuture = executorService.submit( () ->
+        ExecutorService globaleExecutor = Executors.newFixedThreadPool(1);
+
+        Future globaleFuture = globaleExecutor.submit( () ->
             {
                 try
                 {
