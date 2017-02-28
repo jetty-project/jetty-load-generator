@@ -100,12 +100,12 @@ public class LoadGeneratorResultHandler
             return;
         }
 
-        this.executor.execute( () ->
-                               {
-                                   long end = System.nanoTime();
-
-                                   String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
-                                   if ( !StringUtil.isBlank( startTime ) )
+        String startTime = response.getRequest().getHeaders().get( START_RESPONSE_TIME_HEADER );
+        if ( !StringUtil.isBlank( startTime ) )
+        {
+            // we calculate now time outside of the Runnable as we don't when it will happen
+            long end = System.nanoTime();
+            this.executor.execute( () ->
                                    {
                                        long time = end - Long.parseLong( startTime );
 
@@ -120,9 +120,10 @@ public class LoadGeneratorResultHandler
                                        {
                                            responseTimeListener.onResponseTimeValue( values );
                                        }
-                                   }
-                               });
 
+                                   } );
+
+        }
         /*
 
         int size = 0;
@@ -154,32 +155,35 @@ public class LoadGeneratorResultHandler
             return;
         }
 
-        this.executor.execute( () -> {
+        String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER );
+        if ( !StringUtil.isBlank( startTime ) )
+        {
+            // we calculate now time outside of the Runnable as we don't when it will happen
             long end = System.nanoTime();
+            this.executor.execute( () ->
+                                   {
 
-            String startTime = response.getRequest().getHeaders().get( START_LATENCY_TIME_HEADER );
 
-            if ( !StringUtil.isBlank( startTime ) )
-            {
-                long time = end - Long.parseLong( startTime );
+                                       long time = end - Long.parseLong( startTime );
 
-                ValueListener.Values values = new ValueListener.Values() //
-                    .time( time ) //
-                    .path( response.getRequest().getPath() ) //
-                    .method( response.getRequest().getMethod() ) //
-                    .status( response.getStatus() ) //
-                    .eventTimestamp( System.currentTimeMillis() );
+                                       ValueListener.Values values = new ValueListener.Values() //
+                                           .time( time ) //
+                                           .path( response.getRequest().getPath() ) //
+                                           .method( response.getRequest().getMethod() ) //
+                                           .status( response.getStatus() ) //
+                                           .eventTimestamp( System.currentTimeMillis() );
 
-                if ( LOGGER.isDebugEnabled() )
-                {
-                    LOGGER.debug( "onBegin:" + response.hashCode() );
-                }
-                for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
-                {
-                    latencyTimeListener.onLatencyTimeValue( values );
-                }
-            }
-        } );
+                                       if ( LOGGER.isDebugEnabled() )
+                                       {
+                                           LOGGER.debug( "onBegin:" + response.hashCode() );
+                                       }
+                                       for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
+                                       {
+                                           latencyTimeListener.onLatencyTimeValue( values );
+                                       }
+
+                                   } );
+        }
     }
 
     //@Override
