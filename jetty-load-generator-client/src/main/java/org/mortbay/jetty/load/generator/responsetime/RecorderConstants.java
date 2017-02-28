@@ -26,9 +26,15 @@ import java.util.concurrent.TimeUnit;
 public interface RecorderConstants
 {
 
+    /**
+     * lowest value
+     */
     long LOWEST_DISCERNIBLE_VALUE = TimeUnit.MILLISECONDS.toNanos( 1 );
 
-    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 1 );
+    /**
+     * max 3 minutes otherwise we get out of range in histogram
+     */
+    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 3 );
 
     int NUMBER_OF_SIGNIFICANT_VALUE_DIGITS = 3;
 

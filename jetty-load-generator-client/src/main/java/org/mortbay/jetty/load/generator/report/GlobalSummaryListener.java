@@ -70,7 +70,7 @@ public class GlobalSummaryListener
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
-            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+            LOGGER.warn( "skip error recording response time {}, {}", time, e.getMessage() );
         }
 
     }
@@ -85,7 +85,7 @@ public class GlobalSummaryListener
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
-            LOGGER.warn( "skip error recording time {}, {}", time, e.getMessage() );
+            LOGGER.warn( "skip error recording latency time {}, {}", time, e.getMessage() );
         }
     }
 
