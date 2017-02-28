@@ -18,14 +18,14 @@
 
 package org.mortbay.jetty.load.generator.report;
 
+import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Histogram;
-import org.HdrHistogram.Recorder;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.ValueListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.RecorderConstants;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 
 import java.io.Serializable;
 
@@ -38,26 +38,22 @@ public class GlobalSummaryListener
 
     private static final Logger LOGGER = Log.getLogger( GlobalSummaryListener.class );
 
-    private Recorder responseTimeRecorder, latencyTimeRecorder;
+    private Histogram responseHistogram, latencyHistogram;
 
     public GlobalSummaryListener( long lowestDiscernibleValue, long highestTrackableValue,
                                   int numberOfSignificantValueDigits )
     {
-        this.responseTimeRecorder =
-            new Recorder( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
-        this.latencyTimeRecorder =
-            new Recorder( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
+        this.responseHistogram =
+            new AtomicHistogram( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
+        this.latencyHistogram =
+            new AtomicHistogram( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
     }
 
     public GlobalSummaryListener()
     {
-        this.responseTimeRecorder = new Recorder( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
-                                                  RecorderConstants.HIGHEST_TRACKABLE_VALUE, //
-                                                  RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
-
-        this.latencyTimeRecorder = new Recorder( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
-                                                 RecorderConstants.HIGHEST_TRACKABLE_VALUE, //
-                                                 RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
+        this( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
+              RecorderConstants.HIGHEST_TRACKABLE_VALUE, //
+              RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
     }
 
     @Override
@@ -66,7 +62,7 @@ public class GlobalSummaryListener
         long time = values.getTime();
         try
         {
-            responseTimeRecorder.recordValue( time );
+            responseHistogram.recordValue( time );
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
@@ -81,7 +77,7 @@ public class GlobalSummaryListener
         long time = values.getTime();
         try
         {
-            latencyTimeRecorder.recordValue( time );
+            latencyHistogram.recordValue( time );
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
@@ -98,12 +94,12 @@ public class GlobalSummaryListener
 
     public Histogram getResponseTimeHistogram()
     {
-        return responseTimeRecorder.getIntervalHistogram();
+        return responseHistogram;
     }
 
     public Histogram getLatencyTimeHistogram()
     {
-        return latencyTimeRecorder.getIntervalHistogram();
+        return latencyHistogram;
     }
 
 }

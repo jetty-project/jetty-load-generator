@@ -32,9 +32,9 @@ public interface RecorderConstants
     long LOWEST_DISCERNIBLE_VALUE = TimeUnit.MILLISECONDS.toNanos( 1 );
 
     /**
-     * max 3 minutes otherwise we get out of range in histogram
+     * max 10 minutes otherwise we get out of range in histogram
      */
-    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 3 );
+    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 10 );
 
     int NUMBER_OF_SIGNIFICANT_VALUE_DIGITS = 3;
 
