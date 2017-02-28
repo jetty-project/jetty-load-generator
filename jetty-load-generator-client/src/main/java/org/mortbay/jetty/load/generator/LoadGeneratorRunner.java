@@ -86,7 +86,7 @@ public class LoadGeneratorRunner
     @Override
     public void run()
     {
-        LOGGER.debug( "loadGenerator#run" );
+        LOGGER.info( "loadGenerator#run, threadName: {}", Thread.currentThread().getName() );
         try
         {
             if ( _cyclicBarrier != null )
@@ -127,8 +127,6 @@ public class LoadGeneratorRunner
             {
                 Thread.sleep( 1 );
             }
-            done.set( true );
-            LOGGER.debug( "run finish" );
         }
         catch ( InterruptedException e )
         {
@@ -142,9 +140,22 @@ public class LoadGeneratorRunner
         }
         catch ( Throwable e )
         {
-            LOGGER.warn( "ignoring Throwable:" + e.getMessage(), e );
-            // TODO record error in generator report
+            if ( e.getCause() != null && e.getCause() instanceof InterruptedException )
+            {
+                Thread.currentThread().interrupt();
+                // this exception can happen when interrupting the generator so ignore
+            }
+            else
+            {
+                LOGGER.warn( "ignoring Throwable:" + e.getMessage(), e );
+                // TODO record error in generator report ??
+            }
+
+        } finally
+        {
+            done.set( true );
         }
+        LOGGER.info( "run finish, threadName: {}", Thread.currentThread().getName() );
     }
 
     private void handleResource( Resource resource )
