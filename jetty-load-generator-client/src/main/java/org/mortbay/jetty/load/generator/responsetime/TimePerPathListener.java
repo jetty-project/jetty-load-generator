@@ -18,7 +18,7 @@
 
 package org.mortbay.jetty.load.generator.responsetime;
 
-import org.HdrHistogram.Recorder;
+import org.HdrHistogram.AtomicHistogram;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.CollectorInformations;
@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * <p>Use {@link Recorder} to tracker response/latency time per path</p>
+ * <p>Use {@link AtomicHistogram} to tracker response/latency time per path</p>
  * <p>
  * Print out general statistics when stopping.
  * To prevent that and only get the values simply use the constructor with <code>false</code>
@@ -44,17 +44,17 @@ public class TimePerPathListener
 
     private static final Logger LOGGER = Log.getLogger( TimePerPathListener.class );
 
-    private Map<String, Recorder> responseTimePerPath = new ConcurrentHashMap<>();
+    private Map<String, AtomicHistogram> responseTimePerPath = new ConcurrentHashMap<>();
 
-    private Map<String, Recorder> latencyTimePerPath = new ConcurrentHashMap<>();
+    private Map<String, AtomicHistogram> latencyTimePerPath = new ConcurrentHashMap<>();
 
     private boolean printOnEnd = true;
 
-    private long lowestDiscernibleValue = RecorderConstants.LOWEST_DISCERNIBLE_VALUE;
+    private long lowestDiscernibleValue = HistogramConstants.LOWEST_DISCERNIBLE_VALUE;
 
-    private long highestTrackableValue = RecorderConstants.HIGHEST_TRACKABLE_VALUE;
+    private long highestTrackableValue = HistogramConstants.HIGHEST_TRACKABLE_VALUE;
 
-    private int numberOfSignificantValueDigits = RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS;
+    private int numberOfSignificantValueDigits = HistogramConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS;
 
     private boolean nanoDisplay = true;
 
@@ -95,19 +95,19 @@ public class TimePerPathListener
         initializeMap( latencyTimePerPath, loadGenerator.getResource().getResources() );
     }
 
-    private void initializeMap( Map<String, Recorder> recorderMap, List<Resource> resources )
+    private void initializeMap( Map<String, AtomicHistogram> histogramMap, List<Resource> resources )
     {
         for ( Resource resource : resources )
         {
-            Recorder recorder = recorderMap.get( resource.getPath() );
-            if ( recorder == null )
+            AtomicHistogram atomicHistogram = histogramMap.get( resource.getPath() );
+            if ( atomicHistogram == null )
             {
-                recorder = new Recorder( lowestDiscernibleValue, //
+                atomicHistogram = new AtomicHistogram( lowestDiscernibleValue, //
                                          highestTrackableValue, //
                                          numberOfSignificantValueDigits );
-                recorderMap.put( resource.getPath(), recorder );
+                histogramMap.put( resource.getPath(), atomicHistogram );
             }
-            initializeMap( recorderMap, resource.getResources() );
+            initializeMap( histogramMap, resource.getResources() );
         }
     }
 
@@ -117,17 +117,17 @@ public class TimePerPathListener
     {
         String path = values.getPath();
         long responseTime = values.getTime();
-        Recorder recorder = responseTimePerPath.get( path );
-        if ( recorder == null )
+        AtomicHistogram atomicHistogram = responseTimePerPath.get( path );
+        if ( atomicHistogram == null )
         {
-            recorder = new Recorder( lowestDiscernibleValue, //
+            atomicHistogram = new AtomicHistogram( lowestDiscernibleValue, //
                                      highestTrackableValue, //
                                      numberOfSignificantValueDigits );
-            responseTimePerPath.put( path, recorder );
+            responseTimePerPath.put( path, atomicHistogram );
         }
         try
         {
-            recorder.recordValue( responseTime );
+            atomicHistogram.recordValue( responseTime );
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
@@ -144,17 +144,17 @@ public class TimePerPathListener
         }
         String path = values.getPath();
         long time = values.getTime();
-        Recorder recorder = latencyTimePerPath.get( path );
-        if ( recorder == null )
+        AtomicHistogram atomicHistogram = latencyTimePerPath.get( path );
+        if ( atomicHistogram == null )
         {
-            recorder = new Recorder( lowestDiscernibleValue, //
+            atomicHistogram = new AtomicHistogram( lowestDiscernibleValue, //
                                      highestTrackableValue, //
                                      numberOfSignificantValueDigits );
-            latencyTimePerPath.put( path, recorder );
+            latencyTimePerPath.put( path, atomicHistogram );
         }
         try
         {
-            recorder.recordValue( time );
+            atomicHistogram.recordValue( time );
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
@@ -175,11 +175,11 @@ public class TimePerPathListener
                     .append( "   Latency Time Summary               " ).append( System.lineSeparator() ) //
                     .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
-                for ( Map.Entry<String, Recorder> entry : latencyTimePerPath.entrySet() )
+                for ( Map.Entry<String, AtomicHistogram> entry : latencyTimePerPath.entrySet() )
                 {
                     latencyTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
                     CollectorInformations collectorInformations =
-                        new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                        new CollectorInformations( entry.getValue(), //
                                                    CollectorInformations.InformationType.REQUEST );
                     latencyTimeMessage.append( nanoDisplay
                                                    ? collectorInformations.toStringInNanos( true )
@@ -202,11 +202,11 @@ public class TimePerPathListener
                         .append( "   Response Time Summary              " ).append( System.lineSeparator() ) //
                         .append( "--------------------------------------" ).append( System.lineSeparator() ); //
 
-                for ( Map.Entry<String, Recorder> entry : responseTimePerPath.entrySet() )
+                for ( Map.Entry<String, AtomicHistogram> entry : responseTimePerPath.entrySet() )
                 {
                     responseTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
                     CollectorInformations collectorInformations =
-                        new CollectorInformations( entry.getValue().getIntervalHistogram(), //
+                        new CollectorInformations( entry.getValue(), //
                                                    CollectorInformations.InformationType.REQUEST );
 
                     responseTimeMessage.append( nanoDisplay
@@ -224,13 +224,13 @@ public class TimePerPathListener
 
     }
 
-    public Map<String, Recorder> getResponseTimePerPath()
+    public Map<String, AtomicHistogram> getResponseTimePerPath()
     {
         return responseTimePerPath;
     }
 
 
-    public Map<String, Recorder> getLatencyTimePerPath()
+    public Map<String, AtomicHistogram> getLatencyTimePerPath()
     {
         return latencyTimePerPath;
     }

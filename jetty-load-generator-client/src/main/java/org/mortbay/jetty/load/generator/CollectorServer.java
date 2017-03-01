@@ -105,7 +105,6 @@ public class CollectorServer
     {
         // FIXME support more protcols!!
         ConnectionFactory connectionFactory = new HttpConnectionFactory( new HttpConfiguration() );
-
         return new ServerConnector( server, connectionFactory );
     }
 

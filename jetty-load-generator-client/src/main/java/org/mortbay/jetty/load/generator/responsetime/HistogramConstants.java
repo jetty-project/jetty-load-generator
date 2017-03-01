@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public interface RecorderConstants
+public interface HistogramConstants
 {
 
     /**

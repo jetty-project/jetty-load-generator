@@ -60,9 +60,9 @@ public class ResponseTimeDisplayListener
 
     public ResponseTimeDisplayListener( long initial, long delay, TimeUnit timeUnit )
     {
-        this( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
-              RecorderConstants.HIGHEST_TRACKABLE_VALUE,  //
-              RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS,  //
+        this( HistogramConstants.LOWEST_DISCERNIBLE_VALUE, //
+              HistogramConstants.HIGHEST_TRACKABLE_VALUE,  //
+              HistogramConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS,  //
               initial, //
               delay,  //
               timeUnit, //

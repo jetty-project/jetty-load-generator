@@ -107,11 +107,11 @@ public class LoadGeneratorSimpleRunTimeTest
 
         Assert.assertEquals( this.transport + " with " + this.usersNumber + " users", //
                              requestNumber, //
-                             result.getResponseTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
+                             result.getResponseTimePerPath().values().iterator().next().getTotalCount() );
 
         Assert.assertEquals( this.transport + " with " + this.usersNumber + " users", //
                              requestNumber, //
-                             result.getLatencyTimePerPath().values().iterator().next().getIntervalHistogram().getTotalCount() );
+                             result.getLatencyTimePerPath().values().iterator().next().getTotalCount() );
 
         scheduler.stop();
     }

@@ -24,7 +24,7 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.ValueListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.RecorderConstants;
+import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 import java.io.Serializable;
@@ -51,9 +51,9 @@ public class GlobalSummaryListener
 
     public GlobalSummaryListener()
     {
-        this( RecorderConstants.LOWEST_DISCERNIBLE_VALUE, //
-              RecorderConstants.HIGHEST_TRACKABLE_VALUE, //
-              RecorderConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
+        this( HistogramConstants.LOWEST_DISCERNIBLE_VALUE, //
+              HistogramConstants.HIGHEST_TRACKABLE_VALUE, //
+              HistogramConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
     }
 
     @Override
