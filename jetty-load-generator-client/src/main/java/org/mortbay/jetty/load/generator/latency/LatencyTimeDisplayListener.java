@@ -45,7 +45,7 @@ public class LatencyTimeDisplayListener
 
     private static final Logger LOGGER = Log.getLogger( LatencyTimeDisplayListener.class );
 
-    private Map<String, Recorder> recorderPerPath;
+    private volatile Map<String, Recorder> recorderPerPath;
 
     private ScheduledExecutorService scheduledExecutorService;
 

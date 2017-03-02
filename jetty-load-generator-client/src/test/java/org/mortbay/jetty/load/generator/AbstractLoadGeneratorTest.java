@@ -72,6 +72,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
@@ -221,6 +222,8 @@ public abstract class AbstractLoadGeneratorTest
 
         testRequestListener = new TestRequestListener( logger );
 
+        QpsListenerDisplay qpsListenerDisplay = new QpsListenerDisplay( 5, 10, TimeUnit.SECONDS);
+
         List<ResponseTimeListener> responseTimeListeners = new ArrayList<>( getResponseTimeListeners() );
 
         responseTimeListeners.add( responsePerPath );
@@ -240,7 +243,7 @@ public abstract class AbstractLoadGeneratorTest
                 responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()] ) ) //
             .latencyTimeListeners(
                 latencyTimeListeners.toArray( new LatencyTimeListener[latencyTimeListeners.size()] ) ) //
-            .requestListeners( testRequestListener ) //
+            .requestListeners( testRequestListener, qpsListenerDisplay ) //
             .httpVersion( httpVersion() ) //
             //.executor( new QueuedThreadPool() )
             .build();

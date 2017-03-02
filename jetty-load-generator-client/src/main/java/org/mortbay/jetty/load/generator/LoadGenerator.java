@@ -26,7 +26,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpScheme;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
-import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.annotation.ManagedObject;
@@ -47,12 +46,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,7 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  *
  */
-@ManagedObject("this is the Jetty LoadGenerator")
+@ManagedObject( "this is the Jetty LoadGenerator" )
 public class LoadGenerator
     extends ContainerLifeCycle
 {
@@ -72,7 +69,7 @@ public class LoadGenerator
     /**
      * number of transactions send per minute (transaction means the whole {@link Resource}
      * <p>
-     *     if < 0, the generator will not apply any regulation and send as many he can (will be resources dependant)
+     * if < 0, the generator will not apply any regulation and send as many he can (will be resources dependant)
      * </p>
      */
     private volatile int transactionRate;
@@ -252,6 +249,7 @@ public class LoadGenerator
 
     /**
      * will return <code>null</code> if used before {@link #interrupt()}
+     *
      * @return xml content coming from {@link org.eclipse.jetty.servlet.StatisticsServlet} at the end of the run
      */
     public String getEndStatsResponse()
@@ -289,11 +287,10 @@ public class LoadGenerator
         if ( this.executorService == null )
         {
             ThreadPoolExecutor threadPoolExecutor =  // similar to Executors.newCachedThreadPool( );
-                new ThreadPoolExecutor( 256, Integer.MAX_VALUE,
-                                        60L, TimeUnit.SECONDS,
-                                        new LinkedTransferQueue<>()); // BlockingArrayQueue
+                new ThreadPoolExecutor( 256, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
+                                        new LinkedTransferQueue<>() ); // BlockingArrayQueue
             //threadPoolExecutor.prestartCoreThread();
-            this.executorService =  threadPoolExecutor;
+            this.executorService = threadPoolExecutor;
         }
 
         _loadGeneratorResultHandler = new LoadGeneratorResultHandler( this, //
@@ -314,7 +311,8 @@ public class LoadGenerator
     @ManagedOperation
     public void interrupt()
     {
-        if (this.stop.get()) {
+        if ( this.stop.get() )
+        {
             LOGGER.info( "already stopped" );
             return;
         }
@@ -354,7 +352,6 @@ public class LoadGenerator
                 // but we don't care of the result here
                 LOGGER.debug( "fail to shutdownNow the executorService: {}", e.getMessage() );
             }
-
 
             if ( responseTimeListeners != null )
             {
@@ -421,6 +418,7 @@ public class LoadGenerator
 
     /**
      * run the defined load (users / request numbers)
+     *
      * @param transactionNumber the total transaction to run if lower than 0 will run infinite
      */
     protected void doRun( int transactionNumber )
@@ -434,71 +432,83 @@ public class LoadGenerator
             statsReset();
         }
 
-        for(ValueListener valueListener : getAllListeners())
+        for ( ValueListener valueListener : getAllListeners() )
         {
             valueListener.beforeRun( this );
         }
 
-        ExecutorService globaleExecutor = Executors.newFixedThreadPool(1);
+        ExecutorService globaleExecutor = Executors.newFixedThreadPool( 1 );
 
         Future globaleFuture = globaleExecutor.submit( () ->
-            {
-                try
-                {
-                    HttpClientTransport httpClientTransport = getHttpClientTransport();
+                                                       {
+                                                           try
+                                                           {
+                                                               HttpClientTransport httpClientTransport =
+                                                                   getHttpClientTransport();
 
-                    List<LoadGeneratorRunner> futures = new ArrayList<>( getUsers() );
+                                                               List<LoadGeneratorRunner> futures =
+                                                                   new ArrayList<>( getUsers() );
 
-                    CyclicBarrier cyclicBarrier = new CyclicBarrier( getUsers() );
+                                                               CyclicBarrier cyclicBarrier =
+                                                                   new CyclicBarrier( getUsers() );
 
-                    for ( int i = getUsers(); i > 0; i-- )
-                    {
-                        try
-                        {
-                            HttpClient httpClient = newHttpClient( httpClientTransport, getSslContextFactory(), //
-                                                                   listeners );
+                                                               for ( int i = getUsers(); i > 0; i-- )
+                                                               {
+                                                                   try
+                                                                   {
+                                                                       HttpClient httpClient =
+                                                                           newHttpClient( httpClientTransport,
+                                                                                          getSslContextFactory(), //
+                                                                                          listeners );
 
+                                                                       LoadGeneratorRunner loadGeneratorRunner = //
+                                                                           new LoadGeneratorRunner( httpClient, this,
+                                                                                                    _loadGeneratorResultHandler,
+                                                                                                    //
+                                                                                                    transactionNumber,
+                                                                                                    cyclicBarrier,
+                                                                                                    this.getExecutorService() );
 
+                                                                       this.getExecutorService().execute(
+                                                                           loadGeneratorRunner );
+                                                                       futures.add( loadGeneratorRunner );
 
-                            LoadGeneratorRunner loadGeneratorRunner = //
-                                new LoadGeneratorRunner( httpClient, this, _loadGeneratorResultHandler, //
-                                                         transactionNumber, cyclicBarrier, this.getExecutorService() );
+                                                                   }
+                                                                   catch ( Throwable e )
+                                                                   {
+                                                                       LOGGER.warn( "skip exception:" + e.getMessage(),
+                                                                                    e );
+                                                                       this.stop.set( true );
+                                                                   }
+                                                               }
 
-                            this.getExecutorService().execute( loadGeneratorRunner );
-                            futures.add( loadGeneratorRunner );
+                                                               while ( !LoadGenerator.this.stop.get()
+                                                                   && !futures.stream().allMatch(
+                                                                   future -> future.isDone() ) )
+                                                               {
+                                                                   // wait until stopped
+                                                                   Thread.sleep( 10 );
+                                                               }
 
-                        }
-                        catch ( Throwable e )
-                        {
-                            LOGGER.warn( "skip exception:" + e.getMessage(), e );
-                            this.stop.set( true );
-                        }
-                    }
-
-                    while ( !LoadGenerator.this.stop.get() && !futures.stream().allMatch( future -> future.isDone() ) )
-                    {
-                        // wait until stopped
-                        Thread.sleep( 10 );
-                    }
-
-                    LOGGER.debug( "all futures done" );
-                } catch ( InterruptedException e )
-                {
-                    Thread.currentThread().interrupt();
-                    // this exception can happen when interrupting the generator so ignore
-                    if ( !getStop().get() )
-                    {
-                        LOGGER.warn( "ignoring exception:" + e.getMessage(), e );
-                    }
-                    return;
-                }
-                catch ( Throwable e )
-                {
-                    LOGGER.warn( "skip exception:" + e.getMessage(), e );
-                }
-                LOGGER.debug( "exit run lambda" );
-            }
-        );
+                                                               LOGGER.debug( "all futures done" );
+                                                           }
+                                                           catch ( InterruptedException e )
+                                                           {
+                                                               Thread.currentThread().interrupt();
+                                                               // this exception can happen when interrupting the generator so ignore
+                                                               if ( !getStop().get() )
+                                                               {
+                                                                   LOGGER.warn( "ignoring exception:" + e.getMessage(),
+                                                                                e );
+                                                               }
+                                                               return;
+                                                           }
+                                                           catch ( Throwable e )
+                                                           {
+                                                               LOGGER.warn( "skip exception:" + e.getMessage(), e );
+                                                           }
+                                                           LOGGER.debug( "exit run lambda" );
+                                                       } );
 
         if ( transactionNumber > 0 )
         {
@@ -583,7 +593,8 @@ public class LoadGenerator
     {
         try
         {
-            if (clients.isEmpty()) {
+            if ( clients.isEmpty() )
+            {
                 LOGGER.warn( "skip collect server stats impossible to get a httpclient instance" );
                 return;
             }
@@ -652,7 +663,7 @@ public class LoadGenerator
         {
             httpClient.setScheduler( this.getScheduler() );
         }
-        if (this.getExecutorService() != null)
+        if ( this.getExecutorService() != null )
         {
             httpClient.setExecutor( this.getExecutorService() );
         }
@@ -666,7 +677,6 @@ public class LoadGenerator
             httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
         }
 
-
         clients.add( httpClient );
 
         httpClient.start();
@@ -675,7 +685,7 @@ public class LoadGenerator
     }
 
 
-    static String scheme( LoadGenerator.Transport transport)
+    static String scheme( LoadGenerator.Transport transport )
     {
         switch ( transport )
         {
@@ -691,7 +701,6 @@ public class LoadGenerator
         }
 
     }
-
 
     //--------------------------------------------------------------
     //  Builder
@@ -783,7 +792,10 @@ public class LoadGenerator
 
         public Builder requestListeners( Request.Listener... requestListeners )
         {
-            this.requestListeners = new ArrayList<>( Arrays.asList( requestListeners ) );
+            if ( requestListeners != null )
+            {
+                this.requestListeners = new ArrayList<>( Arrays.asList( requestListeners ) );
+            }
             return this;
         }
 
@@ -854,12 +866,10 @@ public class LoadGenerator
         }
 
 
-
         public LoadGenerator build()
         {
             this.validate();
-            LoadGenerator loadGenerator =
-                new LoadGenerator( users, transactionRate, host, port, this.resource );
+            LoadGenerator loadGenerator = new LoadGenerator( users, transactionRate, host, port, this.resource );
             loadGenerator.requestListeners = this.requestListeners == null ? new ArrayList<>() // //
                 : this.requestListeners;
             loadGenerator.httpClientTransport = httpClientTransport;
@@ -900,7 +910,7 @@ public class LoadGenerator
                 throw new IllegalArgumentException( "a profile is mandatory" );
             }
 
-            if (this.httpClientTransport == null)
+            if ( this.httpClientTransport == null )
             {
                 throw new IllegalArgumentException( "httpClientTransport cannot be null" );
             }

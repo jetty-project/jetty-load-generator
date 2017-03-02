@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.eclipse.jetty.client.HttpClientTransport;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
@@ -39,7 +40,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.Executor;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -159,9 +160,15 @@ public abstract class AbstractLoadGeneratorStarter
             .responseTimeListeners( getResponseTimeListeners() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ) //
             .executorService( getExecutorService() != null ? getExecutorService() : null ) //
+            .requestListeners( getListeners() ) //
             .build();
 
         return loadGenerator;
+    }
+
+    protected Request.Listener[] getListeners()
+    {
+        return null;
     }
 
     public ExecutorService getExecutorService()
