@@ -20,6 +20,7 @@ package org.mortbay.jetty.load.generator.report;
 
 import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Histogram;
+import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.ValueListener;
@@ -38,15 +39,15 @@ public class GlobalSummaryListener
 
     private static final Logger LOGGER = Log.getLogger( GlobalSummaryListener.class );
 
-    private Histogram responseHistogram, latencyHistogram;
+    private Recorder responseHistogram, latencyHistogram;
 
     public GlobalSummaryListener( long lowestDiscernibleValue, long highestTrackableValue,
                                   int numberOfSignificantValueDigits )
     {
         this.responseHistogram =
-            new AtomicHistogram( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
+            new Recorder( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
         this.latencyHistogram =
-            new AtomicHistogram( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
+            new Recorder( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
     }
 
     public GlobalSummaryListener()
@@ -92,12 +93,12 @@ public class GlobalSummaryListener
     }
 
 
-    public Histogram getResponseTimeHistogram()
+    public Recorder getResponseTimeHistogram()
     {
         return responseHistogram;
     }
 
-    public Histogram getLatencyTimeHistogram()
+    public Recorder getLatencyTimeHistogram()
     {
         return latencyHistogram;
     }
