@@ -26,6 +26,8 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +49,8 @@ public class QpsListenerDisplay
 
     private volatile Recorder recorder;
 
+    private String hostname;
+
     public QpsListenerDisplay( long initial, long delay, TimeUnit timeUnit )
     {
         this( HistogramConstants.LOWEST_DISCERNIBLE_VALUE, //
@@ -64,10 +68,17 @@ public class QpsListenerDisplay
                                       highestTrackableValue, //
                                       numberOfSignificantValueDigits );
 
+        try
+        {
+            hostname = InetAddress.getLocalHost().getHostName();
+        }
+        catch ( Exception e )
+        {
+            LOGGER.info( "ignore cannot get hostname:" + e.getMessage() );
+        }
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        scheduledExecutorService.scheduleWithFixedDelay( new ValueDisplayRunnable( recorder ), //
+        scheduledExecutorService.scheduleWithFixedDelay( new ValueDisplayRunnable( recorder, hostname ), //
                                                          initial, delay, timeUnit );
-
 
     }
 
@@ -88,8 +99,11 @@ public class QpsListenerDisplay
     {
         private volatile Recorder recorder;
 
-        public ValueDisplayRunnable( Recorder recorder )
+        private String hostname;
+
+        public ValueDisplayRunnable( Recorder recorder, String hostname )
         {
+            this.hostname = hostname;
             this.recorder = recorder;
         }
 
@@ -103,13 +117,12 @@ public class QpsListenerDisplay
 
             CollectorInformations collectorInformations = new CollectorInformations( histogram );
 
-
             LOGGER.info( "----------------------------------------" );
             LOGGER.info( "--------    QPS estimation    ----------" );
             LOGGER.info( "----------------------------------------" );
             long timeInSeconds = TimeUnit.SECONDS.convert( end - start, TimeUnit.MILLISECONDS );
             long qps = totalRequestCommitted / timeInSeconds;
-            LOGGER.info( "estimated QPS : " + qps  );
+            LOGGER.info( "host '" + hostname + "' estimated QPS : " + qps );
             LOGGER.info( "----------------------------------------" );
             LOGGER.info( "--------  Request commit time  ----------" );
             LOGGER.info( "-----------------------------------------" );
