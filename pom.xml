@@ -1,32 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-<!--
-
-Licensed to the Apache Software Foundation (ASF) under one
-or more contributor license agreements.  See the NOTICE file
-distributed with this work for additional information
-regarding copyright ownership.  The ASF licenses this file
-to you under the Apache License, Version 2.0 (the
-"License"); you may not use this file except in compliance
-with the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing,
-software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, either express or implied.  See the License for the
-specific language governing permissions and limitations
-under the License.
--->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <parent>
-    <groupId>org.eclipse.jetty</groupId>
-    <artifactId>jetty-parent</artifactId>
-    <version>20</version>
-    <relativePath />
-  </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mortbay.jetty.loadgenerator</groupId>
   <artifactId>jetty-load-generator</artifactId>
@@ -36,10 +12,10 @@ under the License.
 
   <properties>
     <alpn.version>8.1.9.v20160720</alpn.version>
-    <jetty-93-version>9.3.16.v20170120</jetty-93-version>
-    <jetty-94-version>9.4.1.v20170120</jetty-94-version>
+    <jetty-93-version>9.3.17-SNAPSHOT</jetty-93-version>
+    <jetty-94-version>9.4.3-SNAPSHOT</jetty-94-version>
     <jackson2-version>2.8.1</jackson2-version>
-    <jetty.version>${jetty-93-version}</jetty.version> <!-- 9.3.17-SNAPSHOT ${jetty-93-version} ${jetty-94-version} -->
+    <jetty.version>${jetty-93-version}</jetty.version>
     <argLine>-Xmx1g -Xms1g -XX:+HeapDumpOnOutOfMemoryError</argLine>
   </properties>
 
@@ -89,25 +65,21 @@ under the License.
 
   <dependencyManagement>
     <dependencies>
-
       <dependency>
         <groupId>org.mortbay.jetty.loadgenerator</groupId>
         <artifactId>jetty-load-generator-client</artifactId>
         <version>${project.version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.hdrhistogram</groupId>
         <artifactId>HdrHistogram</artifactId>
         <version>2.1.9</version>
       </dependency>
-
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>${jackson2-version}</version>
       </dependency>
-
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-client</artifactId>
@@ -185,7 +157,6 @@ under the License.
         <version>4.12</version>
         <scope>test</scope>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
 
@@ -250,289 +221,8 @@ under the License.
       <timezone>Australia/Melbourne</timezone>
     </developer>
   </developers>
-  <contributors></contributors>
 
   <profiles>
-    <profile>
-      <id>reporting</id>
-      <reporting>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.10.4</version>
-            <reportSets>
-              <reportSet>
-                <id>non-aggregate</id>
-                <reports>
-                  <report>javadoc</report>
-                  <report>test-javadoc</report>
-                </reports>
-              </reportSet>
-              <reportSet>
-                <id>aggregate</id>
-                <inherited>false</inherited>
-                <reports>
-                  <report>aggregate</report>
-                </reports>
-              </reportSet>
-            </reportSets>
-          </plugin>
-        </plugins>
-      </reporting>
-    </profile>
-    <profile>
-      <id>8u00</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.0.v20141016</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u05</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_05</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.0.v20141016</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u11</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_11</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.0.v20141016</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u20</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_20</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.0.v20141016</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u25</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_25</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.2.v20141202</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u31</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_31</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.3.v20150130</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u40</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_40</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.3.v20150130</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u45</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_45</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.3.v20150130</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u51</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_51</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.4.v20150727</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u60</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_60</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.5.v20150921</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u65</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_65</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.6.v20151105</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u66</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_66</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.6.v20151105</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u71</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_71</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.7.v20160121</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u72</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_72</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.7.v20160121</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u73</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_73</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.7.v20160121</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u74</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_74</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.7.v20160121</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u77</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_77</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.7.v20160121</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u91</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_91</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.7.v20160121</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u92</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_92</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.8.v20160420</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u101</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_101</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.9.v20160720</alpn.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>8u102</id>
-      <activation>
-        <property>
-          <name>java.version</name>
-          <value>1.8.0_102</value>
-        </property>
-      </activation>
-      <properties>
-        <alpn.version>8.1.9.v20160720</alpn.version>
-      </properties>
-    </profile>
     <profile>
       <id>8u111</id>
       <activation>
@@ -569,6 +259,36 @@ under the License.
         <alpn.version>8.1.11.v20170118</alpn.version>
       </properties>
     </profile>
+
+    <profile>
+      <id>reporting</id>
+      <reporting>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.10.4</version>
+            <reportSets>
+              <reportSet>
+                <id>non-aggregate</id>
+                <reports>
+                  <report>javadoc</report>
+                  <report>test-javadoc</report>
+                </reports>
+              </reportSet>
+              <reportSet>
+                <id>aggregate</id>
+                <inherited>false</inherited>
+                <reports>
+                  <report>aggregate</report>
+                </reports>
+              </reportSet>
+            </reportSets>
+          </plugin>
+        </plugins>
+      </reporting>
+    </profile>
+
     <profile>
       <id>release</id>
       <build>
