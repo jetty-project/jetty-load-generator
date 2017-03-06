@@ -18,11 +18,10 @@
 
 package org.mortbay.jetty.load.generator.report;
 
-import org.HdrHistogram.AtomicHistogram;
-import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.ValueListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
@@ -41,9 +40,16 @@ public class GlobalSummaryListener
 
     private Recorder responseHistogram, latencyHistogram;
 
+    private final long lowestDiscernibleValue, highestTrackableValue;
+
+    private int numberOfSignificantValueDigits;
+
     public GlobalSummaryListener( long lowestDiscernibleValue, long highestTrackableValue,
                                   int numberOfSignificantValueDigits )
     {
+        this.lowestDiscernibleValue = lowestDiscernibleValue;
+        this.highestTrackableValue = highestTrackableValue;
+        this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
         this.responseHistogram =
             new Recorder( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
         this.latencyHistogram =
@@ -55,6 +61,16 @@ public class GlobalSummaryListener
         this( HistogramConstants.LOWEST_DISCERNIBLE_VALUE, //
               HistogramConstants.HIGHEST_TRACKABLE_VALUE, //
               HistogramConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
+    }
+
+    @Override
+    public void reset( LoadGenerator loadGenerator )
+    {
+        synchronized ( this )
+        {
+            this.responseHistogram.reset();
+            this.latencyHistogram.reset();
+        }
     }
 
     @Override

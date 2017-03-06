@@ -53,6 +53,16 @@ public interface ValueListener
     }
 
     /**
+     * can be called
+     * @param loadGenerator can be <code>null</code>
+     * @since 0.3
+     */
+    default void reset( LoadGenerator loadGenerator )
+    {
+        // no op
+    }
+
+    /**
      * triggered when the load generator is stopped
      */
     void onLoadGeneratorStop();

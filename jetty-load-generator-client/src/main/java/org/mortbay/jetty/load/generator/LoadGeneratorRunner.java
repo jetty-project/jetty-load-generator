@@ -56,6 +56,8 @@ public class LoadGeneratorRunner
 
     private final CyclicBarrier _cyclicBarrier;
 
+    private volatile AtomicBoolean pause = new AtomicBoolean( false );
+
     // maintain a session/cookie per httpClient
     // FIXME olamy: not sure we really need that??
     private final HttpCookie httpCookie = new HttpCookie( "XXX-Jetty-LoadGenerator", //
@@ -75,6 +77,16 @@ public class LoadGeneratorRunner
         this.transactionNumber = transactionNumber;
         this._cyclicBarrier = cyclicBarrier;
         this.executor = executor == null ? Executors.newCachedThreadPool() : executor;
+    }
+
+    public void pause()
+    {
+        pause.set( true );
+    }
+
+    public void resume()
+    {
+        pause.set( false );
     }
 
     // TODO implements Future ?
@@ -98,6 +110,10 @@ public class LoadGeneratorRunner
                 if ( this.loadGenerator.getStop().get() || httpClient.isStopped() )
                 {
                     break;
+                }
+                while (this.pause.get())
+                {
+                    Thread.sleep( 10 );
                 }
 
                 Resource resource = loadGenerator.getResource();

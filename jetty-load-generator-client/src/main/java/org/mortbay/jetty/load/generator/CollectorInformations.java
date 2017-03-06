@@ -34,7 +34,6 @@ public class CollectorInformations
 
     private InformationType informationType;
 
-
     private long totalCount;
 
     private long minValue;
