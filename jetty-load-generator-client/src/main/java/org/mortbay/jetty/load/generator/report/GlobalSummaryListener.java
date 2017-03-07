@@ -40,16 +40,10 @@ public class GlobalSummaryListener
 
     private Recorder responseHistogram, latencyHistogram;
 
-    private final long lowestDiscernibleValue, highestTrackableValue;
-
-    private int numberOfSignificantValueDigits;
 
     public GlobalSummaryListener( long lowestDiscernibleValue, long highestTrackableValue,
                                   int numberOfSignificantValueDigits )
     {
-        this.lowestDiscernibleValue = lowestDiscernibleValue;
-        this.highestTrackableValue = highestTrackableValue;
-        this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
         this.responseHistogram =
             new Recorder( lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits );
         this.latencyHistogram =
