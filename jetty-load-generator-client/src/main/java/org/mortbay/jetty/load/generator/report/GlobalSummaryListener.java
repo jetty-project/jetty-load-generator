@@ -62,8 +62,8 @@ public class GlobalSummaryListener
     {
         synchronized ( this )
         {
-            this.responseHistogram.reset();
-            this.latencyHistogram.reset();
+            this.responseHistogram.getIntervalHistogram();
+            this.latencyHistogram.getIntervalHistogram();
         }
     }
 

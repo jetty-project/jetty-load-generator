@@ -42,6 +42,13 @@ public class LoadGeneratorSimpleTest
 
         runResource( resourceProfile );
 
+        CollectorInformations collectorInformations =
+            new CollectorInformations( globalSummaryListener.getResponseTimeHistogram().getIntervalHistogram());
+
+        logger.info( "collectorInformations: {}", collectorInformations );
+
+
+
     }
 
 

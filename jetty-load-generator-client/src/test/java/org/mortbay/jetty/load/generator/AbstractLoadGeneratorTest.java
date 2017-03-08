@@ -53,6 +53,7 @@ import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeDisplayListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.profile.Resource;
+import org.mortbay.jetty.load.generator.report.GlobalSummaryListener;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
@@ -95,6 +96,10 @@ public abstract class AbstractLoadGeneratorTest
     TestRequestListener testRequestListener;
 
     ResponsePerPath responsePerPath;
+
+    GlobalSummaryListener globalSummaryListener;
+
+    QpsListenerDisplay qpsListenerDisplay;
 
     public AbstractLoadGeneratorTest( LoadGenerator.Transport transport, int usersNumber )
     {
@@ -206,12 +211,12 @@ public abstract class AbstractLoadGeneratorTest
 
     protected List<ResponseTimeListener> getResponseTimeListeners()
     {
-        return Arrays.asList( new ResponseTimeDisplayListener(), new TimePerPathListener() );
+        return new ArrayList<>( Arrays.asList( new ResponseTimeDisplayListener(), new TimePerPathListener() ));
     }
 
     protected List<LatencyTimeListener> getLatencyTimeListeners()
     {
-        return Arrays.asList( new LatencyTimeDisplayListener(), new TimePerPathListener() );
+        return new ArrayList<>( Arrays.asList( new LatencyTimeDisplayListener(), new TimePerPathListener() ));
     }
 
     protected LoadGenerator build( Resource profile )
@@ -222,13 +227,15 @@ public abstract class AbstractLoadGeneratorTest
 
         testRequestListener = new TestRequestListener( logger );
 
-        QpsListenerDisplay qpsListenerDisplay = new QpsListenerDisplay( 5, 10, TimeUnit.SECONDS);
+        this.qpsListenerDisplay = new QpsListenerDisplay( 5, 10, TimeUnit.SECONDS);
+        this.globalSummaryListener = new GlobalSummaryListener(  );
 
         List<ResponseTimeListener> responseTimeListeners = new ArrayList<>( getResponseTimeListeners() );
-
         responseTimeListeners.add( responsePerPath );
+        responseTimeListeners.add( this.globalSummaryListener );
 
         List<LatencyTimeListener> latencyTimeListeners = getLatencyTimeListeners();
+        latencyTimeListeners.add( globalSummaryListener );
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
