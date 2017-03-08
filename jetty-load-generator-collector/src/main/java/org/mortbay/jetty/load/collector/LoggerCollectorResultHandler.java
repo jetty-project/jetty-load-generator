@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -19,11 +19,11 @@
 package org.mortbay.jetty.load.collector;
 
 
-import org.mortbay.jetty.load.generator.CollectorInformations;
+import java.util.Map;
+
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-
-import java.util.Map;
+import org.mortbay.jetty.load.generator.CollectorInformations;
 
 /**
  *

@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,31 +18,28 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import groovy.lang.GroovyShell;
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.eclipse.jetty.client.HttpClientTransport;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.StringUtil;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.xml.XmlConfiguration;
-import org.mortbay.jetty.load.generator.Http2TransportBuilder;
-import org.mortbay.jetty.load.generator.HttpFCGITransportBuilder;
-import org.mortbay.jetty.load.generator.HttpTransportBuilder;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import groovy.lang.GroovyShell;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.eclipse.jetty.client.HttpClientTransport;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.xml.XmlConfiguration;
+import org.mortbay.jetty.load.generator.Http1ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.Http2ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.resource.Resource;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 
 /**
  *
@@ -68,9 +65,9 @@ public abstract class AbstractLoadGeneratorStarter
     {
         LoadGenerator loadGenerator = getLoadGenerator();
 
-        loadGenerator.run( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
+//        loadGenerator.run( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
 
-        loadGenerator.interrupt();
+//        loadGenerator.interrupt();
 
         writeStats( loadGenerator );
 
@@ -88,11 +85,11 @@ public abstract class AbstractLoadGeneratorStarter
 
         LoadGenerator loadGenerator = getLoadGenerator();
 
-        loadGenerator.run( time, timeUnit );
+//        loadGenerator.run( time, timeUnit );
 
         if ( interrupt )
         {
-            loadGenerator.interrupt();
+//            loadGenerator.interrupt();
             writeStats( loadGenerator );
         }
 
@@ -109,11 +106,11 @@ public abstract class AbstractLoadGeneratorStarter
     {
         LoadGenerator loadGenerator = getLoadGenerator();
 
-        loadGenerator.run( iteration );
+//        loadGenerator.run( iteration );
 
         if ( interrupt )
         {
-            loadGenerator.interrupt();
+//            loadGenerator.interrupt();
             writeStats( loadGenerator );
         }
 
@@ -125,7 +122,8 @@ public abstract class AbstractLoadGeneratorStarter
         throws Exception
     {
         if ( starterArgs.getStatsFile() != null //
-            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse() ) )
+//            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse() ) )
+                )
         {
             Path path = Paths.get( starterArgs.getStatsFile() );
             if ( Files.notExists( path ) )
@@ -133,7 +131,7 @@ public abstract class AbstractLoadGeneratorStarter
                 Files.createFile( path );
             }
 
-            Files.write( path, loadGenerator.getEndStatsResponse().getBytes() );
+//            Files.write( path, loadGenerator.getEndStatsResponse().getBytes() );
 
         }
     }
@@ -151,15 +149,15 @@ public abstract class AbstractLoadGeneratorStarter
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( starterArgs.getHost() ) //
             .port( starterArgs.getPort() ) //
-            .users( starterArgs.getUsers() ) //
-            .transactionRate( starterArgs.getTransactionRate() ) //
-            .transport( starterArgs.getTransport() ) //
-            .httpClientTransport( httpClientTransport() ) //
+            .usersPerThread( starterArgs.getUsers() ) //
+            .resourceRate( starterArgs.getTransactionRate() ) //
+//            .transport( starterArgs.getTransport() ) //
+//            .httpClientTransportBuilder( httpClientTransport() ) //
             .sslContextFactory( sslContextFactory() ) //
             .resource( resourceProfile ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ) //
-            .executorService( getExecutorService() != null ? getExecutorService() : null ) //
+            .executor( getExecutorService() != null ? getExecutorService() : null ) //
             .requestListeners( getListeners() ) //
             .build();
 
@@ -261,17 +259,17 @@ public abstract class AbstractLoadGeneratorStarter
             case HTTP:
             case HTTPS:
             {
-                return new HttpTransportBuilder().selectors( starterArgs.getSelectors() ).build();
+                return new Http1ClientTransportBuilder().selectors( starterArgs.getSelectors() ).build();
             }
             case H2C:
             case H2:
             {
-                return new Http2TransportBuilder().selectors( starterArgs.getSelectors() ).build();
+                return new Http2ClientTransportBuilder().selectors( starterArgs.getSelectors() ).build();
             }
-            case FCGI:
-            {
-                return new HttpFCGITransportBuilder().build();
-            }
+//            case FCGI:
+//            {
+//                return new HttpFCGITransportBuilder().build();
+//            }
 
             default:
             {

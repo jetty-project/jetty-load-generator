@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -28,13 +28,13 @@ public class LoadGeneratorBuilderTest
     @Test( expected = IllegalArgumentException.class )
     public void users_validation()
     {
-        new LoadGenerator.Builder().users( 0 ).build();
+        new LoadGenerator.Builder().usersPerThread( 0 ).build();
     }
 
     @Test( expected = IllegalArgumentException.class )
     public void raterequest_validation()
     {
-        new LoadGenerator.Builder().transactionRate( 0 ).build();
+        new LoadGenerator.Builder().resourceRate( 0 ).build();
     }
 
     @Test( expected = IllegalArgumentException.class )

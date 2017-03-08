@@ -18,31 +18,8 @@
 
 package org.mortbay.jetty.load.generator;
 
+import org.eclipse.jetty.client.HttpClientTransport;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.mortbay.jetty.load.generator.resource.Resource;
-
-@RunWith( Parameterized.class )
-public class LoadGeneratorSimpleTest
-    extends AbstractLoadGeneratorTest
-{
-
-    public LoadGeneratorSimpleTest( LoadGenerator.Transport transport, int usersNumber )
-    {
-        super( transport, usersNumber );
-    }
-
-    @Test
-    public void simple_test()
-        throws Exception
-    {
-        Resource resourceProfile = new Resource( "/index.html" );
-
-        runResource( resourceProfile );
-
-    }
-
-
+public interface HttpClientTransportBuilder {
+    public HttpClientTransport build();
 }

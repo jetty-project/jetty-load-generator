@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,13 +18,13 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.internal.Maps;
 import org.mortbay.jetty.load.generator.LoadGenerator;
-
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  *

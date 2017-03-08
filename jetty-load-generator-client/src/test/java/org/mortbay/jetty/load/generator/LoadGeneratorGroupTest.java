@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -19,13 +19,13 @@
 package org.mortbay.jetty.load.generator;
 
 
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mortbay.jetty.load.generator.profile.Resource;
-
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+import org.mortbay.jetty.load.generator.resource.Resource;
 
 @RunWith( Parameterized.class )
 public class LoadGeneratorGroupTest

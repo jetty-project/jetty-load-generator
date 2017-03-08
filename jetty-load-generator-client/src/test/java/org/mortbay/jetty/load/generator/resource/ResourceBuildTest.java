@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -16,7 +16,13 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator.profile;
+package org.mortbay.jetty.load.generator.resource;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -24,12 +30,6 @@ import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -43,13 +43,13 @@ public class ResourceBuildTest
     {
         Resource resourceProfile = //
             new Resource( //
-                                 new Resource( "/index.html" ).size( 1024 ) //
+                                 new Resource( "/index.html" ).requestLength( 1024 ) //
             );
 
         Assert.assertEquals( 1, resourceProfile.getResources().size() );
 
         Assert.assertEquals( "/index.html", resourceProfile.getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 1024, resourceProfile.getResources().get( 0 ).getSize() );
+        Assert.assertEquals( 1024, resourceProfile.getResources().get( 0 ).getRequestLength() );
         Assert.assertEquals( "GET", resourceProfile.getResources().get( 0 ).getMethod() );
     }
 
@@ -59,18 +59,18 @@ public class ResourceBuildTest
     {
         Resource resourceProfile = //
             new Resource( //
-                                 new Resource( "/index.html" ).size( 1024 ), //
-                                 new Resource( "/beer.html" ).size( 2048 ).method( HttpMethod.POST.asString() )  //
+                                 new Resource( "/index.html" ).requestLength( 1024 ), //
+                                 new Resource( "/beer.html" ).requestLength( 2048 ).method( HttpMethod.POST.asString() )  //
             );
 
         Assert.assertEquals( 2, resourceProfile.getResources().size() );
 
         Assert.assertEquals( "/index.html", resourceProfile.getResources().get( 0 ).getPath() );
-        Assert.assertEquals( 1024, resourceProfile.getResources().get( 0 ).getSize() );
+        Assert.assertEquals( 1024, resourceProfile.getResources().get( 0 ).getRequestLength() );
         Assert.assertEquals( "GET", resourceProfile.getResources().get( 0 ).getMethod() );
 
         Assert.assertEquals( "/beer.html", resourceProfile.getResources().get( 1 ).getPath() );
-        Assert.assertEquals( 2048, resourceProfile.getResources().get( 1 ).getSize() );
+        Assert.assertEquals( 2048, resourceProfile.getResources().get( 1 ).getRequestLength() );
         Assert.assertEquals( "POST", resourceProfile.getResources().get( 1 ).getMethod() );
     }
 

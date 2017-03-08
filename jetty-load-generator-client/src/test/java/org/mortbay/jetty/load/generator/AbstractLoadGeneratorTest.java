@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,6 +18,25 @@
 
 package org.mortbay.jetty.load.generator;
 
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClientTransport;
@@ -52,28 +71,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeDisplayListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.profile.Resource;
+import org.mortbay.jetty.load.generator.resource.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeDisplayListener;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith( Parameterized.class )
 public abstract class AbstractLoadGeneratorTest
@@ -155,17 +156,17 @@ public abstract class AbstractLoadGeneratorTest
             case HTTP:
             case HTTPS:
             {
-                return new HttpTransportBuilder().build();
+                return new Http1ClientTransportBuilder().build();
             }
             case H2C:
             case H2:
             {
-                return new Http2TransportBuilder().selectors( 1 ).build();
+                return new Http2ClientTransportBuilder().selectors( 1 ).build();
             }
-            case FCGI:
-            {
-                return new HttpFCGITransportBuilder().build();
-            }
+//            case FCGI:
+//            {
+//                return new HttpFCGITransportBuilder().build();
+//            }
 
             default:
             {
@@ -233,10 +234,10 @@ public abstract class AbstractLoadGeneratorTest
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
-            .users( this.usersNumber ) //
-            .transactionRate( 1 ) //
-            .transport( this.transport ) //
-            .httpClientTransport( this.httpClientTransport() ) //
+            .usersPerThread( this.usersNumber ) //
+            .resourceRate( 1 ) //
+//            .transport( this.transport ) //
+//            .httpClientTransportBuilder( this.httpClientTransport() ) //
             .sslContextFactory( sslContextFactory ) //
             .resource( profile ) //
             .responseTimeListeners(
@@ -244,7 +245,7 @@ public abstract class AbstractLoadGeneratorTest
             .latencyTimeListeners(
                 latencyTimeListeners.toArray( new LatencyTimeListener[latencyTimeListeners.size()] ) ) //
             .requestListeners( testRequestListener, qpsListenerDisplay ) //
-            .httpVersion( httpVersion() ) //
+//            .httpVersion( httpVersion() ) //
             //.executor( new QueuedThreadPool() )
             .build();
 
@@ -265,17 +266,17 @@ public abstract class AbstractLoadGeneratorTest
 
         LoadGenerator loadGenerator = build( profile );
 
-        loadGenerator.dumpConfiguration();
+//        loadGenerator.dumpConfiguration();
 
-        loadGenerator.run();
+//        loadGenerator.run();
 
         Thread.sleep( 5000 );
 
-        loadGenerator.setTransactionRate( 10 );
+//        loadGenerator.setTransactionRate( 10 );
 
         Thread.sleep( 4000 );
 
-        loadGenerator.interrupt();
+//        loadGenerator.interrupt();
 
         Assert.assertTrue( currentTestRunInfos() + ",successReponsesReceived :" + testRequestListener.success.get(), //
                            testRequestListener.success.get() > 1 );

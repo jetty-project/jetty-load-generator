@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -19,40 +19,24 @@
 package org.mortbay.jetty.load.generator;
 
 import org.eclipse.jetty.client.HttpClientTransport;
-import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
+import org.eclipse.jetty.http2.client.HTTP2Client;
+import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
 
 /**
- * Helper builder to provide an http(s) {@link HttpClientTransport}
+ * Helper builder to provide an http2 {@link HttpClientTransport}
  */
-public class HttpTransportBuilder
-{
-
+public class Http2ClientTransportBuilder implements HttpClientTransportBuilder {
     private int selectors = 1;
 
-    private long stopTimeout;
-
-    public HttpTransportBuilder()
-    {
-        // no op
-    }
-
-    public HttpTransportBuilder selectors( int selectors )
-    {
+    public Http2ClientTransportBuilder selectors(int selectors) {
         this.selectors = selectors;
         return this;
     }
 
-    public HttpTransportBuilder stopTimeout( long stopTimeout )
-    {
-        this.stopTimeout = stopTimeout;
-        return this;
+    @Override
+    public HttpClientTransport build() {
+        HTTP2Client http2Client = new HTTP2Client();
+        http2Client.setSelectors(selectors);
+        return new HttpClientTransportOverHTTP2(http2Client);
     }
-
-    public HttpClientTransport build()
-    {
-        HttpClientTransportOverHTTP httpClientTransport = new HttpClientTransportOverHTTP( selectors );
-        httpClientTransport.setStopTimeout( this.stopTimeout );
-        return httpClientTransport;
-    }
-
 }

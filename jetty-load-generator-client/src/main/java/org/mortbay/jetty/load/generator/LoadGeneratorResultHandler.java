@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,6 +18,10 @@
 
 package org.mortbay.jetty.load.generator;
 
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
@@ -27,12 +31,6 @@ import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.ExecutionStrategy;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 /**
  *
@@ -50,9 +48,9 @@ public class LoadGeneratorResultHandler
 
     public static final String START_LATENCY_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Latency-Time";
 
-    private final List<ResponseTimeListener> responseTimeListeners;
+    private /*final */List<ResponseTimeListener> responseTimeListeners;
 
-    private final List<LatencyTimeListener> latencyTimeListeners;
+    private /*final */List<LatencyTimeListener> latencyTimeListeners;
 
     private Executor executor;
 
@@ -61,10 +59,10 @@ public class LoadGeneratorResultHandler
     public LoadGeneratorResultHandler( LoadGenerator loadGenerator, //
                                        Executor executor)
     {
-        this.responseTimeListeners = loadGenerator.getResponseTimeListeners() == null ? Collections.emptyList() //
-            : new CopyOnWriteArrayList<>( loadGenerator.getResponseTimeListeners() );
-        this.latencyTimeListeners = loadGenerator.getLatencyTimeListeners() == null ? Collections.emptyList() //
-            : new CopyOnWriteArrayList<>( loadGenerator.getLatencyTimeListeners() );
+//        this.responseTimeListeners = loadGenerator.getResponseTimeListeners() == null ? Collections.emptyList() //
+//            : new CopyOnWriteArrayList<>( loadGenerator.getResponseTimeListeners() );
+//        this.latencyTimeListeners = loadGenerator.getLatencyTimeListeners() == null ? Collections.emptyList() //
+//            : new CopyOnWriteArrayList<>( loadGenerator.getLatencyTimeListeners() );
         this.executor = executor;
         if (executor == null)
         {

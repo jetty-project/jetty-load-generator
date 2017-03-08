@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -19,15 +19,6 @@
 package org.mortbay.jetty.load.generator;
 
 
-import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
-import org.eclipse.jetty.util.thread.Scheduler;
-import org.eclipse.jetty.xml.XmlConfiguration;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.mortbay.jetty.load.generator.profile.Resource;
-
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +26,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
+import org.eclipse.jetty.util.thread.Scheduler;
+import org.eclipse.jetty.xml.XmlConfiguration;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.mortbay.jetty.load.generator.resource.Resource;
 
 @RunWith( Parameterized.class )
 public class LoadGeneratorRunNumberTest
@@ -90,15 +90,15 @@ public class LoadGeneratorRunNumberTest
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
-            .users( this.usersNumber ) //
+            .usersPerThread( this.usersNumber ) //
             .scheduler( scheduler ) //
-            .transactionRate( 1 ) //
-            .transport( this.transport ) //
-            .httpClientTransport( this.httpClientTransport() ) //
+            .resourceRate( 1 ) //
+//            .transport( this.transport ) //
+//            .httpClientTransportBuilder( this.httpClientTransport() ) //
             .resource( resourceProfile ) //
             .sslContextFactory( sslContextFactory ) //
             .responseTimeListeners( responsePerPath ) //
-            .httpVersion( httpVersion() ) //
+//            .httpVersion( httpVersion() ) //
             .build();
 
         runWithNumber( number, loadGenerator );
@@ -123,15 +123,15 @@ public class LoadGeneratorRunNumberTest
         LoadGenerator loadGenerator = new LoadGenerator.Builder() //
             .host( "localhost" ) //
             .port( connector.getLocalPort() ) //
-            .users( this.usersNumber ) //
+            .usersPerThread( this.usersNumber ) //
             .scheduler( scheduler ) //
-            .transactionRate( 1 ) //
-            .transport( this.transport ) //
-            .httpClientTransport( this.httpClientTransport() ) //
+            .resourceRate( 1 ) //
+//            .transport( this.transport ) //
+//            .httpClientTransportBuilder( this.httpClientTransport() ) //
             .resource( resourceProfile ) //
             .sslContextFactory( sslContextFactory ) //
             .responseTimeListeners( responsePerPath ) //
-            .httpVersion( httpVersion() ) //
+//            .httpVersion( httpVersion() ) //
             .build();
 
         runWithNumber( number, loadGenerator );
@@ -150,7 +150,7 @@ public class LoadGeneratorRunNumberTest
     {
         int expected =  number * usersNumber;
 
-        loadGenerator.run( number );
+//        loadGenerator.run( number );
 
         Assert.assertEquals( 1, responsePerPath.getRecorderPerPath().size() );
 
@@ -184,17 +184,17 @@ public class LoadGeneratorRunNumberTest
             LoadGenerator loadGenerator = new LoadGenerator.Builder() //
                 .host( "localhost" ) //
                 .port( connector.getLocalPort() ) //
-                .users( this.usersNumber ) //
+                .usersPerThread( this.usersNumber ) //
                 .scheduler( scheduler ) //
-                .transactionRate( 1 ) //
+                .resourceRate( 1 ) //
                 .sslContextFactory( sslContextFactory ) //
-                .transport( this.transport ) //
-                .httpClientTransport( this.httpClientTransport() ) //
+//                .transport( this.transport ) //
+//                .httpClientTransportBuilder( this.httpClientTransport() ) //
                 .resource( resourceProfile ) //
                 .responseTimeListeners( responsePerPath ) //
-                .httpVersion( httpVersion() ) //
+//                .httpVersion( httpVersion() ) //
                 .build();
-            loadGenerator.run( number );
+//            loadGenerator.run( number );
 
             scheduler.stop();
 

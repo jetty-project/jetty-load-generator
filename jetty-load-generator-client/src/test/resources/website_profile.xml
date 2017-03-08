@@ -1,22 +1,22 @@
-<Configure id="Resource" class="org.mortbay.jetty.load.generator.profile.Resource">
+<Configure id="Resource" class="org.mortbay.jetty.load.generator.resource.Resource">
   <Call name="addResource">
     <Arg>
-      <New class="org.mortbay.jetty.load.generator.profile.Resource">
+      <New class="org.mortbay.jetty.load.generator.resource.Resource">
         <Arg>index.html</Arg>
         <Arg>
-          <Array type="org.mortbay.jetty.load.generator.profile.Resource">
+          <Array type="org.mortbay.jetty.load.generator.resource.Resource">
             <Item>
-              <New class="org.mortbay.jetty.load.generator.profile.Resource">
+              <New class="org.mortbay.jetty.load.generator.resource.Resource">
                 <Arg>style.css</Arg>
                 <Arg>
-                  <Array type="org.mortbay.jetty.load.generator.profile.Resource">
+                  <Array type="org.mortbay.jetty.load.generator.resource.Resource">
                     <Item>
-                      <New class="org.mortbay.jetty.load.generator.profile.Resource">
+                      <New class="org.mortbay.jetty.load.generator.resource.Resource">
                         <Arg>logo.gif</Arg>
                       </New>
                     </Item>
                     <Item>
-                      <New class="org.mortbay.jetty.load.generator.profile.Resource">
+                      <New class="org.mortbay.jetty.load.generator.resource.Resource">
                         <Arg>spacer.png</Arg>
                       </New>
                     </Item>
@@ -25,22 +25,22 @@
               </New>
             </Item>
             <Item>
-              <New class="org.mortbay.jetty.load.generator.profile.Resource">
+              <New class="org.mortbay.jetty.load.generator.resource.Resource">
                 <Arg>fancy.css</Arg>
               </New>
             </Item>
             <Item>
-              <New class="org.mortbay.jetty.load.generator.profile.Resource">
+              <New class="org.mortbay.jetty.load.generator.resource.Resource">
                 <Arg>script.js</Arg>
                 <Arg>
-                  <Array type="org.mortbay.jetty.load.generator.profile.Resource">
+                  <Array type="org.mortbay.jetty.load.generator.resource.Resource">
                     <Item>
-                      <New class="org.mortbay.jetty.load.generator.profile.Resource">
+                      <New class="org.mortbay.jetty.load.generator.resource.Resource">
                         <Arg>library.js</Arg>
                       </New>
                     </Item>
                     <Item>
-                      <New class="org.mortbay.jetty.load.generator.profile.Resource">
+                      <New class="org.mortbay.jetty.load.generator.resource.Resource">
                         <Arg>morestuff.js</Arg>
                       </New>
                     </Item>
@@ -49,22 +49,22 @@
               </New>
             </Item>
             <Item>
-              <New class="org.mortbay.jetty.load.generator.profile.Resource">
+              <New class="org.mortbay.jetty.load.generator.resource.Resource">
                 <Arg>anotherScript.js</Arg>
               </New>
             </Item>
             <Item>
-              <New class="org.mortbay.jetty.load.generator.profile.Resource">
+              <New class="org.mortbay.jetty.load.generator.resource.Resource">
                 <Arg>iframeContents.html</Arg>
               </New>
             </Item>
             <Item>
-              <New class="org.mortbay.jetty.load.generator.profile.Resource">
+              <New class="org.mortbay.jetty.load.generator.resource.Resource">
                 <Arg>moreIframeContents.html</Arg>
               </New>
             </Item>
             <Item>
-              <New class="org.mortbay.jetty.load.generator.profile.Resource">
+              <New class="org.mortbay.jetty.load.generator.resource.Resource">
                 <Arg>favicon.ico</Arg>
               </New>
             </Item>

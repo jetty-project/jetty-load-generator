@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -19,18 +19,18 @@
 package org.mortbay.jetty.load.generator;
 
 
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.jetty.jmx.MBeanContainer;
-import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.responsetime.JMXResponseTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.util.log.Log;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.List;
+import org.mortbay.jetty.load.generator.resource.Resource;
+import org.mortbay.jetty.load.generator.responsetime.JMXResponseTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 @RunWith( Parameterized.class )
 public class LoadGeneratorJmxSimpleTest
@@ -54,8 +54,8 @@ public class LoadGeneratorJmxSimpleTest
     protected void enhanceLoadGenerator( LoadGenerator loadGenerator ) throws Exception
     {
         MBeanContainer mbeanContainer = new MBeanContainer( ManagementFactory.getPlatformMBeanServer() );
-        loadGenerator.addBean( mbeanContainer );
-        loadGenerator.start();
+//        loadGenerator.addBean( mbeanContainer );
+        loadGenerator.begin();
 
         server.addBean(mbeanContainer);
 

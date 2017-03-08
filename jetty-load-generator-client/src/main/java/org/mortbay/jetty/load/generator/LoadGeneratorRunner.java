@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,6 +18,13 @@
 
 package org.mortbay.jetty.load.generator;
 
+import java.net.HttpCookie;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.commons.lang.RandomStringUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpDestination;
@@ -26,14 +33,7 @@ import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.profile.Resource;
-
-import java.net.HttpCookie;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import org.mortbay.jetty.load.generator.resource.Resource;
 
 /**
  *
@@ -215,14 +215,14 @@ public class LoadGeneratorRunner
 
         request.method( resource.getMethod() ).cookie( httpCookie );
 
-        if ( resource.getResponseSize() > 0 )
+        if ( resource.getResponseLength() > 0 )
         {
-            request.header( "X-Download", Integer.toString( resource.getResponseSize() ) );
+            request.header( "X-Download", Integer.toString( resource.getResponseLength() ) );
         }
 
-        if ( resource.getSize() > 0 )
+        if ( resource.getRequestLength() > 0 )
         {
-            request.content( new BytesContentProvider( RandomStringUtils.random( resource.getSize() ).getBytes() ) );
+            request.content( new BytesContentProvider( RandomStringUtils.random( resource.getRequestLength() ).getBytes() ) );
         }
 
         //request.onResponseContentAsync( loadGeneratorResultHandler );

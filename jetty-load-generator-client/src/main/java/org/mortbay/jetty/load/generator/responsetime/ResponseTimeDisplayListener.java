@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,14 +18,6 @@
 
 package org.mortbay.jetty.load.generator.responsetime;
 
-import org.HdrHistogram.Histogram;
-import org.HdrHistogram.Recorder;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.CollectorInformations;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.profile.Resource;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +26,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import org.HdrHistogram.Histogram;
+import org.HdrHistogram.Recorder;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.CollectorInformations;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.resource.Resource;
 
 /**
  *
