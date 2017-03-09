@@ -28,6 +28,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.eclipse.jetty.client.api.Request;
@@ -196,5 +197,33 @@ public class LoadGeneratorTest {
         loadGenerator.begin().get(5, TimeUnit.SECONDS);
 
         Assert.assertEquals("/1,<group>", resources.stream().collect(Collectors.joining(",")));
+    }
+
+    @Test
+    public void testWarmupDoesNotNotifyResourceListeners() throws Exception {
+        prepare(new TestHandler());
+
+        AtomicLong requests = new AtomicLong();
+        AtomicLong resources = new AtomicLong();
+        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .warmupIterationsPerThread(2)
+                .iterationsPerThread(3)
+                .resourceRate(5)
+                .resource(new Resource("/").method("POST").responseLength(1024))
+                .requestListener(new Request.Listener.Adapter() {
+                    @Override
+                    public void onBegin(Request request) {
+                        requests.incrementAndGet();
+                    }
+                })
+                .resourceListener((Resource.NodeListener)info -> resources.incrementAndGet())
+                .build();
+
+        loadGenerator.begin().get(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals(5, requests.get());
+        Assert.assertEquals(3, resources.get());
     }
 }

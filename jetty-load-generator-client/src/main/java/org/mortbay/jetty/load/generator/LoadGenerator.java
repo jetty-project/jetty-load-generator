@@ -155,8 +155,8 @@ public class LoadGenerator {
             long period = rate > 0 ? TimeUnit.SECONDS.toNanos(config.getThreads()) / rate : 0;
 
             long runFor = config.getRunFor();
+            int warmupIterations = config.getWarmupIterationsPerThread();
             int iterations = runFor > 0 ? 0 : config.getIterationsPerThread();
-            int iteration = 0;
 
             long begin = System.nanoTime();
             long next = begin + period;
@@ -164,13 +164,19 @@ public class LoadGenerator {
             while (true) {
                 HttpClient client = clients[clientIndex];
 
-                boolean lastIteration = iterations > 0 && ++iteration == iterations;
+                boolean warmup = false;
+                boolean lastIteration = false;
+                if (warmupIterations > 0) {
+                    warmup = --warmupIterations >= 0;
+                } else if (iterations > 0) {
+                    lastIteration = --iterations == 0;
+                }
                 // Sends the resource one more time after the time expired,
                 // but guarantees that the callback is notified correctly.
                 boolean ranEnough = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
                 Callback c = lastIteration || ranEnough ? processCallback : callback;
 
-                sendResourceTree(client, config.getResource(), c);
+                sendResourceTree(client, config.getResource(), warmup, c);
 
                 if (lastIteration || ranEnough) {
                     break;
@@ -236,7 +242,7 @@ public class LoadGenerator {
         return request;
     }
 
-    private void sendResourceTree(HttpClient client, Resource resource, Callback callback) {
+    private void sendResourceTree(HttpClient client, Resource resource, boolean warmup, Callback callback) {
         int nodes = resource.descendantCount();
         Resource.Info info = resource.newInfo();
         CountingCallback treeCallback = new CountingCallback(new Callback() {
@@ -246,7 +252,9 @@ public class LoadGenerator {
                     logger.debug("completed tree for {}", resource);
                 }
                 info.setTotalTime(System.nanoTime());
-                fireResourceTreeEvent(info);
+                if (!warmup) {
+                    fireResourceTreeEvent(info);
+                }
                 callback.succeeded();
             }
 
@@ -258,7 +266,7 @@ public class LoadGenerator {
                 callback.failed(x);
             }
         }, nodes);
-        Sender sender = new Sender(client, treeCallback);
+        Sender sender = new Sender(client, warmup, treeCallback);
         sender.offer(Collections.singletonList(info));
         sender.send();
     }
@@ -295,11 +303,13 @@ public class LoadGenerator {
         private final Queue<Resource.Info> queue = new ArrayDeque<>();
         private final Set<URI> pushCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
         private final HttpClient client;
+        private final boolean warmup;
         private final CountingCallback callback;
         private boolean active;
 
-        private Sender(HttpClient client, CountingCallback callback) {
+        private Sender(HttpClient client, boolean warmup, CountingCallback callback) {
             this.client = client;
+            this.warmup = warmup;
             this.callback = callback;
         }
 
@@ -362,7 +372,7 @@ public class LoadGenerator {
                         }
                     } else {
                         if (logger.isDebugEnabled()) {
-                            logger.debug("sending {}", resource);
+                            logger.debug("sending {}{}", warmup ? "warmup " : "", resource);
                         }
                         Request request = config.getRequestListeners().stream()
                                 .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
@@ -412,7 +422,9 @@ public class LoadGenerator {
                 }
                 if (result.isSucceeded()) {
                     info.setResponseTime(System.nanoTime());
-                    fireResourceNodeEvent(info);
+                    if (!warmup) {
+                        fireResourceNodeEvent(info);
+                    }
                     callback.succeeded();
                 } else {
                     callback.failed(result.getFailure());
@@ -427,6 +439,7 @@ public class LoadGenerator {
      */
     public static class Config {
         protected int threads = 1;
+        protected int warmupIterationsPerThread = 0;
         protected int iterationsPerThread = 1;
         protected long runFor = 0;
         protected int usersPerThread = 1;
@@ -447,6 +460,10 @@ public class LoadGenerator {
 
         public int getThreads() {
             return threads;
+        }
+
+        public int getWarmupIterationsPerThread() {
+            return warmupIterationsPerThread;
         }
 
         public int getIterationsPerThread() {
@@ -546,7 +563,16 @@ public class LoadGenerator {
         }
 
         /**
-         * @param iterationsPerThread the number of iterations that each sender thread perform, or zero to run forever
+         * @param warmupIterationsPerThread the number of warmup iterations that each sender thread performs
+         * @return this Builder
+         */
+        public Builder warmupIterationsPerThread(int warmupIterationsPerThread) {
+            this.warmupIterationsPerThread = warmupIterationsPerThread;
+            return this;
+        }
+
+        /**
+         * @param iterationsPerThread the number of iterations that each sender thread performs, or zero to run forever
          * @return this Builder
          */
         public Builder iterationsPerThread(int iterationsPerThread) {
