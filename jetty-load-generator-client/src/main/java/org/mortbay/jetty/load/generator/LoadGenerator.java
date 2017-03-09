@@ -126,9 +126,6 @@ public class LoadGenerator {
                 clients[i].start();
             }
 
-            int rate = config.getResourceRate();
-            long pause = rate > 0 ? TimeUnit.SECONDS.toMicros(config.getThreads()) / rate : 0;
-
             Callback processCallback = new Callback() {
                 @Override
                 public void succeeded() {
@@ -154,11 +151,15 @@ public class LoadGenerator {
                 }
             };
 
+            int rate = config.getResourceRate();
+            long period = rate > 0 ? TimeUnit.SECONDS.toNanos(config.getThreads()) / rate : 0;
+
             long runFor = config.getRunFor();
             int iterations = runFor > 0 ? 0 : config.getIterationsPerThread();
             int iteration = 0;
 
             long begin = System.nanoTime();
+            long next = begin + period;
             int clientIndex = 0;
             while (true) {
                 HttpClient client = clients[clientIndex];
@@ -182,9 +183,13 @@ public class LoadGenerator {
                 if (++clientIndex == clients.length) {
                     clientIndex = 0;
                 }
-                // TODO: make it more precise by checking the begin time.
-                if (pause > 0) {
-                    timer.sleep(pause);
+
+                if (period > 0) {
+                    long pause = TimeUnit.NANOSECONDS.toMicros(next - System.nanoTime());
+                    next += period;
+                    if (pause > 0) {
+                        timer.sleep(pause);
+                    }
                 }
             }
 
