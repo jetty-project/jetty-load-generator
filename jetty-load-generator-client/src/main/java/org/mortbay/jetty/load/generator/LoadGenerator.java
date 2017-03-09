@@ -106,29 +106,9 @@ public class LoadGenerator {
             barrier.await();
 
             String threadName = Thread.currentThread().getName();
-            int iterations = config.getIterationsPerThread();
             if (logger.isDebugEnabled()) {
-                logger.debug("sender thread {} running {} iterations", threadName, iterations);
+                logger.debug("sender thread {} running", threadName);
             }
-
-            CountingCallback callback = new CountingCallback(new Callback() {
-                @Override
-                public void succeeded() {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("sender thread {} completed {} iterations", threadName, iterations);
-                    }
-                    process.complete(null);
-                }
-
-                @Override
-                public void failed(Throwable x) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("sender thread {} failed {} iterations", threadName, iterations);
-                    }
-                    process.completeExceptionally(x);
-                }
-            }, iterations);
-            int iteration = 0;
 
             HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
             // HttpClient cannot be stopped from one of its own threads.
@@ -148,23 +128,63 @@ public class LoadGenerator {
             int rate = config.getResourceRate();
             long pause = rate > 0 ? TimeUnit.SECONDS.toMicros(config.getThreads()) / rate : 0;
 
+            Callback processCallback = new Callback() {
+                @Override
+                public void succeeded() {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("sender thread {} completed", threadName);
+                    }
+                    process.complete(null);
+                }
+
+                @Override
+                public void failed(Throwable x) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("sender thread {} failed", threadName);
+                    }
+                    process.completeExceptionally(x);
+                }
+            };
+
+            // This callback only forwards failure, success is notified explicitly.
+            Callback callback = new Callback.Nested(processCallback) {
+                @Override
+                public void succeeded() {
+                }
+            };
+
+            long runFor = config.getRunFor();
+            int iterations = runFor > 0 ? 0 : config.getIterationsPerThread();
+            int iteration = 0;
+
+            long begin = System.nanoTime();
             int clientIndex = 0;
             while (true) {
                 HttpClient client = clients[clientIndex];
                 PushCache pushCache = pushCaches[clientIndex];
-                sendResourceTree(client, pushCache, config.getResource(), callback);
-                if (++iteration == iterations) {
+
+                boolean lastIteration = iterations > 0 && ++iteration == iterations;
+                // Sends the resource one more time after the time expired,
+                // but guarantees that the callback is notified correctly.
+                boolean ranEnough = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
+                Callback c = lastIteration || ranEnough ? processCallback : callback;
+
+                sendResourceTree(client, pushCache, config.getResource(), c);
+
+                if (lastIteration || ranEnough) {
                     break;
                 }
+                if (interrupt) {
+                    callback.failed(new InterruptedException());
+                    break;
+                }
+
                 if (++clientIndex == clients.length) {
                     clientIndex = 0;
                 }
+                // TODO: make it more precise by checking the begin time.
                 if (pause > 0) {
                     timer.sleep(pause);
-                }
-                if (interrupt) {
-                    process.completeExceptionally(new InterruptedException());
-                    break;
                 }
             }
 
@@ -203,7 +223,7 @@ public class LoadGenerator {
                 .scheme(config.getScheme())
                 .method(resource.getMethod())
                 .path(resource.getPath())
-                .header("X-Download", Integer.toString(resource.getResponseLength()));
+                .header("JLG-ResponseLength", Integer.toString(resource.getResponseLength()));
         int requestLength = resource.getRequestLength();
         if (requestLength > 0) {
             request.content(new BytesContentProvider(new byte[requestLength]));
@@ -395,6 +415,7 @@ public class LoadGenerator {
     public static class Config {
         protected int threads = 1;
         protected int iterationsPerThread = 1;
+        protected long runFor = 0;
         protected int usersPerThread = 1;
         protected int channelsPerUser = 1024;
         protected int resourceRate = 1;
@@ -417,6 +438,10 @@ public class LoadGenerator {
 
         public int getIterationsPerThread() {
             return iterationsPerThread;
+        }
+
+        public long getRunFor() {
+            return runFor;
         }
 
         public int getUsersPerThread() {
@@ -513,6 +538,22 @@ public class LoadGenerator {
          */
         public Builder iterationsPerThread(int iterationsPerThread) {
             this.iterationsPerThread = iterationsPerThread;
+            return this;
+        }
+
+        /**
+         * <p>Configures the amount of time that the load generator should run.</p>
+         * <p>This setting always takes precedence over {@link #iterationsPerThread}.</p>
+         *
+         * @param time the time the load generator runs
+         * @param unit the unit of time
+         * @return this Builder
+         */
+        public Builder runFor(long time, TimeUnit unit) {
+            this.runFor = unit.toSeconds(time);
+            if (runFor <= 0) {
+                throw new IllegalArgumentException();
+            }
             return this;
         }
 

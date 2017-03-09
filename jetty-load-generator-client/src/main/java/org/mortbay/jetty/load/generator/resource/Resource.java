@@ -19,7 +19,7 @@
 package org.mortbay.jetty.load.generator.resource;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
 
@@ -40,21 +40,15 @@ public class Resource {
         this(null, resources);
     }
 
-    public Resource(List<Resource> resources) {
-        this(null, resources);
-    }
-
     public Resource(String path) {
-        this(path, (Resource[])null);
+        this(path, new Resource[0]);
     }
 
     public Resource(String path, Resource... resources) {
-        this(path, resources == null ? new ArrayList<>() : Arrays.asList(resources));
-    }
-
-    public Resource(String path, List<Resource> resources) {
         this.path = path;
-        this.resources.addAll(resources);
+        if (resources != null) {
+            Collections.addAll(this.resources, resources);
+        }
     }
 
     public Resource method(String method) {

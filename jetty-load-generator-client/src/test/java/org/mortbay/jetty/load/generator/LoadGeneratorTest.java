@@ -18,19 +18,17 @@
 
 package org.mortbay.jetty.load.generator;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.stream.Collectors;
 
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
@@ -40,12 +38,12 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mortbay.jetty.load.generator.resource.Resource;
 
 @RunWith(Parameterized.class)
 public class LoadGeneratorTest {
@@ -84,12 +82,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testDefaultConfiguration() throws Exception {
-        prepare(new AbstractHandler() {
-            @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-                jettyRequest.setHandled(true);
-            }
-        });
+        prepare(new TestHandler());
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .port(connector.getLocalPort())
@@ -100,12 +93,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testMultipleThreads() throws Exception {
-        prepare(new AbstractHandler() {
-            @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-                jettyRequest.setHandled(true);
-            }
-        });
+        prepare(new TestHandler());
 
         Set<String> threads = Collections.newSetFromMap(new ConcurrentHashMap<>());
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
@@ -126,12 +114,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testInterrupt() throws Exception {
-        prepare(new AbstractHandler() {
-            @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-                jettyRequest.setHandled(true);
-            }
-        });
+        prepare(new TestHandler());
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .port(connector.getLocalPort())
@@ -156,36 +139,62 @@ public class LoadGeneratorTest {
         }).get(5, TimeUnit.SECONDS);
     }
 
-/*
     @Test
-    public void testPush() throws Exception {
-        prepare(new HTTP2CServerConnectionFactory(new HttpConfiguration()), new AbstractHandler() {
-            @Override
-            public void handle(String target, Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-                jettyRequest.setHandled(true);
-                if ("/".equals(target)) {
-                    jettyRequest.getPushBuilder().path("/1").push();
-                    jettyRequest.getPushBuilder().path("/2").push();
-                }
-            }
-        });
+    public void testRunFor() throws Exception {
+        prepare(new TestHandler());
 
-        RunInfo runInfo = new RunInfo();
+        long time = 2;
+        TimeUnit unit = TimeUnit.SECONDS;
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
-                .httpClientTransport(new Http2ClientTransportBuilder().build())
                 .port(connector.getLocalPort())
-                .threads(1)
-                .usersPerThread(1)
-                .iterationsPerThread(2000)
-                .resourceRate(1000)
-                .resource(new Resource("/", new Resource("/1"), new Resource("/2")))
-                .listener(runInfo)
-                .resourceListener(runInfo)
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .runFor(time, unit)
+                .resourceRate(5)
                 .build();
-        loadGenerator.begin().join();
-        Histogram histogram = runInfo.getHistogram();
-        HistogramSnapshot snapshot = new HistogramSnapshot(histogram, 32, "resource response time", "\u00B5s", TimeUnit.NANOSECONDS::toMicros);
-        System.err.println(snapshot);
+        loadGenerator.begin().get(2 * time, unit);
     }
-*/
+
+    @Test
+    public void testResourceTree() throws Exception {
+        prepare(new TestHandler());
+
+        Queue<String> resources = new ConcurrentLinkedDeque<>();
+        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .resource(new Resource("/",
+                        new Resource("/1",
+                                new Resource("/11").responseLength(1024))
+                                .responseLength(10 * 1024))
+                        .responseLength(16 * 1024))
+                .resourceListener((Resource.NodeListener)info -> resources.offer(info.getResource().getPath()))
+                .resourceListener((Resource.TreeListener)info -> resources.offer(info.getResource().getPath()))
+                .build();
+        loadGenerator.begin().get(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals("/,/1,/11,/", resources.stream().collect(Collectors.joining(",")));
+    }
+
+    @Test
+    public void testResourceGroup() throws Exception {
+        prepare(new TestHandler());
+
+        Queue<String> resources = new ConcurrentLinkedDeque<>();
+        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .resource(new Resource(new Resource("/1").responseLength(10 * 1024)))
+                .resourceListener((Resource.NodeListener)info -> resources.offer(info.getResource().getPath()))
+                .resourceListener((Resource.TreeListener)info -> {
+                    if (info.getResource().getPath() == null) {
+                        if (resources.size() == 1) {
+                            resources.offer("<group>");
+                        }
+                    }
+                })
+                .build();
+        loadGenerator.begin().get(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals("/1,<group>", resources.stream().collect(Collectors.joining(",")));
+    }
 }
