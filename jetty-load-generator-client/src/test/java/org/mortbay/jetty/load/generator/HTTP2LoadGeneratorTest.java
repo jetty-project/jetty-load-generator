@@ -32,7 +32,6 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -59,14 +58,20 @@ public class HTTP2LoadGeneratorTest {
 
     @Test
     public void testPush() throws Exception {
-        prepare(new AbstractHandler() {
+        prepare(new TestHandler() {
             @Override
             public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-                jettyRequest.setHandled(true);
                 if ("/".equals(target)) {
-                    jettyRequest.getPushBuilder().path("/1").push();
-                    jettyRequest.getPushBuilder().path("/2").push();
+                    jettyRequest.getPushBuilder()
+                            .path("/1")
+                            .setHeader("JLG-Response-Length", String.valueOf(10 * 1024))
+                            .push();
+                    jettyRequest.getPushBuilder()
+                            .path("/2")
+                            .setHeader("JLG-Response-Length", String.valueOf(32 * 1024))
+                            .push();
                 }
+                super.handle(target, jettyRequest, request, response);
             }
         });
 
@@ -76,7 +81,7 @@ public class HTTP2LoadGeneratorTest {
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .httpClientTransportBuilder(new Http2ClientTransportBuilder())
                 .port(connector.getLocalPort())
-                .resource(new Resource("/", new Resource("/1"), new Resource("/2")))
+                .resource(new Resource("/", new Resource("/1"), new Resource("/2")).responseLength(128 * 1024))
                 .requestListener(new Request.Listener.Adapter() {
                     @Override
                     public void onBegin(Request request) {

@@ -18,6 +18,7 @@
 
 package org.mortbay.jetty.load.generator.resource;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
@@ -91,6 +92,25 @@ public class Resource {
         return resources;
     }
 
+    public Resource findDescendant(URI uri) {
+        String pathQuery = uri.getRawPath();
+        String query = uri.getRawQuery();
+        if (query != null) {
+            pathQuery += "?" + query;
+        }
+        for (Resource child : getResources()) {
+            if (pathQuery.equals(child.getPath())) {
+                return child;
+            } else {
+                Resource result = child.findDescendant(uri);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return null;
+    }
+
     public int descendantCount() {
         return descendantCount(this);
     }
@@ -103,6 +123,9 @@ public class Resource {
         return result;
     }
 
+    public Info newInfo() {
+        return new Info(this);
+    }
 
     @Override
     public String toString() {
@@ -124,7 +147,7 @@ public class Resource {
         private long contentLength;
         private boolean pushed;
 
-        public Info(Resource resource) {
+        private Info(Resource resource) {
             this.resource = resource;
         }
 

@@ -19,6 +19,7 @@
 package org.mortbay.jetty.load.generator;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,9 +28,9 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +42,8 @@ import java.util.stream.Collectors;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpRequest;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
@@ -118,11 +121,9 @@ public class LoadGenerator {
                 }
                 Arrays.stream(clients).forEach(this::stopHttpClient);
             }, threads);
-            PushCache[] pushCaches = new PushCache[clients.length];
             for (int i = 0; i < clients.length; ++i) {
                 clients[i] = newHttpClient(getConfig());
                 clients[i].start();
-                pushCaches[i] = new PushCache();
             }
 
             int rate = config.getResourceRate();
@@ -161,7 +162,6 @@ public class LoadGenerator {
             int clientIndex = 0;
             while (true) {
                 HttpClient client = clients[clientIndex];
-                PushCache pushCache = pushCaches[clientIndex];
 
                 boolean lastIteration = iterations > 0 && ++iteration == iterations;
                 // Sends the resource one more time after the time expired,
@@ -169,7 +169,7 @@ public class LoadGenerator {
                 boolean ranEnough = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
                 Callback c = lastIteration || ranEnough ? processCallback : callback;
 
-                sendResourceTree(client, pushCache, config.getResource(), c);
+                sendResourceTree(client, config.getResource(), c);
 
                 if (lastIteration || ranEnough) {
                     break;
@@ -223,7 +223,7 @@ public class LoadGenerator {
                 .scheme(config.getScheme())
                 .method(resource.getMethod())
                 .path(resource.getPath())
-                .header("JLG-ResponseLength", Integer.toString(resource.getResponseLength()));
+                .header("JLG-Response-Length", Integer.toString(resource.getResponseLength()));
         int requestLength = resource.getRequestLength();
         if (requestLength > 0) {
             request.content(new BytesContentProvider(new byte[requestLength]));
@@ -231,9 +231,9 @@ public class LoadGenerator {
         return request;
     }
 
-    private void sendResourceTree(HttpClient client, PushCache pushCache, Resource resource, Callback callback) {
+    private void sendResourceTree(HttpClient client, Resource resource, Callback callback) {
         int nodes = resource.descendantCount();
-        Resource.Info info = new Resource.Info(resource);
+        Resource.Info info = resource.newInfo();
         CountingCallback treeCallback = new CountingCallback(new Callback() {
             @Override
             public void succeeded() {
@@ -253,7 +253,7 @@ public class LoadGenerator {
                 callback.failed(x);
             }
         }, nodes);
-        Sender sender = new Sender(client, pushCache, treeCallback);
+        Sender sender = new Sender(client, treeCallback);
         sender.offer(Collections.singletonList(info));
         sender.send();
     }
@@ -286,28 +286,15 @@ public class LoadGenerator {
                 .forEach(l -> l.onResourceTree(info));
     }
 
-    private static class PushCache {
-        private final ConcurrentMap<URI, Boolean> cache = new ConcurrentHashMap<>();
-
-        public boolean add(URI uri) {
-            return cache.putIfAbsent(uri, true) == null;
-        }
-
-        public boolean contains(URI uri) {
-            return cache.containsKey(uri);
-        }
-    }
-
     private class Sender {
         private final Queue<Resource.Info> queue = new ArrayDeque<>();
+        private final Set<URI> pushCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
         private final HttpClient client;
-        private final PushCache pushCache;
         private final CountingCallback callback;
         private boolean active;
 
-        private Sender(HttpClient client, PushCache pushCache, CountingCallback callback) {
+        private Sender(HttpClient client, CountingCallback callback) {
             this.client = client;
-            this.pushCache = pushCache;
             this.callback = callback;
         }
 
@@ -344,52 +331,37 @@ public class LoadGenerator {
         private void send(List<Resource.Info> resources) {
             for (Resource.Info info : resources) {
                 Resource resource = info.getResource();
-                if (logger.isDebugEnabled()) {
-                    logger.debug("sending {}", resource);
-                }
-                // Record send time.
                 info.setRequestTime(System.nanoTime());
                 if (resource.getPath() != null) {
                     HttpRequest httpRequest = (HttpRequest)newRequest(client, config, resource);
 
-                    httpRequest.pushListener((req, push) -> {
-                        URI pushURI = push.getURI();
-                        if (pushCache.add(pushURI)) {
-                            return result -> {
-                            };
+                    httpRequest.pushListener((request, pushed) -> {
+                        URI pushedURI = pushed.getURI();
+                        Resource child = resource.findDescendant(pushedURI);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("pushed {}", child);
+                        }
+                        if (child != null && pushCache.add(pushedURI)) {
+                            Resource.Info pushedInfo = child.newInfo();
+                            pushedInfo.setRequestTime(System.nanoTime());
+                            pushedInfo.setPushed(true);
+                            return new ResponseHandler(pushedInfo);
                         } else {
                             return null;
                         }
                     });
 
                     if (pushCache.contains(httpRequest.getURI())) {
-                        info.setLatencyTime(System.nanoTime());
-                        info.setResponseTime(System.nanoTime());
-                        info.setPushed(true);
-                        fireResourceNodeEvent(info);
-                        callback.succeeded();
-                        sendChildren(resource);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("skip sending pushed {}", resource);
+                        }
                     } else {
-                        Request request = httpRequest
-                                // Record time to first byte.
-                                .onResponseBegin(r -> info.setLatencyTime(System.nanoTime()))
-                                // Record content length.
-                                .onResponseContent((r, b) -> info.addContent(b.remaining()));
-                        request = config.getRequestListeners().stream()
-                                .reduce(request, Request::listener, (r1, r2) -> r1);
-                        request.send(result -> {
-                            if (logger.isDebugEnabled()) {
-                                logger.debug("completed {}: {}", resource, result);
-                            }
-                            if (result.isSucceeded()) {
-                                info.setResponseTime(System.nanoTime());
-                                fireResourceNodeEvent(info);
-                                callback.succeeded();
-                            } else {
-                                callback.failed(result.getFailure());
-                            }
-                            sendChildren(resource);
-                        });
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("sending {}", resource);
+                        }
+                        Request request = config.getRequestListeners().stream()
+                                .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
+                        request.send(new ResponseHandler(info));
                     }
                 } else {
                     info.setResponseTime(System.nanoTime());
@@ -403,8 +375,44 @@ public class LoadGenerator {
         private void sendChildren(Resource resource) {
             List<Resource> children = resource.getResources();
             if (!children.isEmpty()) {
-                offer(children.stream().map(Resource.Info::new).collect(Collectors.toList()));
+                offer(children.stream().map(Resource::newInfo).collect(Collectors.toList()));
                 send();
+            }
+        }
+
+        private class ResponseHandler extends Response.Listener.Adapter {
+            private final Resource.Info info;
+
+            private ResponseHandler(Resource.Info info) {
+                this.info = info;
+            }
+
+            @Override
+            public void onBegin(Response response) {
+                // Record time to first byte.
+                info.setLatencyTime(System.nanoTime());
+            }
+
+            @Override
+            public void onContent(Response response, ByteBuffer buffer) {
+                // Record content length.
+                info.addContent(buffer.remaining());
+            }
+
+            @Override
+            public void onComplete(Result result) {
+                Resource resource = info.getResource();
+                if (logger.isDebugEnabled()) {
+                    logger.debug("completed {}: {}", resource, result);
+                }
+                if (result.isSucceeded()) {
+                    info.setResponseTime(System.nanoTime());
+                    fireResourceNodeEvent(info);
+                    callback.succeeded();
+                } else {
+                    callback.failed(result.getFailure());
+                }
+                sendChildren(resource);
             }
         }
     }
