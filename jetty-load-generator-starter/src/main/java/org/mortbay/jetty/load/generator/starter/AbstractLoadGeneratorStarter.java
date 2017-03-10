@@ -39,6 +39,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -66,8 +67,8 @@ public abstract class AbstractLoadGeneratorStarter
     {
         LoadGenerator loadGenerator = getLoadGenerator();
 
-        loadGenerator.begin();
-
+        CompletableFuture<Void> cf = loadGenerator.begin();
+        cf.get();
         writeStats( loadGenerator );
 
     }
