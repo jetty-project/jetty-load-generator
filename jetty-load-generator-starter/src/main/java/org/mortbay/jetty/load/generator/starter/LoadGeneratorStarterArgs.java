@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.internal.Maps;
-import org.mortbay.jetty.load.generator.LoadGenerator;
 
 /**
  *
@@ -92,6 +91,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--collect-server-stats", "-css"}, description = "Collect server stats on remote StatisticsServlet" )
     private boolean collectServerStats;
 
+    @Parameter( names = { "--warmup-number", "-wn" }, description = "Warm up number to run" )
+    private int warmupNumber;
+
 
     public LoadGeneratorStarterArgs()
     {
@@ -148,20 +150,18 @@ public class LoadGeneratorStarterArgs
         this.transactionRate = transactionRate;
     }
 
-    public LoadGenerator.Transport getTransport()
+    public Transport getTransport()
     {
         switch ( this.transport )
         {
             case "http":
-                return LoadGenerator.Transport.HTTP;
+                return Transport.HTTP;
             case "https":
-                return LoadGenerator.Transport.HTTPS;
+                return Transport.HTTPS;
             case "h2":
-                return LoadGenerator.Transport.H2;
+                return Transport.H2;
             case "h2c":
-                return LoadGenerator.Transport.H2C;
-            case "fcgi":
-                return LoadGenerator.Transport.FCGI;
+                return Transport.H2C;
             default:
                 throw new IllegalArgumentException( transport + " is not recognized" );
         }
@@ -323,6 +323,16 @@ public class LoadGeneratorStarterArgs
         this.collectServerStats = collectServerStats;
     }
 
+    public int getWarmupNumber()
+    {
+        return warmupNumber;
+    }
+
+    public void setWarmupNumber( int warmupNumber )
+    {
+        this.warmupNumber = warmupNumber;
+    }
+
     @Override
     public String toString()
     {
@@ -333,6 +343,13 @@ public class LoadGeneratorStarterArgs
             + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='" + reportHost + '\''
             + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt + ", statsFile='" + statsFile + '\''
             + ", params=" + params + ", help=" + help + ", displayStatsAtEnd=" + displayStatsAtEnd
-            + ", collectServerStats=" + collectServerStats + '}';
+            + ", collectServerStats=" + collectServerStats + ", warmupNumber=" + warmupNumber + '}';
+    }
+
+    public enum Transport {
+        HTTP,
+        HTTPS,
+        H2C,
+        H2
     }
 }

@@ -57,25 +57,13 @@ public class LoadGeneratorStarter
         try
         {
             LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs );
-            if ( runnerArgs.getRunIteration() > 0 )
-            {
-                runner.run( runnerArgs.getRunIteration() );
-            }
-            else if ( runnerArgs.getRunningTime() > 0 && runnerArgs.getRunningTimeUnit() != null )
-            {
-                runner.run( runnerArgs.getRunningTime(), runnerArgs.getRunningTimeUnit(), false );
-            }
-            else
-            {
-                runner.run();
-            }
+            runner.run();
 
             if (runnerArgs.isDisplayStatsAtEnd())
             {
 
             }
 
-//            runner.getLoadGenerator().interrupt();
         }
         catch ( Exception e )
         {

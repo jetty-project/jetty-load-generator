@@ -18,14 +18,6 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -35,11 +27,20 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.mortbay.jetty.load.generator.Http1ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.Http2ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HttpClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
 import org.mortbay.jetty.load.generator.resource.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -65,33 +66,9 @@ public abstract class AbstractLoadGeneratorStarter
     {
         LoadGenerator loadGenerator = getLoadGenerator();
 
-//        loadGenerator.run( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
-
-//        loadGenerator.interrupt();
+        loadGenerator.begin();
 
         writeStats( loadGenerator );
-
-    }
-
-    public void run( int iteration )
-        throws Exception
-    {
-        this.run( iteration, true );
-    }
-
-    public void run( long time, TimeUnit timeUnit, boolean interrupt )
-        throws Exception
-    {
-
-        LoadGenerator loadGenerator = getLoadGenerator();
-
-//        loadGenerator.run( time, timeUnit );
-
-        if ( interrupt )
-        {
-//            loadGenerator.interrupt();
-            writeStats( loadGenerator );
-        }
 
     }
 
@@ -101,29 +78,13 @@ public abstract class AbstractLoadGeneratorStarter
         writeStats( getLoadGenerator() );
     }
 
-    public void run( int iteration, boolean interrupt )
-        throws Exception
-    {
-        LoadGenerator loadGenerator = getLoadGenerator();
-
-//        loadGenerator.run( iteration );
-
-        if ( interrupt )
-        {
-//            loadGenerator.interrupt();
-            writeStats( loadGenerator );
-        }
-
-
-    }
-
 
     protected void writeStats( LoadGenerator loadGenerator )
         throws Exception
     {
         if ( starterArgs.getStatsFile() != null //
 //            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse() ) )
-                )
+            )
         {
             Path path = Paths.get( starterArgs.getStatsFile() );
             if ( Files.notExists( path ) )
@@ -141,32 +102,46 @@ public abstract class AbstractLoadGeneratorStarter
     {
         Resource resourceProfile = getResource();
 
-        if (this.loadGenerator != null)
+        if ( this.loadGenerator != null )
         {
             return this.loadGenerator;
         }
 
-        LoadGenerator loadGenerator = new LoadGenerator.Builder() //
+        LoadGenerator.Builder loadGeneratorBuilder = new LoadGenerator.Builder() //
             .host( starterArgs.getHost() ) //
             .port( starterArgs.getPort() ) //
+            .iterationsPerThread( starterArgs.getRunIteration() )
             .usersPerThread( starterArgs.getUsers() ) //
             .resourceRate( starterArgs.getTransactionRate() ) //
-//            .transport( starterArgs.getTransport() ) //
-//            .httpClientTransportBuilder( httpClientTransport() ) //
+            .httpClientTransportBuilder( httpClientTransport() )
             .sslContextFactory( sslContextFactory() ) //
             .resource( resourceProfile ) //
+            .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
-            .latencyTimeListeners( getLatencyTimeListeners() ) //
-            .executor( getExecutorService() != null ? getExecutorService() : null ) //
-            .requestListeners( getListeners() ) //
-            .build();
+            .latencyTimeListeners( getLatencyTimeListeners() ); //
+        if (getExecutorService() != null)
+        {
+            loadGeneratorBuilder.executor( getExecutorService() );
+        }
+
+        if (starterArgs.getRunningTime() > 0)
+        {
+            loadGeneratorBuilder.runFor( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
+        }
+
+        for ( Request.Listener listener : getListeners() )
+        {
+            loadGeneratorBuilder.requestListener( listener );
+        }
+
+        LoadGenerator loadGenerator = loadGeneratorBuilder.build();
 
         return loadGenerator;
     }
 
     protected Request.Listener[] getListeners()
     {
-        return null;
+        return new Request.Listener[0];
     }
 
     public ExecutorService getExecutorService()
@@ -252,25 +227,20 @@ public abstract class AbstractLoadGeneratorStarter
         this.resource = resource;
     }
 
-    public HttpClientTransport httpClientTransport()
+    public HttpClientTransportBuilder httpClientTransport()
     {
         switch ( starterArgs.getTransport() )
         {
             case HTTP:
             case HTTPS:
             {
-                return new Http1ClientTransportBuilder().selectors( starterArgs.getSelectors() ).build();
+                return new Http1ClientTransportBuilder().selectors( starterArgs.getSelectors() );
             }
             case H2C:
             case H2:
             {
-                return new Http2ClientTransportBuilder().selectors( starterArgs.getSelectors() ).build();
+                return new Http2ClientTransportBuilder().selectors( starterArgs.getSelectors() );
             }
-//            case FCGI:
-//            {
-//                return new HttpFCGITransportBuilder().build();
-//            }
-
             default:
             {
                 // nothing this weird case already handled by #provideClientTransport

@@ -19,10 +19,10 @@
 package org.mortbay.jetty.load.generator.starter;
 
 import com.beust.jcommander.JCommander;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -129,9 +129,11 @@ public class JenkinsRemoteStarter
     }
 
 
-    public static void launch(List<String> argsList) throws Exception {
+    public static void launch( List<String> argsList )
+        throws Exception
+    {
 
-        final String[] args = argsList.toArray(new String[argsList.size()]);
+        final String[] args = argsList.toArray( new String[argsList.size()] );
 
         LoadGeneratorStarterArgs runnerArgs = new LoadGeneratorStarterArgs();
 
@@ -151,30 +153,24 @@ public class JenkinsRemoteStarter
 
         try
         {
-            LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs ){
+            LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs )
+            {
                 @Override
                 public ResponseTimeListener[] getResponseTimeListeners()
                 {
-                    return responseTimeListeners.toArray(new ResponseTimeListener[responseTimeListeners.size()]);
+                    return responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()] );
                 }
 
                 @Override
                 public LatencyTimeListener[] getLatencyTimeListeners()
                 {
-                    return latencyTimeListeners.toArray(new LatencyTimeListener[latencyTimeListeners.size()]);
+                    return latencyTimeListeners.toArray( new LatencyTimeListener[latencyTimeListeners.size()] );
                 }
             };
 
-
-            if (runnerArgs.getRunIteration() > 0)
-            {
-                LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost()  + " for " + runnerArgs.getRunIteration() + " iterations" );
-                runner.run(runnerArgs.getRunIteration(), !runnerArgs.isNotInterrupt());
-            } else
-            {
-                LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost() + " for " + runnerArgs.getRunningTime() + " " + runnerArgs.getRunningTimeUnit() );
-                runner.run();
-            }
+            LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost() + " for " + runnerArgs.getRunningTime() + " "
+                             + runnerArgs.getRunningTimeUnit() );
+            runner.run();
 
             LOGGER.info( "LoadGenerator stopped" );
 
@@ -187,9 +183,5 @@ public class JenkinsRemoteStarter
         }
 
     }
-
-
-
-
 
 }

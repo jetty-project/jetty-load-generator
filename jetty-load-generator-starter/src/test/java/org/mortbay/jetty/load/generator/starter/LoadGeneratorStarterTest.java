@@ -91,7 +91,8 @@ public class LoadGeneratorStarterTest
     public void simpletest() throws Exception {
 
         List<String> args = new ArrayList<>(  );
-        args.add( "-Dwarmup.number=10" );
+        args.add( "--warmup-number" );
+        args.add( "10" );
         args.add( "-h" );
         args.add( "localhost" );
         args.add( "--port" );

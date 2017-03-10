@@ -737,10 +737,6 @@ public class LoadGenerator {
 
         // TODO: verify how these listeners are actually used.
 
-        public Builder requestListeners(Request.Listener... requestListeners) {
-            return this;
-        }
-
         public Builder responseTimeListeners(ResponseTimeListener... responseTimeListeners) {
             return this;
         }
@@ -791,10 +787,4 @@ public class LoadGenerator {
         return HttpVersion.HTTP_1_1;
     }
 
-    public enum Transport {
-        HTTP,
-        HTTPS,
-        H2C,
-        H2
-    }
 }

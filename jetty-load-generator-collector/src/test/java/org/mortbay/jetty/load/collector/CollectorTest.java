@@ -52,6 +52,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.CollectorServer;
+import org.mortbay.jetty.load.generator.Http1ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.resource.Resource;
 
@@ -131,15 +132,16 @@ public class CollectorTest
                 .port( port ) //
                 .usersPerThread( 2 ) //
                 .resourceRate( 5 ) //
+                .iterationsPerThread( 4 )
 //                .transport( LoadGenerator.Transport.HTTP ) //
-//                .httpClientTransportBuilder( new Http1ClientTransportBuilder().build() ) //
+                .httpClientTransportBuilder( new Http1ClientTransportBuilder() ) //
                 //.scheduler( scheduler ) //
                 .resource( profile ) //
                 .responseTimeListeners( collectorServer ) //
-                .requestListeners( testRequestListener ) //
+                .requestListener( testRequestListener ) //
                 .build();
 
-//            loadGenerator.run();
+            loadGenerator.begin();
 
             loadGenerators.add( loadGenerator );
 
@@ -164,7 +166,7 @@ public class CollectorTest
 
         for ( LoadGenerator loadGenerator : loadGenerators )
         {
-//            loadGenerator.interrupt();
+            loadGenerator.interrupt();
         }
 
         for ( TestRequestListener testRequestListener : testRequestListeners )
