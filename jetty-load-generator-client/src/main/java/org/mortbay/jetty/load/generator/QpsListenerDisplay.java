@@ -18,20 +18,17 @@
 
 package org.mortbay.jetty.load.generator;
 
-import java.net.InetAddress;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
 
-import static org.mortbay.jetty.load.generator.LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER;
+import java.net.InetAddress;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This listener will record time between start of send and onCommit event
@@ -43,6 +40,8 @@ public class QpsListenerDisplay
 {
 
     private static final Logger LOGGER = Log.getLogger( QpsListenerDisplay.class );
+
+    public static final String START_RESPONSE_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Response-Time";
 
     private ScheduledExecutorService scheduledExecutorService;
 
@@ -81,16 +80,18 @@ public class QpsListenerDisplay
 
     }
 
+
     @Override
     public void onCommit( Request request )
     {
-        String startTime = request.getHeaders().get( START_RESPONSE_TIME_HEADER );
-        if ( !StringUtil.isBlank( startTime ) )
-        {
-            long end = System.nanoTime();
-            long time = end - Long.parseLong( startTime );
-            this.recorder.recordValue( time );
-        }
+        // we only care about total count and start/end so just record 1 :-)
+        this.recorder.recordValue( 1 );
+    }
+
+    @Override
+    public void onFailure( Request request, Throwable failure )
+    {
+        LOGGER.warn( "failure to send request: {}", failure.getMessage() );
     }
 
     private static class ValueDisplayRunnable

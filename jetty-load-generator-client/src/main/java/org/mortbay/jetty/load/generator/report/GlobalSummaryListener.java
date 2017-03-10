@@ -25,6 +25,7 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.ValueListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.resource.Resource;
 import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
@@ -34,7 +35,7 @@ import java.io.Serializable;
  * This will collect a global histogram for all response and latency times
  */
 public class GlobalSummaryListener
-    implements ResponseTimeListener, LatencyTimeListener, Serializable
+    implements Resource.NodeListener
 {
 
     private static final Logger LOGGER = Log.getLogger( GlobalSummaryListener.class );
@@ -58,38 +59,10 @@ public class GlobalSummaryListener
     }
 
     @Override
-    public void onResponseTimeValue( ValueListener.Values values )
+    public void onResourceNode( Resource.Info info )
     {
-        long time = values.getTime();
-        try
-        {
-            responseHistogram.recordValue( time );
-        }
-        catch ( ArrayIndexOutOfBoundsException e )
-        {
-            LOGGER.warn( "skip error recording response time {}, {}", time, e.getMessage() );
-        }
-
-    }
-
-    @Override
-    public void onLatencyTimeValue( ValueListener.Values values )
-    {
-        long time = values.getTime();
-        try
-        {
-            latencyHistogram.recordValue( time );
-        }
-        catch ( ArrayIndexOutOfBoundsException e )
-        {
-            LOGGER.warn( "skip error recording latency time {}, {}", time, e.getMessage() );
-        }
-    }
-
-    @Override
-    public void onLoadGeneratorStop()
-    {
-        // no op
+        latencyHistogram.recordValue( info.getLatencyTime() );
+        responseHistogram.recordValue( info.getResponseTime() );
     }
 
 
