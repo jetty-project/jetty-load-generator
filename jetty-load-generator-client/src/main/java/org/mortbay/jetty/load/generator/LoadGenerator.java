@@ -794,7 +794,6 @@ public class LoadGenerator {
     public enum Transport {
         HTTP,
         HTTPS,
-        FCGI,
         H2C,
         H2
     }
