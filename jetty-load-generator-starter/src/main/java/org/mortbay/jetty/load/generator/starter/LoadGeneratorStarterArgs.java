@@ -70,6 +70,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--report-host", "-rh" }, description = "Report host" )
     private String reportHost = "localhost";
 
+    @Parameter( names = { "--scheme" }, description = "Scheme (http/https)" )
+    private String scheme = "http";
+
     @Parameter( names = { "--report-port", "-rp" }, description = "Report port" )
     private int reportPort;
 
@@ -333,6 +336,16 @@ public class LoadGeneratorStarterArgs
         this.warmupNumber = warmupNumber;
     }
 
+    public String getScheme()
+    {
+        return scheme;
+    }
+
+    public void setScheme( String scheme )
+    {
+        this.scheme = scheme;
+    }
+
     @Override
     public String toString()
     {
@@ -341,9 +354,9 @@ public class LoadGeneratorStarterArgs
             + ", port=" + port + ", users=" + users + ", transactionRate=" + transactionRate + ", transport='"
             + transport + '\'' + ", selectors=" + selectors + ", runningTime=" + runningTime + ", runningTimeUnit='"
             + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='" + reportHost + '\''
-            + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt + ", statsFile='" + statsFile + '\''
-            + ", params=" + params + ", help=" + help + ", displayStatsAtEnd=" + displayStatsAtEnd
-            + ", collectServerStats=" + collectServerStats + ", warmupNumber=" + warmupNumber + '}';
+            + ", scheme='" + scheme + '\'' + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt
+            + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help + ", displayStatsAtEnd="
+            + displayStatsAtEnd + ", collectServerStats=" + collectServerStats + ", warmupNumber=" + warmupNumber + '}';
     }
 
     public enum Transport {

@@ -61,8 +61,22 @@ public class GlobalSummaryListener
     @Override
     public void onResourceNode( Resource.Info info )
     {
-        latencyHistogram.recordValue( info.getLatencyTime() );
-        responseHistogram.recordValue( info.getResponseTime() );
+        try
+        {
+            latencyHistogram.recordValue( info.getLatencyTime() );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "fail to record latency value: {}", info.getLatencyTime() );
+        }
+        try
+        {
+            responseHistogram.recordValue( info.getResponseTime() );
+        }
+        catch ( ArrayIndexOutOfBoundsException e )
+        {
+            LOGGER.warn( "fail to record response time value: {}", info.getLatencyTime() );
+        }
     }
 
 

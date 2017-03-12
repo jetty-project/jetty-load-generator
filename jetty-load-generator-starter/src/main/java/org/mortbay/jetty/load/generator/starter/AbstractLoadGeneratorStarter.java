@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.mortbay.jetty.load.generator.Http1ClientTransportBuilder;
@@ -39,13 +41,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  *
  */
 public abstract class AbstractLoadGeneratorStarter
 {
+
+    private Logger logger = Log.getLogger( getClass() );
 
     private LoadGeneratorStarterArgs starterArgs;
 
@@ -75,6 +82,7 @@ public abstract class AbstractLoadGeneratorStarter
             .resource( resourceProfile ) //
             .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
             .responseTimeListeners( getResponseTimeListeners() ) //
+            .scheme( starterArgs.getScheme() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ); //
 
 
@@ -102,16 +110,25 @@ public abstract class AbstractLoadGeneratorStarter
         }
 
         LoadGenerator loadGenerator = loadGeneratorBuilder.build();
+        logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString());
         CompletableFuture<Void> cf = loadGenerator.begin();
 
 
         if (runFor)
         {
-            cf.handle( ( aVoid, throwable ) -> {
-                return null;
-            } ).get(starterArgs.getRunningTime() * 2, starterArgs.getRunningTimeUnit());
+            logger.info( "runFor" );
+            long ts = TimeUnit.MILLISECONDS.convert( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
+            try
+            {
+                cf.get(ts + 20, TimeUnit.MILLISECONDS);
+            }
+            catch ( InterruptedException | ExecutionException | TimeoutException e )
+            {
+                logger.ignore( e );
+            }
         }
 
+        logger.info( "load test done" );
 
     }
 

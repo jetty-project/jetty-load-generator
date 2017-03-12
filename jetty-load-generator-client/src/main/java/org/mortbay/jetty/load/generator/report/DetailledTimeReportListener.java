@@ -20,6 +20,7 @@ package org.mortbay.jetty.load.generator.report;
 
 import org.mortbay.jetty.load.generator.ValueListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.resource.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 import java.io.Serializable;
@@ -28,7 +29,7 @@ import java.io.Serializable;
  * Use this one to collect all values
  */
 public class DetailledTimeReportListener
-    implements ResponseTimeListener, LatencyTimeListener, Serializable
+    implements ResponseTimeListener, LatencyTimeListener, Serializable, Resource.NodeListener
 {
     private DetailledTimeValuesReport detailledTimeValuesReport = new DetailledTimeValuesReport();
 
@@ -58,6 +59,12 @@ public class DetailledTimeReportListener
                                                  values.getPath(), //
                                                  values.getStatus(), //
                                                  values.getTime() ) );
+    }
+
+    @Override
+    public void onResourceNode( Resource.Info info )
+    {
+        //info.
     }
 
     public DetailledTimeValuesReport getDetailledResponseTimeValuesReport()

@@ -91,7 +91,7 @@ public class QpsListenerDisplay
     @Override
     public void onFailure( Request request, Throwable failure )
     {
-        LOGGER.warn( "failure to send request: {}", failure.getMessage() );
+        LOGGER.warn( "failure to send request: {} : {}",failure.getClass(), failure.getMessage() );
     }
 
     private static class ValueDisplayRunnable

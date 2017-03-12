@@ -1,6 +1,6 @@
 import org.mortbay.jetty.load.generator.resource.Resource
 
-return new Resource("index.html",
+return new Resource("/index.html",
         new Resource("/css/bootstrap.css",
                 new Resource("/css/bootstrap-theme.css"),
                 new Resource("/js/jquery-3.1.1.min.js"),

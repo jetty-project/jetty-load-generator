@@ -26,15 +26,9 @@ import java.util.concurrent.TimeUnit;
 public interface HistogramConstants
 {
 
-    /**
-     * lowest value
-     */
     long LOWEST_DISCERNIBLE_VALUE = TimeUnit.MILLISECONDS.toNanos( 1 );
 
-    /**
-     * max 10 minutes otherwise we get out of range in histogram
-     */
-    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 10 );
+    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 1000 );
 
     int NUMBER_OF_SIGNIFICANT_VALUE_DIGITS = 3;
 
