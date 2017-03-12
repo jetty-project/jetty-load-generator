@@ -214,7 +214,7 @@ public class LoadGenerator {
         result.setExecutor(config.getExecutor());
         result.setScheduler(config.getScheduler());
         result.setMaxConnectionsPerDestination(config.getChannelsPerUser());
-        result.setMaxRequestsQueuedPerDestination(2048);
+        result.setMaxRequestsQueuedPerDestination(config.getMaxRequestsQueued());
         result.setSocketAddressResolver(config.getSocketAddressResolver());
         return result;
     }
@@ -458,6 +458,7 @@ public class LoadGenerator {
         protected final List<Listener> listeners = new ArrayList<>();
         protected final List<Request.Listener> requestListeners = new ArrayList<>();
         protected final List<Resource.Listener> resourceListeners = new ArrayList<>();
+        protected int maxRequestsQueued = 2048;
 
         public int getThreads() {
             return threads;
@@ -533,6 +534,10 @@ public class LoadGenerator {
 
         public List<Resource.Listener> getResourceListeners() {
             return resourceListeners;
+        }
+
+        public int getMaxRequestsQueued() {
+            return maxRequestsQueued;
         }
 
         @Override
@@ -726,6 +731,14 @@ public class LoadGenerator {
 
         public Builder resourceListener(Resource.Listener listener) {
             resourceListeners.add(listener);
+            return this;
+        }
+
+        public Builder maxRequestsQueued(int maxRequestsQueued) {
+            if (maxRequestsQueued < 0) {
+                throw new IllegalArgumentException("maxRequestsQueued cannot be < 0");
+            }
+            this.maxRequestsQueued = maxRequestsQueued;
             return this;
         }
 

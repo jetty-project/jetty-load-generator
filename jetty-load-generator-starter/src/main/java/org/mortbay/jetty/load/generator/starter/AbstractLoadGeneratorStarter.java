@@ -85,6 +85,10 @@ public abstract class AbstractLoadGeneratorStarter
             .scheme( starterArgs.getScheme() ) //
             .latencyTimeListeners( getLatencyTimeListeners() ); //
 
+        if (starterArgs.getMaxRequestsQueued() > 0)
+        {
+            loadGeneratorBuilder.maxRequestsQueued( starterArgs.getMaxRequestsQueued() );
+        }
 
         if (getExecutorService() != null)
         {

@@ -97,6 +97,8 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--warmup-number", "-wn" }, description = "Warm up number to run" )
     private int warmupNumber;
 
+    @Parameter( names = { "--max-requests-queued", "-mrq" }, description = "Max Requests Queued" )
+    private int maxRequestsQueued = -1;
 
     public LoadGeneratorStarterArgs()
     {
@@ -346,6 +348,16 @@ public class LoadGeneratorStarterArgs
         this.scheme = scheme;
     }
 
+    public int getMaxRequestsQueued()
+    {
+        return maxRequestsQueued;
+    }
+
+    public void setMaxRequestsQueued( int maxRequestsQueued )
+    {
+        this.maxRequestsQueued = maxRequestsQueued;
+    }
+
     @Override
     public String toString()
     {
@@ -356,7 +368,8 @@ public class LoadGeneratorStarterArgs
             + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='" + reportHost + '\''
             + ", scheme='" + scheme + '\'' + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt
             + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help + ", displayStatsAtEnd="
-            + displayStatsAtEnd + ", collectServerStats=" + collectServerStats + ", warmupNumber=" + warmupNumber + '}';
+            + displayStatsAtEnd + ", collectServerStats=" + collectServerStats + ", warmupNumber=" + warmupNumber
+            + ", maxRequestsQueued=" + maxRequestsQueued + '}';
     }
 
     public enum Transport {
