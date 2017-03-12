@@ -146,6 +146,7 @@ public class Resource {
         private long totalTime;
         private long contentLength;
         private boolean pushed;
+        private int status;
 
         private Info(Resource resource) {
             this.resource = resource;
@@ -199,9 +200,19 @@ public class Resource {
             return pushed;
         }
 
-        public void setPushed(boolean pushed) {
+        public void setPushed( boolean pushed) {
             this.pushed = pushed;
         }
+
+        public int getStatus() {
+            return status;
+        }
+
+        public void setStatus( int status ) {
+            this.status = status;
+        }
+
+
     }
 
     public interface Listener extends EventListener {

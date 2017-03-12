@@ -422,6 +422,7 @@ public class LoadGenerator {
                 }
                 if (result.isSucceeded()) {
                     info.setResponseTime(System.nanoTime());
+                    info.setStatus( result.getResponse().getStatus() );
                     if (!warmup) {
                         fireResourceNodeEvent(info);
                     }

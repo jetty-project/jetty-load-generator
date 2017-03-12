@@ -160,6 +160,7 @@ public class LoadGeneratorTest {
         prepare(new TestHandler());
 
         Queue<String> resources = new ConcurrentLinkedDeque<>();
+        List<Resource.Info> infos = new ArrayList<>(  );
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .port(connector.getLocalPort())
                 .httpClientTransportBuilder(clientTransportBuilder)
@@ -168,12 +169,16 @@ public class LoadGeneratorTest {
                                 new Resource("/11").responseLength(1024))
                                 .responseLength(10 * 1024))
                         .responseLength(16 * 1024))
-                .resourceListener((Resource.NodeListener)info -> resources.offer(info.getResource().getPath()))
+                .resourceListener((Resource.NodeListener)info -> {
+                    resources.offer(info.getResource().getPath());
+                    infos.add( info );
+                })
                 .resourceListener((Resource.TreeListener)info -> resources.offer(info.getResource().getPath()))
                 .build();
         loadGenerator.begin().get(5, TimeUnit.SECONDS);
 
         Assert.assertEquals("/,/1,/11,/", resources.stream().collect(Collectors.joining(",")));
+        Assert.assertTrue( infos.stream().allMatch( info -> info.getStatus() == 200 ) );
     }
 
     @Test
