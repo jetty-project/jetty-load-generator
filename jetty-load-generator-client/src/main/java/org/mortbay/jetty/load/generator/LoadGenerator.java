@@ -422,7 +422,7 @@ public class LoadGenerator {
                 }
                 if (result.isSucceeded()) {
                     info.setResponseTime(System.nanoTime());
-                    info.setStatus( result.getResponse().getStatus() );
+                    info.setStatus(result.getResponse().getStatus());
                     if (!warmup) {
                         fireResourceNodeEvent(info);
                     }
@@ -449,7 +449,7 @@ public class LoadGenerator {
         protected String scheme = "http";
         protected String host = "localhost";
         protected int port = 8080;
-        protected HttpClientTransportBuilder httpClientTransportBuilder;
+        protected HTTPClientTransportBuilder httpClientTransportBuilder;
         protected SslContextFactory sslContextFactory;
         protected Scheduler scheduler;
         protected ExecutorService executor;
@@ -458,7 +458,7 @@ public class LoadGenerator {
         protected final List<Listener> listeners = new ArrayList<>();
         protected final List<Request.Listener> requestListeners = new ArrayList<>();
         protected final List<Resource.Listener> resourceListeners = new ArrayList<>();
-        protected int maxRequestsQueued = 2048;
+        protected int maxRequestsQueued = 128 * 1024;
 
         public int getThreads() {
             return threads;
@@ -500,7 +500,7 @@ public class LoadGenerator {
             return port;
         }
 
-        public HttpClientTransportBuilder getHttpClientTransportBuilder() {
+        public HTTPClientTransportBuilder getHttpClientTransportBuilder() {
             return httpClientTransportBuilder;
         }
 
@@ -524,6 +524,10 @@ public class LoadGenerator {
             return resource;
         }
 
+        public int getMaxRequestsQueued() {
+            return maxRequestsQueued;
+        }
+
         public List<Listener> getListeners() {
             return listeners;
         }
@@ -534,10 +538,6 @@ public class LoadGenerator {
 
         public List<Resource.Listener> getResourceListeners() {
             return resourceListeners;
-        }
-
-        public int getMaxRequestsQueued() {
-            return maxRequestsQueued;
         }
 
         @Override
@@ -669,7 +669,7 @@ public class LoadGenerator {
          * @param httpClientTransportBuilder the HttpClient transport builder
          * @return this Builder
          */
-        public Builder httpClientTransportBuilder(HttpClientTransportBuilder httpClientTransportBuilder) {
+        public Builder httpClientTransportBuilder(HTTPClientTransportBuilder httpClientTransportBuilder) {
             this.httpClientTransportBuilder = Objects.requireNonNull(httpClientTransportBuilder);
             return this;
         }
@@ -734,17 +734,9 @@ public class LoadGenerator {
             return this;
         }
 
-        public Builder maxRequestsQueued(int maxRequestsQueued) {
-            if (maxRequestsQueued < 0) {
-                throw new IllegalArgumentException("maxRequestsQueued cannot be < 0");
-            }
-            this.maxRequestsQueued = maxRequestsQueued;
-            return this;
-        }
-
         public LoadGenerator build() {
             if (httpClientTransportBuilder == null) {
-                httpClientTransportBuilder = new Http1ClientTransportBuilder();
+                httpClientTransportBuilder = new HTTP1ClientTransportBuilder();
             }
             return new LoadGenerator(this);
         }
@@ -800,5 +792,4 @@ public class LoadGenerator {
     public HttpVersion getHttpVersion() {
         return HttpVersion.HTTP_1_1;
     }
-
 }

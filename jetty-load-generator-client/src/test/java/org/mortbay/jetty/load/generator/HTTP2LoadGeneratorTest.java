@@ -79,7 +79,7 @@ public class HTTP2LoadGeneratorTest {
         AtomicLong sent = new AtomicLong();
         AtomicLong pushed = new AtomicLong();
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
-                .httpClientTransportBuilder(new Http2ClientTransportBuilder())
+                .httpClientTransportBuilder(new HTTP2ClientTransportBuilder())
                 .port(connector.getLocalPort())
                 .resource(new Resource("/", new Resource("/1"), new Resource("/2")).responseLength(128 * 1024))
                 .requestListener(new Request.Listener.Adapter() {

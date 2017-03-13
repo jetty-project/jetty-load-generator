@@ -52,7 +52,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.CollectorServer;
-import org.mortbay.jetty.load.generator.Http1ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.resource.Resource;
 
@@ -132,9 +131,8 @@ public class CollectorTest
                 .port( port ) //
                 .usersPerThread( 2 ) //
                 .resourceRate( 5 ) //
-                .iterationsPerThread( 4 )
 //                .transport( LoadGenerator.Transport.HTTP ) //
-                .httpClientTransportBuilder( new Http1ClientTransportBuilder() ) //
+                .httpClientTransportBuilder( new HTTP1ClientTransportBuilder().build() ) //
                 //.scheduler( scheduler ) //
                 .resource( profile ) //
                 .responseTimeListeners( collectorServer ) //
@@ -188,7 +186,7 @@ public class CollectorTest
         QueuedThreadPool serverThreads = new QueuedThreadPool();
         serverThreads.setName( "server" );
         Server server = new Server( serverThreads );
-        server.setSessionIdManager( new HashSessionIdManager() );
+//        server.setSessionIdManager( new HashSessionIdManager() );
         ServerConnector connector = new ServerConnector( server, new HttpConnectionFactory( new HttpConfiguration() ) );
         server.addConnector( connector );
 

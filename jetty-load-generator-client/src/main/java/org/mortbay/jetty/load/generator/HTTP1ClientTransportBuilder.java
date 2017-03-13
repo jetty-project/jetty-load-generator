@@ -19,7 +19,25 @@
 package org.mortbay.jetty.load.generator;
 
 import org.eclipse.jetty.client.HttpClientTransport;
+import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 
-public interface HttpClientTransportBuilder {
-    public HttpClientTransport build();
+/**
+ * Helper builder to provide an http(s) {@link HttpClientTransport}
+ */
+public class HTTP1ClientTransportBuilder implements HTTPClientTransportBuilder {
+    private int selectors = 1;
+
+    public HTTP1ClientTransportBuilder selectors(int selectors) {
+        this.selectors = selectors;
+        return this;
+    }
+
+    public int getSelectors() {
+        return selectors;
+    }
+
+    @Override
+    public HttpClientTransport build() {
+        return new HttpClientTransportOverHTTP(getSelectors());
+    }
 }

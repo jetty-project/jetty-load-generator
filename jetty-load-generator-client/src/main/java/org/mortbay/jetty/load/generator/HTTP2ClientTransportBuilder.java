@@ -25,18 +25,46 @@ import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
 /**
  * Helper builder to provide an http2 {@link HttpClientTransport}
  */
-public class Http2ClientTransportBuilder implements HttpClientTransportBuilder {
+public class HTTP2ClientTransportBuilder implements HTTPClientTransportBuilder {
     private int selectors = 1;
+    private int sessionRecvWindow = 16 * 1024 * 1024;
+    private int streamRecvWindow = 16 * 1024 * 1024;
 
-    public Http2ClientTransportBuilder selectors(int selectors) {
+    public HTTP2ClientTransportBuilder selectors(int selectors) {
         this.selectors = selectors;
         return this;
+    }
+
+    public int getSelectors() {
+        return selectors;
+    }
+
+    public HTTP2ClientTransportBuilder sessionRecvWindow(int sessionRecvWindow) {
+        this.sessionRecvWindow = sessionRecvWindow;
+        return this;
+    }
+
+    public int getSessionRecvWindow() {
+        return sessionRecvWindow;
+    }
+
+    public HTTP2ClientTransportBuilder streamRecvWindow(int streamRecvWindow) {
+        this.streamRecvWindow = streamRecvWindow;
+        return this;
+    }
+
+    public int getStreamRecvWindow() {
+        return streamRecvWindow;
     }
 
     @Override
     public HttpClientTransport build() {
         HTTP2Client http2Client = new HTTP2Client();
-        http2Client.setSelectors(selectors);
+        // Chrome uses 15 MiB session and 6 MiB stream windows.
+        // Firefox uses 12 MiB session and stream windows.
+        http2Client.setInitialSessionRecvWindow(getSessionRecvWindow());
+        http2Client.setInitialStreamRecvWindow(getStreamRecvWindow());
+        http2Client.setSelectors(getSelectors());
         return new HttpClientTransportOverHTTP2(http2Client);
     }
 }

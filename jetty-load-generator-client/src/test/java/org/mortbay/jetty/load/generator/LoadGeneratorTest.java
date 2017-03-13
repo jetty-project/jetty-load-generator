@@ -51,17 +51,17 @@ public class LoadGeneratorTest {
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object[]> parameters() {
         List<Object[]> result = new ArrayList<>();
-        result.add(new Object[]{new HttpConnectionFactory(), new Http1ClientTransportBuilder()});
-        result.add(new Object[]{new HTTP2CServerConnectionFactory(new HttpConfiguration()), new Http2ClientTransportBuilder()});
+        result.add(new Object[]{new HttpConnectionFactory(), new HTTP1ClientTransportBuilder()});
+        result.add(new Object[]{new HTTP2CServerConnectionFactory(new HttpConfiguration()), new HTTP2ClientTransportBuilder()});
         return result;
     }
 
     private final ConnectionFactory connectionFactory;
-    private final HttpClientTransportBuilder clientTransportBuilder;
+    private final HTTPClientTransportBuilder clientTransportBuilder;
     private Server server;
     private ServerConnector connector;
 
-    public LoadGeneratorTest(ConnectionFactory connectionFactory, HttpClientTransportBuilder clientTransportBuilder) {
+    public LoadGeneratorTest(ConnectionFactory connectionFactory, HTTPClientTransportBuilder clientTransportBuilder) {
         this.connectionFactory = connectionFactory;
         this.clientTransportBuilder = clientTransportBuilder;
     }
