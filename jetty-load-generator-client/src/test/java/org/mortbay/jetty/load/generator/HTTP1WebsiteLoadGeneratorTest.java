@@ -43,7 +43,9 @@ public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         AtomicLong requests = new AtomicLong();
         Histogram histogram = new AtomicHistogram(TimeUnit.MICROSECONDS.toNanos(1), TimeUnit.SECONDS.toNanos(10), 3);
         LoadGenerator loadGenerator = prepareLoadGenerator(new HTTP1ClientTransportBuilder())
-                .runFor(2, TimeUnit.MINUTES)
+                .warmupIterationsPerThread(10)
+                .iterationsPerThread(100)
+//                .runFor(2, TimeUnit.MINUTES)
                 .usersPerThread(100)
                 .channelsPerUser(6)
                 .resourceRate(20)
@@ -62,19 +64,6 @@ public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
                     }
                 })
                 .build();
-
-/*
-        scheduler.schedule(new Runnable() {
-            @Override
-            public void run() {
-                System.err.println();
-                System.err.printf("executor: q/l/t %d/%d/%d%n", executor.getMaxQueueSize(), executor.getMaxQueueLatency(), executor.getMaxActiveThreads());
-                System.err.printf("queued requests: %d%n", requests.get());
-//                server.dumpStdErr();
-                scheduler.schedule(this, 2, TimeUnit.SECONDS);
-            }
-        }, 2, TimeUnit.SECONDS);
-*/
 
         loadGenerator.begin().join();
 

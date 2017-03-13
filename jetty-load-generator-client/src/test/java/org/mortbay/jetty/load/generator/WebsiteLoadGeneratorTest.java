@@ -83,7 +83,6 @@ public abstract class WebsiteLoadGeneratorTest {
     protected LoadGenerator.Builder prepareLoadGenerator(HTTPClientTransportBuilder clientTransportBuilder) {
         return new LoadGenerator.Builder()
                 .threads(1)
-                .warmupIterationsPerThread(1000)
                 .port(connector.getLocalPort())
                 .httpClientTransportBuilder(clientTransportBuilder)
                 .resource(resource)

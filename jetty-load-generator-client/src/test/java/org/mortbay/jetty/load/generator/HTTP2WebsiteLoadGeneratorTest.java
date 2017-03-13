@@ -41,7 +41,9 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         AtomicLong requests = new AtomicLong();
         Histogram histogram = new AtomicHistogram(TimeUnit.MICROSECONDS.toNanos(1), TimeUnit.SECONDS.toNanos(10), 3);
         LoadGenerator loadGenerator = prepareLoadGenerator(new HTTP2ClientTransportBuilder())
-                .runFor(2, TimeUnit.MINUTES)
+                .warmupIterationsPerThread(10)
+                .iterationsPerThread(100)
+//                .runFor(2, TimeUnit.MINUTES)
                 .usersPerThread(100)
                 .channelsPerUser(1000)
                 .resourceRate(20)

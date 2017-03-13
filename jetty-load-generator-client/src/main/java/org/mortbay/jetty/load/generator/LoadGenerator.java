@@ -83,13 +83,17 @@ public class LoadGenerator {
         if (logger.isDebugEnabled()) {
             logger.debug("generating load, {}", config);
         }
-        fireBeginEvent(this);
+
         threads = Executors.newCachedThreadPool();
+        interrupt = false;
+
+        fireBeginEvent(this);
 
         CompletableFuture[] futures = new CompletableFuture[config.getThreads()];
         for (int i = 0; i < futures.length; ++i) {
             futures[i] = CompletableFuture.supplyAsync(this::process, threads).thenCompose(Function.identity());
         }
+
         return CompletableFuture.allOf(futures).whenCompleteAsync((r, x) -> {
             fireEndEvent(this);
             interrupt();

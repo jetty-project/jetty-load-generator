@@ -231,4 +231,38 @@ public class LoadGeneratorTest {
         Assert.assertEquals(5, requests.get());
         Assert.assertEquals(3, resources.get());
     }
+
+    @Test
+    public void testTwoRuns() throws Exception {
+        prepare(new TestHandler());
+
+        AtomicLong requests = new AtomicLong();
+        AtomicLong resources = new AtomicLong();
+        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .iterationsPerThread(3)
+                .resourceRate(5)
+                .resource(new Resource("/").responseLength(1024))
+                .requestListener(new Request.Listener.Adapter() {
+                    @Override
+                    public void onBegin(Request request) {
+                        requests.incrementAndGet();
+                    }
+                })
+                .resourceListener((Resource.NodeListener)info -> resources.incrementAndGet())
+                .build();
+
+        loadGenerator.begin().get(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals(3, requests.get());
+        Assert.assertEquals(3, resources.get());
+
+        requests.set(0);
+        resources.set(0);
+        loadGenerator.begin().get(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals(3, requests.get());
+        Assert.assertEquals(3, resources.get());
+    }
 }
