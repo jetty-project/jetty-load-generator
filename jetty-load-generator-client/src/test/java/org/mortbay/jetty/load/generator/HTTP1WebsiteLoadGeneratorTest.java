@@ -28,7 +28,6 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
 import org.junit.Before;
 import org.junit.Test;
-import org.mortbay.jetty.load.generator.resource.Resource;
 
 public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
     @Before

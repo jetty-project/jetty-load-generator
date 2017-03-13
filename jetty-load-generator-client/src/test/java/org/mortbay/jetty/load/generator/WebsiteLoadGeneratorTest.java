@@ -27,7 +27,6 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
 import org.junit.After;
-import org.mortbay.jetty.load.generator.resource.Resource;
 
 public abstract class WebsiteLoadGeneratorTest {
     // A dump of the resources needed by the webtide.com website.

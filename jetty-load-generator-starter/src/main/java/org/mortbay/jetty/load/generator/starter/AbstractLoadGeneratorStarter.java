@@ -30,8 +30,8 @@ import org.mortbay.jetty.load.generator.Http1ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.Http2ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.HttpClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.resource.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 

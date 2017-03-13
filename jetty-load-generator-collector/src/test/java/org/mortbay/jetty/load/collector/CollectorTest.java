@@ -53,7 +53,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.CollectorServer;
 import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.resource.Resource;
+import org.mortbay.jetty.load.generator.Resource;
 
 @RunWith( Parameterized.class )
 public class CollectorTest

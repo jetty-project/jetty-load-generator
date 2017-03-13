@@ -48,7 +48,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mortbay.jetty.load.generator.resource.Resource;
 
 @RunWith(Parameterized.class)
 public class LoadGeneratorTest {

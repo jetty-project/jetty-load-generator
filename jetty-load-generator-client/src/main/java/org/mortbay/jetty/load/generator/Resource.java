@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator.resource;
+package org.mortbay.jetty.load.generator;
 
 import java.net.URI;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-import org.mortbay.jetty.load.generator.resource.Resource
+import org.mortbay.jetty.load.generator.Resource
 
 return new Resource(
         new Resource("index.html",
