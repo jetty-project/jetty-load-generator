@@ -22,6 +22,7 @@ import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
@@ -30,7 +31,7 @@ import org.mortbay.jetty.load.generator.resource.Resource;
 
 public abstract class WebsiteLoadGeneratorTest {
     // A dump of the resources needed by the webtide.com website.
-    private Resource resource = new Resource("/",
+    protected Resource resource = new Resource("/",
             new Resource("/styles.css").responseLength(1600),
             new Resource("/pagenavi-css.css").responseLength(426),
             new Resource("/style.css").responseLength(74900),
@@ -62,9 +63,10 @@ public abstract class WebsiteLoadGeneratorTest {
             new Resource("/wp-emoji-release.min.js").responseLength(11200),
             new Resource("/fontawesome-webfont.woff2").responseLength(70300)
     ).responseLength(30700);
-    private Server server;
-    private ServerConnector connector;
-    private Scheduler scheduler;
+    protected Server server;
+    protected ServerConnector connector;
+    protected Scheduler scheduler;
+    protected StatisticsHandler serverStats;
 
     protected void prepareServer(ConnectionFactory connectionFactory, Handler handler)  throws Exception {
         QueuedThreadPool serverThreads = new QueuedThreadPool(5120);
@@ -72,7 +74,9 @@ public abstract class WebsiteLoadGeneratorTest {
         server = new Server(serverThreads);
         connector = new ServerConnector(server, connectionFactory);
         server.addConnector(connector);
-        server.setHandler(handler);
+        serverStats = new StatisticsHandler();
+        server.setHandler(serverStats);
+        serverStats.setHandler(handler);
 
         scheduler = new ScheduledExecutorScheduler();
         server.addBean(scheduler, true);
@@ -94,9 +98,5 @@ public abstract class WebsiteLoadGeneratorTest {
         if (server != null) {
             server.stop();
         }
-    }
-
-    protected Resource getResource() {
-        return resource;
     }
 }

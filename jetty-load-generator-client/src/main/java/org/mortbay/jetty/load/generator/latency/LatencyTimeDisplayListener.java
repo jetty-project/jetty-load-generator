@@ -88,7 +88,7 @@ public class LatencyTimeDisplayListener
     {
         // we initialize Maps to avoid concurrent issues
         recorderPerPath = new ConcurrentHashMap<>();
-        initializeMap( recorderPerPath, loadGenerator.getResource().getResources() );
+        initializeMap( recorderPerPath, loadGenerator.getConfig().getResource().getResources() );
     }
 
     private void initializeMap( Map<String, Recorder> recorderMap, List<Resource> resources )

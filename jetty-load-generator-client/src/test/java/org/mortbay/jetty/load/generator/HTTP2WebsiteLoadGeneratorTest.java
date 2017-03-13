@@ -76,7 +76,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         @Override
         public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             if (target.equals("/")) {
-                for (Resource resource : getResource().getResources()) {
+                for (Resource resource : resource.getResources()) {
                     jettyRequest.getPushBuilder()
                             .path(resource.getPath())
                             .setHeader("JLG-Response-Length", Integer.toString(resource.getResponseLength()))

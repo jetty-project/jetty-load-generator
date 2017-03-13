@@ -766,34 +766,4 @@ public class LoadGenerator {
     public interface EndListener extends Listener {
         public void onEnd(LoadGenerator generator);
     }
-
-    // TODO: methods to remove once implementation is stable.
-
-    public Resource getResource() {
-        return config.getResource();
-    }
-
-    public AtomicBoolean getStop() {
-        return new AtomicBoolean();
-    }
-
-    public int getTransactionRate() {
-        return config.getResourceRate();
-    }
-
-    public String getScheme() {
-        return config.getScheme();
-    }
-
-    public String getHost() {
-        return config.getHost();
-    }
-
-    public int getPort() {
-        return config.getPort();
-    }
-
-    public HttpVersion getHttpVersion() {
-        return HttpVersion.HTTP_1_1;
-    }
 }

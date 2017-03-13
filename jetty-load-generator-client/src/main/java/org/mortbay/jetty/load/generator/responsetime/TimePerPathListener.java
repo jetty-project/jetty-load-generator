@@ -90,9 +90,9 @@ public class TimePerPathListener
     {
         // we initialize Maps to avoid concurrent issues
         responseTimePerPath = new ConcurrentHashMap<>();
-        initializeMap( responseTimePerPath, loadGenerator.getResource().getResources() );
+        initializeMap( responseTimePerPath, loadGenerator.getConfig().getResource().getResources() );
         latencyTimePerPath = new ConcurrentHashMap<>();
-        initializeMap( latencyTimePerPath, loadGenerator.getResource().getResources() );
+        initializeMap( latencyTimePerPath, loadGenerator.getConfig().getResource().getResources() );
     }
 
     private void initializeMap( Map<String, AtomicHistogram> histogramMap, List<Resource> resources )
