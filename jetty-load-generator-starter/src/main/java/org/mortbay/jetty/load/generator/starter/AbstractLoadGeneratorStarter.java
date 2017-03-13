@@ -18,23 +18,6 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import groovy.lang.GroovyShell;
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.xml.XmlConfiguration;
-import org.mortbay.jetty.load.generator.Http1ClientTransportBuilder;
-import org.mortbay.jetty.load.generator.Http2ClientTransportBuilder;
-import org.mortbay.jetty.load.generator.HttpClientTransportBuilder;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -45,6 +28,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import groovy.lang.GroovyShell;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.xml.XmlConfiguration;
+import org.mortbay.jetty.load.generator.HTTP1ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HTTP2ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 
 /**
  *
@@ -263,19 +263,19 @@ public abstract class AbstractLoadGeneratorStarter
         this.resource = resource;
     }
 
-    public HttpClientTransportBuilder httpClientTransportBuilder()
+    public HTTPClientTransportBuilder httpClientTransportBuilder()
     {
         switch ( starterArgs.getTransport() )
         {
             case HTTP:
             case HTTPS:
             {
-                return new Http1ClientTransportBuilder().selectors( starterArgs.getSelectors() );
+                return new HTTP1ClientTransportBuilder().selectors( starterArgs.getSelectors() );
             }
             case H2C:
             case H2:
             {
-                return new Http2ClientTransportBuilder().selectors( starterArgs.getSelectors() );
+                return new HTTP2ClientTransportBuilder().selectors( starterArgs.getSelectors() );
             }
             default:
             {

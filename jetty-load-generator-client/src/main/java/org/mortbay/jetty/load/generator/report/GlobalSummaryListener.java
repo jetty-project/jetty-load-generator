@@ -18,18 +18,11 @@
 
 package org.mortbay.jetty.load.generator.report;
 
-import org.HdrHistogram.AtomicHistogram;
-import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.ValueListener;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.resource.Resource;
+import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
-
-import java.io.Serializable;
 
 /**
  * This will collect a global histogram for all response and latency times

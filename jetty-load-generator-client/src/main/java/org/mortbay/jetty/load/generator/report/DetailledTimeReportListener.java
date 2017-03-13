@@ -18,12 +18,12 @@
 
 package org.mortbay.jetty.load.generator.report;
 
+import java.io.Serializable;
+
+import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.ValueListener;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.resource.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
-
-import java.io.Serializable;
 
 /**
  * Use this one to collect all values

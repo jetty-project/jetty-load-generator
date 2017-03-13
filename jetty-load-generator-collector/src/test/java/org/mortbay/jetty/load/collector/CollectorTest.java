@@ -40,7 +40,6 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.session.HashSessionIdManager;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.log.Log;
@@ -52,6 +51,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mortbay.jetty.load.generator.CollectorServer;
+import org.mortbay.jetty.load.generator.HTTP1ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
 
@@ -132,7 +132,7 @@ public class CollectorTest
                 .usersPerThread( 2 ) //
                 .resourceRate( 5 ) //
 //                .transport( LoadGenerator.Transport.HTTP ) //
-                .httpClientTransportBuilder( new HTTP1ClientTransportBuilder().build() ) //
+                .httpClientTransportBuilder( new HTTP1ClientTransportBuilder() ) //
                 //.scheduler( scheduler ) //
                 .resource( profile ) //
                 .responseTimeListeners( collectorServer ) //

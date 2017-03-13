@@ -35,7 +35,6 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -45,7 +44,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BytesContentProvider;
-import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.CountingCallback;
@@ -749,6 +747,11 @@ public class LoadGenerator extends ContainerLifeCycle {
          */
         public Builder resource(Resource resource) {
             this.resource = resource;
+            return this;
+        }
+
+        public Builder maxRequestsQueued(int maxRequestsQueued) {
+            this.maxRequestsQueued = maxRequestsQueued;
             return this;
         }
 
