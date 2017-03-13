@@ -35,7 +35,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         testHTTP2();
     }
 
-    private void testHTTP2() {
+    private void testHTTP2() throws Exception {
         MonitoringThreadPoolExecutor executor = new MonitoringThreadPoolExecutor(1024, 60, TimeUnit.SECONDS);
 
         AtomicLong requests = new AtomicLong();

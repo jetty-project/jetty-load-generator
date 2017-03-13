@@ -52,6 +52,7 @@ import org.eclipse.jetty.util.CountingCallback;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.ManagedOperation;
+import org.eclipse.jetty.util.component.ContainerLifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -61,7 +62,7 @@ import org.mortbay.jetty.load.generator.resource.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 @ManagedObject("Jetty LoadGenerator")
-public class LoadGenerator {
+public class LoadGenerator extends ContainerLifeCycle {
     private static final Logger logger = Log.getLogger(LoadGenerator.class);
 
     private final PlatformTimer timer = PlatformTimer.detect();
@@ -75,6 +76,42 @@ public class LoadGenerator {
         this.barrier = new CyclicBarrier(config.threads);
     }
 
+    private void go() {
+        try {
+            start();
+        } catch (RuntimeException x) {
+            throw x;
+        } catch (Exception x) {
+            throw new RuntimeException(x);
+        }
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+        threads = Executors.newCachedThreadPool();
+        interrupt = false;
+        super.doStart();
+        fireBeginEvent(this);
+    }
+
+    private void halt() {
+        try {
+            stop();
+        } catch (RuntimeException x) {
+            throw x;
+        } catch (Exception x) {
+            throw new RuntimeException(x);
+        }
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        fireEndEvent(this);
+        super.doStop();
+        interrupt();
+        threads.shutdown();
+    }
+
     public Config getConfig() {
         return config;
     }
@@ -84,21 +121,14 @@ public class LoadGenerator {
             logger.debug("generating load, {}", config);
         }
 
-        threads = Executors.newCachedThreadPool();
-        interrupt = false;
-
-        fireBeginEvent(this);
+        go();
 
         CompletableFuture[] futures = new CompletableFuture[config.getThreads()];
         for (int i = 0; i < futures.length; ++i) {
             futures[i] = CompletableFuture.supplyAsync(this::process, threads).thenCompose(Function.identity());
         }
 
-        return CompletableFuture.allOf(futures).whenCompleteAsync((r, x) -> {
-            fireEndEvent(this);
-            interrupt();
-            threads.shutdown();
-        }, threads);
+        return CompletableFuture.allOf(futures).whenCompleteAsync((r, x) -> halt(), threads);
     }
 
     @ManagedOperation(value = "Interrupts this LoadGenerator", impact = "ACTION")

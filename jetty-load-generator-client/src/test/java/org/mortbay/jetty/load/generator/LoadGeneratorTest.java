@@ -18,6 +18,7 @@
 
 package org.mortbay.jetty.load.generator;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,8 +32,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import javax.management.ObjectName;
+
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
+import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -264,5 +268,42 @@ public class LoadGeneratorTest {
 
         Assert.assertEquals(3, requests.get());
         Assert.assertEquals(3, resources.get());
+    }
+
+    @Test
+    public void testJMX() throws Exception {
+        prepare(new TestHandler());
+
+        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                // Iterate forever.
+                .iterationsPerThread(0)
+                .resourceRate(5)
+                .build();
+
+        MBeanContainer mbeanContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
+        loadGenerator.addBean(mbeanContainer);
+
+        ObjectName pattern = new ObjectName(LoadGenerator.class.getPackage().getName() + ":*");
+        Set<ObjectName> objectNames = mbeanContainer.getMBeanServer().queryNames(pattern, null);
+        Assert.assertEquals(1, objectNames.size());
+        ObjectName objectName = objectNames.iterator().next();
+
+        CompletableFuture<Void> cf = loadGenerator.begin();
+
+        Thread.sleep(1000);
+
+        mbeanContainer.getMBeanServer().invoke(objectName, "interrupt", null, null);
+        mbeanContainer.beanRemoved(null, loadGenerator);
+
+        cf.handle((r, x) -> {
+            Throwable cause = x.getCause();
+            if (cause instanceof InterruptedException) {
+                return null;
+            } else {
+                throw new CompletionException(cause);
+            }
+        }).get(5, TimeUnit.SECONDS);
     }
 }
