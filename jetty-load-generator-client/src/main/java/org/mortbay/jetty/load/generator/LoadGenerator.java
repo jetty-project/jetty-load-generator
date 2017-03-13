@@ -282,7 +282,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                 if (logger.isDebugEnabled()) {
                     logger.debug("completed tree for {}", resource);
                 }
-                info.setTotalTime(System.nanoTime());
+                info.setTreeTime(System.nanoTime());
                 if (!warmup) {
                     fireResourceTreeEvent(info);
                 }

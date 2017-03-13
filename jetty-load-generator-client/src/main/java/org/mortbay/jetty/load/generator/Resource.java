@@ -143,7 +143,7 @@ public class Resource {
         private long requestTime;
         private long latencyTime;
         private long responseTime;
-        private long totalTime;
+        private long treeTime;
         private long contentLength;
         private boolean pushed;
         private int status;
@@ -180,12 +180,12 @@ public class Resource {
             this.responseTime = responseTime;
         }
 
-        public long getTotalTime() {
-            return totalTime;
+        public long getTreeTime() {
+            return treeTime;
         }
 
-        public void setTotalTime(long totalTime) {
-            this.totalTime = totalTime;
+        public void setTreeTime(long treeTime) {
+            this.treeTime = treeTime;
         }
 
         public void addContent(int bytes) {
