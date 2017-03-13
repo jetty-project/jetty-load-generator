@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class QpsListenerDisplay
     extends Request.Listener.Adapter
-    implements Request.Listener
+    implements Request.Listener, LoadGenerator.EndListener
 {
 
     private static final Logger LOGGER = Log.getLogger( QpsListenerDisplay.class );
@@ -77,7 +77,6 @@ public class QpsListenerDisplay
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
         scheduledExecutorService.scheduleWithFixedDelay( new ValueDisplayRunnable( recorder, hostname ), //
                                                          initial, delay, timeUnit );
-
     }
 
 
@@ -131,4 +130,9 @@ public class QpsListenerDisplay
         }
     }
 
+    @Override
+    public void onEnd( LoadGenerator generator )
+    {
+        this.scheduledExecutorService.shutdownNow();
+    }
 }

@@ -113,6 +113,11 @@ public abstract class AbstractLoadGeneratorStarter
             loadGeneratorBuilder.requestListener( listener );
         }
 
+        for ( LoadGenerator.Listener listener : getLoadGeneratorListeners() )
+        {
+            loadGeneratorBuilder.listener( listener );
+        }
+
         LoadGenerator loadGenerator = loadGeneratorBuilder.build();
         logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString());
         CompletableFuture<Void> cf = loadGenerator.begin();
@@ -161,6 +166,10 @@ public abstract class AbstractLoadGeneratorStarter
         }
     }
 
+    protected LoadGenerator.Listener[] getLoadGeneratorListeners()
+    {
+        return new LoadGenerator.Listener[0];
+    }
 
     protected Resource.Listener[] getResourceListeners() {
         return new Resource.Listener[0];
