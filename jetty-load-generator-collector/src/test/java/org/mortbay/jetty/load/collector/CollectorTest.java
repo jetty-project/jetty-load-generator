@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,37 +18,6 @@
 
 package org.mortbay.jetty.load.collector;
 
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.session.HashSessionIdManager;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
-import org.eclipse.jetty.util.thread.Scheduler;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.mortbay.jetty.load.generator.CollectorServer;
-import org.mortbay.jetty.load.generator.HttpTransportBuilder;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.profile.Resource;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +26,34 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.mortbay.jetty.load.generator.CollectorServer;
+import org.mortbay.jetty.load.generator.HTTP1ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.Resource;
 
 @RunWith( Parameterized.class )
 public class CollectorTest
@@ -132,17 +129,17 @@ public class CollectorTest
             LoadGenerator loadGenerator = new LoadGenerator.Builder() //
                 .host( "localhost" ) //
                 .port( port ) //
-                .users( 2 ) //
-                .transactionRate( 5 ) //
-                .transport( LoadGenerator.Transport.HTTP ) //
-                .httpClientTransport( new HttpTransportBuilder().build() ) //
+                .usersPerThread( 2 ) //
+                .resourceRate( 5 ) //
+//                .transport( LoadGenerator.Transport.HTTP ) //
+                .httpClientTransportBuilder( new HTTP1ClientTransportBuilder() ) //
                 //.scheduler( scheduler ) //
                 .resource( profile ) //
                 .responseTimeListeners( collectorServer ) //
-                .requestListeners( testRequestListener ) //
+                .requestListener( testRequestListener ) //
                 .build();
 
-            loadGenerator.run();
+            loadGenerator.begin();
 
             loadGenerators.add( loadGenerator );
 
@@ -189,7 +186,7 @@ public class CollectorTest
         QueuedThreadPool serverThreads = new QueuedThreadPool();
         serverThreads.setName( "server" );
         Server server = new Server( serverThreads );
-        server.setSessionIdManager( new HashSessionIdManager() );
+//        server.setSessionIdManager( new HashSessionIdManager() );
         ServerConnector connector = new ServerConnector( server, new HttpConnectionFactory( new HttpConfiguration() ) );
         server.addConnector( connector );
 

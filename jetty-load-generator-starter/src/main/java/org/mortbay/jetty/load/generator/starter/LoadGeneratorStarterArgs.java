@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,13 +18,12 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.internal.Maps;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -71,6 +70,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--report-host", "-rh" }, description = "Report host" )
     private String reportHost = "localhost";
 
+    @Parameter( names = { "--scheme" }, description = "Scheme (http/https)" )
+    private String scheme = "http";
+
     @Parameter( names = { "--report-port", "-rp" }, description = "Report port" )
     private int reportPort;
 
@@ -92,6 +94,11 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--collect-server-stats", "-css"}, description = "Collect server stats on remote StatisticsServlet" )
     private boolean collectServerStats;
 
+    @Parameter( names = { "--warmup-number", "-wn" }, description = "Warm up number to run" )
+    private int warmupNumber;
+
+    @Parameter( names = { "--max-requests-queued", "-mrq" }, description = "Max Requests Queued" )
+    private int maxRequestsQueued = -1;
 
     public LoadGeneratorStarterArgs()
     {
@@ -148,20 +155,18 @@ public class LoadGeneratorStarterArgs
         this.transactionRate = transactionRate;
     }
 
-    public LoadGenerator.Transport getTransport()
+    public Transport getTransport()
     {
         switch ( this.transport )
         {
             case "http":
-                return LoadGenerator.Transport.HTTP;
+                return Transport.HTTP;
             case "https":
-                return LoadGenerator.Transport.HTTPS;
+                return Transport.HTTPS;
             case "h2":
-                return LoadGenerator.Transport.H2;
+                return Transport.H2;
             case "h2c":
-                return LoadGenerator.Transport.H2C;
-            case "fcgi":
-                return LoadGenerator.Transport.FCGI;
+                return Transport.H2C;
             default:
                 throw new IllegalArgumentException( transport + " is not recognized" );
         }
@@ -323,6 +328,36 @@ public class LoadGeneratorStarterArgs
         this.collectServerStats = collectServerStats;
     }
 
+    public int getWarmupNumber()
+    {
+        return warmupNumber;
+    }
+
+    public void setWarmupNumber( int warmupNumber )
+    {
+        this.warmupNumber = warmupNumber;
+    }
+
+    public String getScheme()
+    {
+        return scheme;
+    }
+
+    public void setScheme( String scheme )
+    {
+        this.scheme = scheme;
+    }
+
+    public int getMaxRequestsQueued()
+    {
+        return maxRequestsQueued;
+    }
+
+    public void setMaxRequestsQueued( int maxRequestsQueued )
+    {
+        this.maxRequestsQueued = maxRequestsQueued;
+    }
+
     @Override
     public String toString()
     {
@@ -331,8 +366,16 @@ public class LoadGeneratorStarterArgs
             + ", port=" + port + ", users=" + users + ", transactionRate=" + transactionRate + ", transport='"
             + transport + '\'' + ", selectors=" + selectors + ", runningTime=" + runningTime + ", runningTimeUnit='"
             + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='" + reportHost + '\''
-            + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt + ", statsFile='" + statsFile + '\''
-            + ", params=" + params + ", help=" + help + ", displayStatsAtEnd=" + displayStatsAtEnd
-            + ", collectServerStats=" + collectServerStats + '}';
+            + ", scheme='" + scheme + '\'' + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt
+            + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help + ", displayStatsAtEnd="
+            + displayStatsAtEnd + ", collectServerStats=" + collectServerStats + ", warmupNumber=" + warmupNumber
+            + ", maxRequestsQueued=" + maxRequestsQueued + '}';
+    }
+
+    public enum Transport {
+        HTTP,
+        HTTPS,
+        H2C,
+        H2
     }
 }

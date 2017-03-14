@@ -18,15 +18,6 @@
 
 package org.mortbay.jetty.load.generator.latency;
 
-import org.HdrHistogram.Histogram;
-import org.HdrHistogram.Recorder;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
-import org.mortbay.jetty.load.generator.CollectorInformations;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,6 +26,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import org.HdrHistogram.Histogram;
+import org.HdrHistogram.Recorder;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.CollectorInformations;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
 
 /**
  *
@@ -88,7 +88,7 @@ public class LatencyTimeDisplayListener
     {
         // we initialize Maps to avoid concurrent issues
         recorderPerPath = new ConcurrentHashMap<>();
-        initializeMap( recorderPerPath, loadGenerator.getResource().getResources() );
+        initializeMap( recorderPerPath, loadGenerator.getConfig().getResource().getResources() );
     }
 
     private void initializeMap( Map<String, Recorder> recorderMap, List<Resource> resources )

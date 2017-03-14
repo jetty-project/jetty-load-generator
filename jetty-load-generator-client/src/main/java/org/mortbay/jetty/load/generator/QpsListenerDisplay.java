@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -21,18 +21,14 @@ package org.mortbay.jetty.load.generator;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import static org.mortbay.jetty.load.generator.LoadGeneratorResultHandler.START_RESPONSE_TIME_HEADER;
 
 /**
  * This listener will record time between start of send and onCommit event
@@ -40,10 +36,12 @@ import static org.mortbay.jetty.load.generator.LoadGeneratorResultHandler.START_
  */
 public class QpsListenerDisplay
     extends Request.Listener.Adapter
-    implements Request.Listener
+    implements Request.Listener, LoadGenerator.EndListener
 {
 
     private static final Logger LOGGER = Log.getLogger( QpsListenerDisplay.class );
+
+    public static final String START_RESPONSE_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Response-Time";
 
     private ScheduledExecutorService scheduledExecutorService;
 
@@ -79,19 +77,20 @@ public class QpsListenerDisplay
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
         scheduledExecutorService.scheduleWithFixedDelay( new ValueDisplayRunnable( recorder, hostname ), //
                                                          initial, delay, timeUnit );
-
     }
+
 
     @Override
     public void onCommit( Request request )
     {
-        String startTime = request.getHeaders().get( START_RESPONSE_TIME_HEADER );
-        if ( !StringUtil.isBlank( startTime ) )
-        {
-            long end = System.nanoTime();
-            long time = end - Long.parseLong( startTime );
-            this.recorder.recordValue( time );
-        }
+        // we only care about total count and start/end so just record 1 :-)
+        this.recorder.recordValue( 1 );
+    }
+
+    @Override
+    public void onFailure( Request request, Throwable failure )
+    {
+        LOGGER.warn( "failure to send request: {} : {}",failure.getClass(), failure.getMessage() );
     }
 
     private static class ValueDisplayRunnable
@@ -131,4 +130,9 @@ public class QpsListenerDisplay
         }
     }
 
+    @Override
+    public void onEnd( LoadGenerator generator )
+    {
+        this.scheduledExecutorService.shutdownNow();
+    }
 }

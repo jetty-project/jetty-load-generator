@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,16 +18,36 @@
 
 package org.mortbay.jetty.load.generator;
 
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.HttpClientTransport;
-import org.eclipse.jetty.client.HttpProxy;
-import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.HttpRequest;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.http.HttpScheme;
-import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.toolchain.perf.PlatformTimer;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.CountingCallback;
 import org.eclipse.jetty.util.SocketAddressResolver;
-import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.ManagedOperation;
 import org.eclipse.jetty.util.component.ContainerLifeCycle;
@@ -36,887 +56,746 @@ import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.profile.Resource;
 import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
-import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+@ManagedObject("Jetty LoadGenerator")
+public class LoadGenerator extends ContainerLifeCycle {
+    private static final Logger logger = Log.getLogger(LoadGenerator.class);
 
-/**
- *
- */
-@ManagedObject( "this is the Jetty LoadGenerator" )
-public class LoadGenerator
-    extends ContainerLifeCycle
-{
+    private final PlatformTimer timer = PlatformTimer.detect();
+    private final Config config;
+    private final CyclicBarrier barrier;
+    private ExecutorService threads;
+    private volatile boolean interrupt;
 
-    private static final Logger LOGGER = Log.getLogger( LoadGenerator.class );
-
-    private int users;
-
-    /**
-     * number of transactions send per minute (transaction means the whole {@link Resource}
-     * <p>
-     * if < 0, the generator will not apply any regulation and send as many he can (will be resources dependant)
-     * </p>
-     */
-    private volatile int transactionRate;
-
-    private volatile AtomicBoolean stop;
-
-    /**
-     * target host scheme
-     */
-    private String scheme;
-
-    /**
-     * target host
-     */
-    private String host;
-
-    /**
-     * target host port
-     */
-    private int port;
-
-    private Resource resource;
-
-    private HttpClientTransport httpClientTransport;
-
-    private SslContextFactory sslContextFactory;
-
-    private List<Request.Listener> requestListeners;
-
-    private ExecutorService executorService;
-
-    private CopyOnWriteArrayList<HttpClient> clients = new CopyOnWriteArrayList<>();
-
-    private Scheduler scheduler;
-
-    private SocketAddressResolver socketAddressResolver;
-
-    private List<ResponseTimeListener> responseTimeListeners;
-
-    private List<LatencyTimeListener> latencyTimeListeners;
-
-    private LoadGeneratorResultHandler _loadGeneratorResultHandler;
-
-    private List<HttpProxy> httpProxies;
-
-    private Transport transport;
-
-    private HttpVersion httpVersion = HttpVersion.HTTP_1_1;
-
-    private String endStatsResponse;
-
-    /**
-     * call {@link org.eclipse.jetty.servlet.StatisticsServlet} on server side to reset
-     */
-    private boolean collectServerStats;
-
-    /**
-     * path of the {@link org.eclipse.jetty.servlet.StatisticsServlet} on server side
-     */
-    private String statisticsPath = "/stats";
-
-    public enum Transport
-    {
-        HTTP,
-        HTTPS,
-        H2C,
-        H2,
-        FCGI
+    private LoadGenerator(Config config) {
+        this.config = config;
+        this.barrier = new CyclicBarrier(config.threads);
     }
 
-    LoadGenerator( int users, int transactionRate, String host, int port, Resource resource )
-    {
-        this.users = users;
-        this.transactionRate = transactionRate;
-        this.host = host;
-        this.port = port;
-        this.stop = new AtomicBoolean( false );
-        this.resource = resource;
-
-
-    }
-
-    //--------------------------------------------------------------
-    //  getters
-    //--------------------------------------------------------------
-
-    public int getUsers()
-    {
-        return users;
-    }
-
-    public int getTransactionRate()
-    {
-        return transactionRate;
-    }
-
-    @ManagedOperation
-    public void setTransactionRate( int transactionRate )
-    {
-        this.transactionRate = transactionRate;
-    }
-
-    public String getHost()
-    {
-        return host;
-    }
-
-    public int getPort()
-    {
-        return port;
-    }
-
-    public HttpClientTransport getHttpClientTransport()
-    {
-        return httpClientTransport;
-    }
-
-    public SslContextFactory getSslContextFactory()
-    {
-        return sslContextFactory;
-    }
-
-    public List<Request.Listener> getRequestListeners()
-    {
-        return requestListeners;
-    }
-
-    public AtomicBoolean getStop()
-    {
-        return stop;
-    }
-
-    public Scheduler getScheduler()
-    {
-        return scheduler;
-    }
-
-    public SocketAddressResolver getSocketAddressResolver()
-    {
-        return socketAddressResolver;
-    }
-
-    public Resource getResource()
-    {
-        return resource;
-    }
-
-    public String getScheme()
-    {
-        return scheme;
-    }
-
-    public ExecutorService getExecutorService()
-    {
-        return executorService;
-    }
-
-    public HttpVersion getHttpVersion()
-    {
-        return httpVersion;
-    }
-
-    public List<LatencyTimeListener> getLatencyTimeListeners()
-    {
-        return latencyTimeListeners;
-    }
-
-    public List<ResponseTimeListener> getResponseTimeListeners()
-    {
-        return responseTimeListeners;
-    }
-
-    public boolean isCollectServerStats()
-    {
-        return collectServerStats;
-    }
-
-    /**
-     * will return <code>null</code> if used before {@link #interrupt()}
-     *
-     * @return xml content coming from {@link org.eclipse.jetty.servlet.StatisticsServlet} at the end of the run
-     */
-    public String getEndStatsResponse()
-    {
-        return endStatsResponse;
-    }
-
-    private List<ValueListener> getAllListeners()
-    {
-        List<ValueListener> allValueListeners = new ArrayList<>();
-        List<? extends ValueListener> listeners = getResponseTimeListeners();
-        if ( listeners != null )
-        {
-            allValueListeners.addAll( listeners );
-        }
-        listeners = getLatencyTimeListeners();
-        if ( listeners != null )
-        {
-            allValueListeners.addAll( listeners );
-        }
-        return allValueListeners;
-    }
-
-    //--------------------------------------------------------------
-    //  component implementation
-    //--------------------------------------------------------------
-
-    /**
-     * start the generator lifecycle (this doesn't send any requests but just start few internal components)
-     */
-    protected LoadGenerator startIt()
-    {
-        this.scheme = scheme( this.transport );
-
-        if ( this.executorService == null )
-        {
-            ThreadPoolExecutor threadPoolExecutor =  // similar to Executors.newCachedThreadPool( );
-                new ThreadPoolExecutor( 256, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
-                                        new LinkedTransferQueue<>() ); // BlockingArrayQueue
-            //threadPoolExecutor.prestartCoreThread();
-            this.executorService = threadPoolExecutor;
-        }
-
-        _loadGeneratorResultHandler = new LoadGeneratorResultHandler( this, //
-                                                                      getExecutorService() );
-
-        for ( ValueListener valueListener : getAllListeners() )
-        {
-            valueListener.onLoadGeneratorStart( this );
-        }
-
-        return this;
-
-    }
-
-    /**
-     * interrupt (clear resources) the generator lifecycle
-     */
-    @ManagedOperation
-    public void interrupt()
-    {
-        if ( this.stop.get() )
-        {
-            LOGGER.info( "already stopped" );
-            return;
-        }
-        this.stop.set( true );
-
-        if ( collectServerStats )
-        {
-            collectStats();
-        }
-
-        for ( HttpClient httpClient : this.clients )
-        {
-            try
-            {
-                httpClient.stop();
-            }
-            catch ( Exception e )
-            {
-                LOGGER.debug( "fail to stop httpclient: {}", e.getMessage() );
-            }
-        }
-
-        try
-        {
-            try
-            {
-                this.executorService.shutdown();
-                // wait the end?
-                if ( !executorService.isTerminated() )
-                {
-                    executorService.shutdownNow();
-                }
-            }
-            catch ( Exception e )
-            {
-                // maybe not supported by some implementation of BlockingQueue
-                // but we don't care of the result here
-                LOGGER.debug( "fail to shutdownNow the executorService: {}", e.getMessage() );
-            }
-
-            if ( responseTimeListeners != null )
-            {
-                for ( ResponseTimeListener responseTimeListener : responseTimeListeners )
-                {
-                    try
-                    {
-                        responseTimeListener.onLoadGeneratorStop();
-                    }
-                    catch ( Exception e )
-                    {
-                        LOGGER.debug( "fail to responseTimeListener.onLoadGeneratorStop(): {}", e.getMessage() );
-                    }
-                }
-            }
-
-            if ( latencyTimeListeners != null )
-            {
-                for ( LatencyTimeListener latencyTimeListener : latencyTimeListeners )
-                {
-                    try
-                    {
-                        latencyTimeListener.onLoadGeneratorStop();
-                    }
-                    catch ( Exception e )
-                    {
-                        LOGGER.debug( "fail to latencyTimeListener.onLoadGeneratorStop(): {}", e.getMessage() );
-                    }
-                }
-            }
-        }
-        catch ( Exception e )
-        {
-            LOGGER.warn( e.getMessage(), e );
+    private void go() {
+        try {
+            start();
+        } catch (RuntimeException x) {
+            throw x;
+        } catch (Exception x) {
+            throw new RuntimeException(x);
         }
     }
 
     @Override
-    public String toString()
-    {
-        return "LoadGenerator{" + "users=" + users + ", transactionRate=" + transactionRate + ", scheme='" + scheme
-            + '\'' + ", host='" + host + '\'' + ", port=" + port + ", resource=" + resource + ", requestListeners="
-            + requestListeners + ", scheduler=" + scheduler + ", responseTimeListeners=" + responseTimeListeners
-            + ", httpProxies=" + httpProxies + ", transport=" + transport + ", httpVersion=" + httpVersion
-            + ", statisticsPath='" + statisticsPath + '\'' + '}';
+    protected void doStart() throws Exception {
+        threads = Executors.newCachedThreadPool();
+        interrupt = false;
+        super.doStart();
+        fireBeginEvent(this);
     }
 
-    public void dumpConfiguration()
-    {
-
-        LOGGER.info( "Configuration dump: {}", this );
-    }
-
-    public void run( int transactionNumber )
-        throws Exception
-    {
-        this.doRun( transactionNumber );
-        for ( ValueListener valueListener : getAllListeners() )
-        {
-            valueListener.afterRun( this );
+    private void halt() {
+        try {
+            stop();
+        } catch (RuntimeException x) {
+            throw x;
+        } catch (Exception x) {
+            throw new RuntimeException(x);
         }
     }
 
+    @Override
+    protected void doStop() throws Exception {
+        fireEndEvent(this);
+        super.doStop();
+        interrupt();
+        threads.shutdown();
+    }
+
+    public Config getConfig() {
+        return config;
+    }
+
+    public CompletableFuture<Void> begin() {
+        if (logger.isDebugEnabled()) {
+            logger.debug("generating load, {}", config);
+        }
+
+        go();
+
+        CompletableFuture[] futures = new CompletableFuture[config.getThreads()];
+        for (int i = 0; i < futures.length; ++i) {
+            futures[i] = CompletableFuture.supplyAsync(this::process, threads).thenCompose(Function.identity());
+        }
+
+        return CompletableFuture.allOf(futures).whenCompleteAsync((r, x) -> halt(), threads);
+    }
+
+    @ManagedOperation(value = "Interrupts this LoadGenerator", impact = "ACTION")
+    public void interrupt() {
+        interrupt = true;
+    }
+
+    private CompletableFuture<Void> process() {
+        CompletableFuture<Void> process = new CompletableFuture<>();
+        CompletableFuture<Void> result = process;
+        try {
+            barrier.await();
+
+            String threadName = Thread.currentThread().getName();
+            if (logger.isDebugEnabled()) {
+                logger.debug("sender thread {} running", threadName);
+            }
+
+            HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
+            // HttpClient cannot be stopped from one of its own threads.
+            result = process.whenCompleteAsync((r, x) -> {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("stopping http clients");
+                }
+                Arrays.stream(clients).forEach(this::stopHttpClient);
+            }, threads);
+            for (int i = 0; i < clients.length; ++i) {
+                clients[i] = newHttpClient(getConfig());
+                clients[i].start();
+            }
+
+            Callback processCallback = new Callback() {
+                @Override
+                public void succeeded() {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("sender thread {} completed", threadName);
+                    }
+                    process.complete(null);
+                }
+
+                @Override
+                public void failed(Throwable x) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("sender thread {} failed", threadName);
+                    }
+                    process.completeExceptionally(x);
+                }
+            };
+
+            // This callback only forwards failure, success is notified explicitly.
+            Callback callback = new Callback.Nested(processCallback) {
+                @Override
+                public void succeeded() {
+                }
+            };
+
+            int rate = config.getResourceRate();
+            long period = rate > 0 ? TimeUnit.SECONDS.toNanos(config.getThreads()) / rate : 0;
+
+            long runFor = config.getRunFor();
+            int warmupIterations = config.getWarmupIterationsPerThread();
+            int iterations = runFor > 0 ? 0 : config.getIterationsPerThread();
+
+            long begin = System.nanoTime();
+            long next = begin + period;
+            int clientIndex = 0;
+            while (true) {
+                HttpClient client = clients[clientIndex];
+
+                boolean warmup = false;
+                boolean lastIteration = false;
+                if (warmupIterations > 0) {
+                    warmup = --warmupIterations >= 0;
+                } else if (iterations > 0) {
+                    lastIteration = --iterations == 0;
+                }
+                // Sends the resource one more time after the time expired,
+                // but guarantees that the callback is notified correctly.
+                boolean ranEnough = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
+                Callback c = lastIteration || ranEnough ? processCallback : callback;
+
+                sendResourceTree(client, config.getResource(), warmup, c);
+
+                if (lastIteration || ranEnough) {
+                    break;
+                }
+                if (interrupt) {
+                    callback.failed(new InterruptedException());
+                    break;
+                }
+
+                if (++clientIndex == clients.length) {
+                    clientIndex = 0;
+                }
+
+                if (period > 0) {
+                    long pause = TimeUnit.NANOSECONDS.toMicros(next - System.nanoTime());
+                    next += period;
+                    if (pause > 0) {
+                        timer.sleep(pause);
+                    }
+                }
+            }
+
+            return result;
+        } catch (Throwable x) {
+            if (logger.isDebugEnabled()) {
+                logger.debug(x);
+            }
+            process.completeExceptionally(x);
+            return result;
+        }
+    }
+
+    protected HttpClient newHttpClient(Config config) {
+        HttpClient result = new HttpClient(config.getHttpClientTransportBuilder().build(), config.getSslContextFactory());
+        result.setExecutor(config.getExecutor());
+        result.setScheduler(config.getScheduler());
+        result.setMaxConnectionsPerDestination(config.getChannelsPerUser());
+        result.setMaxRequestsQueuedPerDestination(config.getMaxRequestsQueued());
+        result.setSocketAddressResolver(config.getSocketAddressResolver());
+        return result;
+    }
+
+    private void stopHttpClient(HttpClient client) {
+        try {
+            if (client != null) {
+                client.stop();
+            }
+        } catch (Throwable x) {
+            logger.ignore(x);
+        }
+    }
+
+    protected Request newRequest(HttpClient client, Config config, Resource resource) {
+        Request request = client.newRequest(config.getHost(), config.getPort())
+                .scheme(config.getScheme())
+                .method(resource.getMethod())
+                .path(resource.getPath())
+                .header("JLG-Response-Length", Integer.toString(resource.getResponseLength()));
+        int requestLength = resource.getRequestLength();
+        if (requestLength > 0) {
+            request.content(new BytesContentProvider(new byte[requestLength]));
+        }
+        return request;
+    }
+
+    private void sendResourceTree(HttpClient client, Resource resource, boolean warmup, Callback callback) {
+        int nodes = resource.descendantCount();
+        Resource.Info info = resource.newInfo();
+        CountingCallback treeCallback = new CountingCallback(new Callback() {
+            @Override
+            public void succeeded() {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("completed tree for {}", resource);
+                }
+                info.setTreeTime(System.nanoTime());
+                if (!warmup) {
+                    fireResourceTreeEvent(info);
+                }
+                callback.succeeded();
+            }
+
+            @Override
+            public void failed(Throwable x) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("failed tree for {}", resource);
+                }
+                callback.failed(x);
+            }
+        }, nodes);
+        Sender sender = new Sender(client, warmup, treeCallback);
+        sender.offer(Collections.singletonList(info));
+        sender.send();
+    }
+
+    private void fireBeginEvent(LoadGenerator generator) {
+        config.getListeners().stream()
+                .filter(l -> l instanceof BeginListener)
+                .map(l -> (BeginListener)l)
+                .forEach(l -> l.onBegin(generator));
+    }
+
+    private void fireEndEvent(LoadGenerator generator) {
+        config.getListeners().stream()
+                .filter(l -> l instanceof EndListener)
+                .map(l -> (EndListener)l)
+                .forEach(l -> l.onEnd(generator));
+    }
+
+    private void fireResourceNodeEvent(Resource.Info info) {
+        config.getResourceListeners().stream()
+                .filter(l -> l instanceof Resource.NodeListener)
+                .map(l -> (Resource.NodeListener)l)
+                .forEach(l -> l.onResourceNode(info));
+    }
+
+    private void fireResourceTreeEvent(Resource.Info info) {
+        config.getResourceListeners().stream()
+                .filter(l -> l instanceof Resource.TreeListener)
+                .map(l -> (Resource.TreeListener)l)
+                .forEach(l -> l.onResourceTree(info));
+    }
+
+    private class Sender {
+        private final Queue<Resource.Info> queue = new ArrayDeque<>();
+        private final Set<URI> pushCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        private final HttpClient client;
+        private final boolean warmup;
+        private final CountingCallback callback;
+        private boolean active;
+
+        private Sender(HttpClient client, boolean warmup, CountingCallback callback) {
+            this.client = client;
+            this.warmup = warmup;
+            this.callback = callback;
+        }
+
+        private void offer(List<Resource.Info> resources) {
+            synchronized (this) {
+                queue.addAll(resources);
+            }
+        }
+
+        private void send() {
+            synchronized (this) {
+                if (active) {
+                    return;
+                }
+                active = true;
+            }
+
+            List<Resource.Info> resources = new ArrayList<>();
+            while (true) {
+                synchronized (this) {
+                    if (queue.isEmpty()) {
+                        active = false;
+                        return;
+                    }
+                    resources.addAll(queue);
+                    queue.clear();
+                }
+
+                send(resources);
+                resources.clear();
+            }
+        }
+
+        private void send(List<Resource.Info> resources) {
+            for (Resource.Info info : resources) {
+                Resource resource = info.getResource();
+                info.setRequestTime(System.nanoTime());
+                if (resource.getPath() != null) {
+                    HttpRequest httpRequest = (HttpRequest)newRequest(client, config, resource);
+
+                    httpRequest.pushListener((request, pushed) -> {
+                        URI pushedURI = pushed.getURI();
+                        Resource child = resource.findDescendant(pushedURI);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("pushed {}", child);
+                        }
+                        if (child != null && pushCache.add(pushedURI)) {
+                            Resource.Info pushedInfo = child.newInfo();
+                            pushedInfo.setRequestTime(System.nanoTime());
+                            pushedInfo.setPushed(true);
+                            return new ResponseHandler(pushedInfo);
+                        } else {
+                            return null;
+                        }
+                    });
+
+                    if (pushCache.contains(httpRequest.getURI())) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("skip sending pushed {}", resource);
+                        }
+                    } else {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("sending {}{}", warmup ? "warmup " : "", resource);
+                        }
+                        Request request = config.getRequestListeners().stream()
+                                .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
+                        request.send(new ResponseHandler(info));
+                    }
+                } else {
+                    info.setResponseTime(System.nanoTime());
+                    // Don't fire the resource event for "group" resources.
+                    callback.succeeded();
+                    sendChildren(resource);
+                }
+            }
+        }
+
+        private void sendChildren(Resource resource) {
+            List<Resource> children = resource.getResources();
+            if (!children.isEmpty()) {
+                offer(children.stream().map(Resource::newInfo).collect(Collectors.toList()));
+                send();
+            }
+        }
+
+        private class ResponseHandler extends Response.Listener.Adapter {
+            private final Resource.Info info;
+
+            private ResponseHandler(Resource.Info info) {
+                this.info = info;
+            }
+
+            @Override
+            public void onBegin(Response response) {
+                // Record time to first byte.
+                info.setLatencyTime(System.nanoTime());
+            }
+
+            @Override
+            public void onContent(Response response, ByteBuffer buffer) {
+                // Record content length.
+                info.addContent(buffer.remaining());
+            }
+
+            @Override
+            public void onComplete(Result result) {
+                Resource resource = info.getResource();
+                if (logger.isDebugEnabled()) {
+                    logger.debug("completed {}: {}", resource, result);
+                }
+                if (result.isSucceeded()) {
+                    info.setResponseTime(System.nanoTime());
+                    info.setStatus(result.getResponse().getStatus());
+                    if (!warmup) {
+                        fireResourceNodeEvent(info);
+                    }
+                    callback.succeeded();
+                } else {
+                    callback.failed(result.getFailure());
+                }
+                sendChildren(resource);
+            }
+        }
+    }
 
     /**
-     * run the defined load (users / request numbers)
-     *
-     * @param transactionNumber the total transaction to run if lower than 0 will run infinite
+     * Read-only configuration for the load generator.
      */
-    protected void doRun( int transactionNumber )
-        throws Exception
-    {
+    public static class Config {
+        protected int threads = 1;
+        protected int warmupIterationsPerThread = 0;
+        protected int iterationsPerThread = 1;
+        protected long runFor = 0;
+        protected int usersPerThread = 1;
+        protected int channelsPerUser = 1024;
+        protected int resourceRate = 1;
+        protected String scheme = "http";
+        protected String host = "localhost";
+        protected int port = 8080;
+        protected HTTPClientTransportBuilder httpClientTransportBuilder;
+        protected SslContextFactory sslContextFactory;
+        protected Scheduler scheduler;
+        protected ExecutorService executor;
+        protected SocketAddressResolver socketAddressResolver = new SocketAddressResolver.Sync();
+        protected Resource resource = new Resource("/");
+        protected final List<Listener> listeners = new ArrayList<>();
+        protected final List<Request.Listener> requestListeners = new ArrayList<>();
+        protected final List<Resource.Listener> resourceListeners = new ArrayList<>();
+        protected int maxRequestsQueued = 128 * 1024;
 
-        final List<Request.Listener> listeners = new ArrayList<>( getRequestListeners() );
-
-        if ( this.collectServerStats )
-        {
-            statsReset();
+        public int getThreads() {
+            return threads;
         }
 
-        for ( ValueListener valueListener : getAllListeners() )
-        {
-            valueListener.beforeRun( this );
+        public int getWarmupIterationsPerThread() {
+            return warmupIterationsPerThread;
         }
 
-        ExecutorService globaleExecutor = Executors.newFixedThreadPool( 1 );
-
-        Future globaleFuture = globaleExecutor.submit( () ->
-                                                       {
-                                                           try
-                                                           {
-                                                               HttpClientTransport httpClientTransport =
-                                                                   getHttpClientTransport();
-
-                                                               List<LoadGeneratorRunner> futures =
-                                                                   new ArrayList<>( getUsers() );
-
-                                                               CyclicBarrier cyclicBarrier =
-                                                                   new CyclicBarrier( getUsers() );
-
-                                                               for ( int i = getUsers(); i > 0; i-- )
-                                                               {
-                                                                   try
-                                                                   {
-                                                                       HttpClient httpClient =
-                                                                           newHttpClient( httpClientTransport,
-                                                                                          getSslContextFactory(), //
-                                                                                          listeners );
-
-                                                                       LoadGeneratorRunner loadGeneratorRunner = //
-                                                                           new LoadGeneratorRunner( httpClient, this,
-                                                                                                    _loadGeneratorResultHandler,
-                                                                                                    //
-                                                                                                    transactionNumber,
-                                                                                                    cyclicBarrier,
-                                                                                                    this.getExecutorService() );
-
-                                                                       this.getExecutorService().execute(
-                                                                           loadGeneratorRunner );
-                                                                       futures.add( loadGeneratorRunner );
-
-                                                                   }
-                                                                   catch ( Throwable e )
-                                                                   {
-                                                                       LOGGER.warn( "skip exception:" + e.getMessage(),
-                                                                                    e );
-                                                                       this.stop.set( true );
-                                                                   }
-                                                               }
-
-                                                               while ( !LoadGenerator.this.stop.get()
-                                                                   && !futures.stream().allMatch(
-                                                                   future -> future.isDone() ) )
-                                                               {
-                                                                   // wait until stopped
-                                                                   Thread.sleep( 10 );
-                                                               }
-
-                                                               LOGGER.debug( "all futures done" );
-                                                           }
-                                                           catch ( InterruptedException e )
-                                                           {
-                                                               Thread.currentThread().interrupt();
-                                                               // this exception can happen when interrupting the generator so ignore
-                                                               if ( !getStop().get() )
-                                                               {
-                                                                   LOGGER.warn( "ignoring exception:" + e.getMessage(),
-                                                                                e );
-                                                               }
-                                                               return;
-                                                           }
-                                                           catch ( Throwable e )
-                                                           {
-                                                               LOGGER.warn( "skip exception:" + e.getMessage(), e );
-                                                           }
-                                                           LOGGER.debug( "exit run lambda" );
-                                                       } );
-
-        if ( transactionNumber > 0 )
-        {
-            // TODO any timeout here or maxWait time?
-            while ( !globaleFuture.isDone() )
-            {
-                Thread.sleep( 1 );
-            }
+        public int getIterationsPerThread() {
+            return iterationsPerThread;
         }
 
-        LOGGER.debug( "run {} finished", transactionNumber );
-    }
-
-    public void run()
-        throws Exception
-    {
-        this.run( -1 );
-    }
-
-    public void run( long time, TimeUnit timeUnit )
-        throws Exception
-    {
-        this.run( time, timeUnit, true );
-    }
-
-    /**
-     * @param time
-     * @param timeUnit
-     * @param interupt if <code>true</code>
-     * @throws Exception
-     */
-    public void run( long time, TimeUnit timeUnit, boolean interupt )
-        throws Exception
-    {
-        this.run( -1 );
-        PlatformTimer.detect().sleep( timeUnit.toMicros( time ) );
-        for ( ValueListener valueListener : getAllListeners() )
-        {
-            valueListener.afterRun( this );
+        public long getRunFor() {
+            return runFor;
         }
-        if ( interupt )
-        {
-            this.interrupt();
+
+        public int getUsersPerThread() {
+            return usersPerThread;
+        }
+
+        public int getChannelsPerUser() {
+            return channelsPerUser;
+        }
+
+        public int getResourceRate() {
+            return resourceRate;
+        }
+
+        public String getScheme() {
+            return scheme;
+        }
+
+        public String getHost() {
+            return host;
+        }
+
+        public int getPort() {
+            return port;
+        }
+
+        public HTTPClientTransportBuilder getHttpClientTransportBuilder() {
+            return httpClientTransportBuilder;
+        }
+
+        public SslContextFactory getSslContextFactory() {
+            return sslContextFactory;
+        }
+
+        public Scheduler getScheduler() {
+            return scheduler;
+        }
+
+        public ExecutorService getExecutor() {
+            return executor;
+        }
+
+        public SocketAddressResolver getSocketAddressResolver() {
+            return socketAddressResolver;
+        }
+
+        public Resource getResource() {
+            return resource;
+        }
+
+        public int getMaxRequestsQueued() {
+            return maxRequestsQueued;
+        }
+
+        public List<Listener> getListeners() {
+            return listeners;
+        }
+
+        public List<Request.Listener> getRequestListeners() {
+            return requestListeners;
+        }
+
+        public List<Resource.Listener> getResourceListeners() {
+            return resourceListeners;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s[t=%d,i=%d,u=%d,c=%d,r=%d,%s://%s:%d]",
+                    Config.class.getSimpleName(),
+                    threads,
+                    iterationsPerThread,
+                    usersPerThread,
+                    channelsPerUser,
+                    resourceRate,
+                    scheme,
+                    host,
+                    port);
         }
     }
 
-    /**
-     * reset stats on Server side
-     */
-    protected void statsReset()
-    {
-        try
-        {
-            HttpClient httpClient =
-                newHttpClient( httpClientTransport, getSslContextFactory(), Collections.emptyList() );
-            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?statsReset=true";
-            Request request = httpClient.newRequest( uri );
-            ContentResponse contentResponse = request.send();
-            if ( LOGGER.isDebugEnabled() )
-            {
-                LOGGER.debug( "stats reset status: {}", contentResponse.getStatus() );
+    public static class Builder extends Config {
+        /**
+         * @param threads the number of sender threads
+         * @return this Builder
+         */
+        public Builder threads(int threads) {
+            if (threads < 1) {
+                throw new IllegalArgumentException();
             }
-            if ( contentResponse.getStatus() != HttpServletResponse.SC_OK )
-            {
-                LOGGER.warn( "cannot reset stats on Server side" );
-            }
-        }
-        catch ( Exception e )
-        {
-            LOGGER.warn( "skip error getting stats", e );
-        }
-        finally
-        {
-            this.clients.clear();
-        }
-    }
-
-    /**
-     * collect stats on server side
-     */
-    protected void collectStats()
-    {
-        try
-        {
-            if ( clients.isEmpty() )
-            {
-                LOGGER.warn( "skip collect server stats impossible to get a httpclient instance" );
-                return;
-            }
-            // we get the first one
-            HttpClient httpClient = clients.get( 0 );
-            final String uri = getScheme() + "://" + getHost() + ":" + getPort() + statisticsPath + "?xml=true";
-            Request request = httpClient.newRequest( uri );
-            ContentResponse contentResponse = request.send();
-            this.endStatsResponse = contentResponse.getContentAsString();
-            LOGGER.info( "content response xml: {}", this.endStatsResponse );
-        }
-        catch ( Exception e )
-        {
-            LOGGER.warn( "skip error getting stats", e );
-        }
-    }
-
-    private void stopQuietly( HttpClient httpClient )
-    {
-        if ( httpClient != null )
-        {
-            try
-            {
-                httpClient.stop();
-            }
-            catch ( Exception e )
-            {
-                LOGGER.warn( "skip issue stopping httpclient:" + e.getMessage() );
-            }
-        }
-    }
-
-    protected HttpClient newHttpClient( HttpClientTransport httpClientTransport, SslContextFactory sslContextFactory, //
-                                        List<Request.Listener> listeners )
-        throws Exception
-    {
-        HttpClient httpClient = new HttpClient( httpClientTransport, sslContextFactory );
-
-        switch ( this.transport )
-        {
-            case HTTP:
-            case HTTPS:
-            {
-                httpClient.setMaxConnectionsPerDestination( 7 );
-            }
-            case H2C:
-            case H2:
-            {
-                httpClient.setMaxConnectionsPerDestination( 1 );
-            }
-            /*
-            no op
-            case FCGI:
-            {
-
-            }
-            */
-            default:
-            {
-                // nothing this weird case already handled by #provideClientTransport
-            }
-
-        }
-
-        if ( this.getScheduler() != null )
-        {
-            httpClient.setScheduler( this.getScheduler() );
-        }
-        if ( this.getExecutorService() != null )
-        {
-            httpClient.setExecutor( this.getExecutorService() );
-        }
-
-        // TODO dynamic depending on the rate??
-        httpClient.setMaxRequestsQueuedPerDestination( 2048 );
-        httpClient.setSocketAddressResolver( getSocketAddressResolver() );
-        httpClient.getRequestListeners().addAll( listeners );
-        if ( this.httpProxies != null )
-        {
-            httpClient.getProxyConfiguration().getProxies().addAll( this.httpProxies );
-        }
-
-        clients.add( httpClient );
-
-        httpClient.start();
-
-        return httpClient;
-    }
-
-
-    static String scheme( LoadGenerator.Transport transport )
-    {
-        switch ( transport )
-        {
-            case HTTP:
-            case H2C:
-            case FCGI:
-                return HttpScheme.HTTP.asString();
-            case HTTPS:
-            case H2:
-                return HttpScheme.HTTPS.asString();
-            default:
-                throw new IllegalArgumentException( "unknow scheme" );
-        }
-
-    }
-
-    //--------------------------------------------------------------
-    //  Builder
-    //--------------------------------------------------------------
-
-    public static class Builder
-    {
-
-        private int users;
-
-        private int transactionRate;
-
-        private String host;
-
-        private int port;
-
-        private HttpClientTransport httpClientTransport;
-
-        private SslContextFactory sslContextFactory;
-
-        private List<Request.Listener> requestListeners;
-
-        private Scheduler httpScheduler;
-
-        private ExecutorService executorService;
-
-        private SocketAddressResolver socketAddressResolver;
-
-        private Resource resource;
-
-        private List<ResponseTimeListener> responseTimeListeners;
-
-        private List<LatencyTimeListener> latencyTimeListeners;
-
-        private List<HttpProxy> httpProxies;
-
-        private Transport transport;
-
-        private String statisticsPath = "/stats";
-
-        private HttpVersion httpVersion = HttpVersion.HTTP_1_1;
-
-        private boolean collectServerStats;
-
-        public Builder()
-        {
-            // no op
-        }
-
-        public Builder users( int users )
-        {
-            this.users = users;
+            this.threads = threads;
             return this;
         }
 
         /**
-         * @param transactionRate number of transaction per second (transaction means the whole profile)
-         * @return {@link Builder}
+         * @param warmupIterationsPerThread the number of warmup iterations that each sender thread performs
+         * @return this Builder
          */
-        public Builder transactionRate( int transactionRate )
-        {
-            this.transactionRate = transactionRate;
+        public Builder warmupIterationsPerThread(int warmupIterationsPerThread) {
+            this.warmupIterationsPerThread = warmupIterationsPerThread;
             return this;
         }
 
-        public Builder host( String host )
-        {
-            this.host = host;
+        /**
+         * @param iterationsPerThread the number of iterations that each sender thread performs, or zero to run forever
+         * @return this Builder
+         */
+        public Builder iterationsPerThread(int iterationsPerThread) {
+            this.iterationsPerThread = iterationsPerThread;
             return this;
         }
 
-        public Builder port( int port )
-        {
+        /**
+         * <p>Configures the amount of time that the load generator should run.</p>
+         * <p>This setting always takes precedence over {@link #iterationsPerThread}.</p>
+         *
+         * @param time the time the load generator runs
+         * @param unit the unit of time
+         * @return this Builder
+         */
+        public Builder runFor(long time, TimeUnit unit) {
+            this.runFor = unit.toSeconds(time);
+            if (runFor <= 0) {
+                throw new IllegalArgumentException();
+            }
+            return this;
+        }
+
+        /**
+         * @param usersPerThread the number of users/browsers for each sender thread
+         * @return this Builder
+         */
+        public Builder usersPerThread(int usersPerThread) {
+            if (usersPerThread < 0) {
+                throw new IllegalArgumentException();
+            }
+            this.usersPerThread = usersPerThread;
+            return this;
+        }
+
+        /**
+         * @param channelsPerUser the number of connections/streams per user
+         * @return this Builder
+         */
+        public Builder channelsPerUser(int channelsPerUser) {
+            if (channelsPerUser < 0) {
+                throw new IllegalArgumentException();
+            }
+            this.channelsPerUser = channelsPerUser;
+            return this;
+        }
+
+        /**
+         * @param resourceRate number of resource trees requested per second, or zero for maximum request rate
+         * @return this Builder
+         */
+        public Builder resourceRate(int resourceRate) {
+            this.resourceRate = resourceRate;
+            return this;
+        }
+
+        /**
+         * @param scheme the default scheme
+         * @return this Builder
+         */
+        public Builder scheme(String scheme) {
+            this.scheme = Objects.requireNonNull(scheme);
+            return this;
+        }
+
+        /**
+         * @param host the default host
+         * @return this Builder
+         */
+        public Builder host(String host) {
+            this.host = Objects.requireNonNull(host);
+            return this;
+        }
+
+        /**
+         * @param port the default port
+         * @return this Builder
+         */
+        public Builder port(int port) {
+            if (port <= 0) {
+                throw new IllegalArgumentException();
+            }
             this.port = port;
             return this;
         }
 
-        public Builder httpClientTransport( HttpClientTransport httpClientTransport )
-        {
-            this.httpClientTransport = httpClientTransport;
+        /**
+         * @param httpClientTransportBuilder the HttpClient transport builder
+         * @return this Builder
+         */
+        public Builder httpClientTransportBuilder(HTTPClientTransportBuilder httpClientTransportBuilder) {
+            this.httpClientTransportBuilder = Objects.requireNonNull(httpClientTransportBuilder);
             return this;
         }
 
-        public Builder sslContextFactory( SslContextFactory sslContextFactory )
-        {
+        /**
+         * @param sslContextFactory the SslContextFactory to use for https requests
+         * @return this Builder
+         */
+        public Builder sslContextFactory(SslContextFactory sslContextFactory) {
             this.sslContextFactory = sslContextFactory;
             return this;
         }
 
-        public Builder requestListeners( Request.Listener... requestListeners )
-        {
-            if ( requestListeners != null )
-            {
-                this.requestListeners = new ArrayList<>( Arrays.asList( requestListeners ) );
-            }
+        /**
+         * @param scheduler the shared scheduler
+         * @return this Builder
+         */
+        public Builder scheduler(Scheduler scheduler) {
+            this.scheduler = Objects.requireNonNull(scheduler);
             return this;
         }
 
-        public Builder scheduler( Scheduler scheduler )
-        {
-            this.httpScheduler = scheduler;
+        /**
+         * @param executor the shared executor
+         * @return this Builder
+         */
+        public Builder executor(ExecutorService executor) {
+            this.executor = Objects.requireNonNull(executor);
             return this;
         }
 
-        public Builder executorService( ExecutorService executorService )
-        {
-            this.executorService = executorService;
+        /**
+         * @param socketAddressResolver the shared SocketAddressResolver
+         * @return this Builder
+         */
+        public Builder socketAddressResolver(SocketAddressResolver socketAddressResolver) {
+            this.socketAddressResolver = Objects.requireNonNull(socketAddressResolver);
             return this;
         }
 
-        public Builder httpClientSocketAddressResolver( SocketAddressResolver socketAddressResolver )
-        {
-            this.socketAddressResolver = socketAddressResolver;
-            return this;
-        }
-
-        public Builder resource( Resource resource )
-        {
+        /**
+         * @param resource the root Resource
+         * @return this Builder
+         */
+        public Builder resource(Resource resource) {
             this.resource = resource;
             return this;
         }
 
-        public Builder responseTimeListeners( ResponseTimeListener... responseTimeListeners )
-        {
-            this.responseTimeListeners = new ArrayList<>( Arrays.asList( responseTimeListeners ) );
+        public Builder maxRequestsQueued(int maxRequestsQueued) {
+            this.maxRequestsQueued = maxRequestsQueued;
             return this;
         }
 
-        public Builder latencyTimeListeners( LatencyTimeListener... latencyTimeListeners )
-        {
-            this.latencyTimeListeners = new ArrayList<>( Arrays.asList( latencyTimeListeners ) );
+        public Builder listener(Listener listener) {
+            listeners.add(listener);
             return this;
         }
 
-        public Builder httpProxies( HttpProxy... httpProxies )
-        {
-            this.httpProxies = new ArrayList<>( Arrays.asList( httpProxies ) );
+        public Builder requestListener(Request.Listener listener) {
+            requestListeners.add(listener);
             return this;
         }
 
-        public Builder transport( Transport transport )
-        {
-            this.transport = transport;
+        public Builder resourceListener(Resource.Listener listener) {
+            resourceListeners.add(listener);
             return this;
         }
 
-        public Builder statisticsPath( String statisticsPath )
-        {
-            this.statisticsPath = statisticsPath;
-            return this;
-        }
-
-        public Builder httpVersion( HttpVersion httpVersion )
-        {
-            this.httpVersion = httpVersion;
-            return this;
-        }
-
-        public Builder collectServerStats( boolean collectServerStats )
-        {
-            this.collectServerStats = collectServerStats;
-            return this;
-        }
-
-
-        public LoadGenerator build()
-        {
-            this.validate();
-            LoadGenerator loadGenerator = new LoadGenerator( users, transactionRate, host, port, this.resource );
-            loadGenerator.requestListeners = this.requestListeners == null ? new ArrayList<>() // //
-                : this.requestListeners;
-            loadGenerator.httpClientTransport = httpClientTransport;
-            loadGenerator.sslContextFactory = sslContextFactory;
-            loadGenerator.scheduler = httpScheduler;
-            loadGenerator.socketAddressResolver = socketAddressResolver == null ? //
-                new SocketAddressResolver.Sync() : socketAddressResolver;
-            loadGenerator.responseTimeListeners = responseTimeListeners;
-            loadGenerator.httpProxies = httpProxies;
-            loadGenerator.transport = transport;
-            loadGenerator.statisticsPath = statisticsPath;
-            loadGenerator.executorService = executorService;
-            loadGenerator.httpVersion = httpVersion;
-            loadGenerator.latencyTimeListeners = latencyTimeListeners;
-            loadGenerator.collectServerStats = collectServerStats;
-            return loadGenerator.startIt();
-        }
-
-        public void validate()
-        {
-            if ( users < 1 )
-            {
-                throw new IllegalArgumentException( "users number must be at least 1" );
+        public LoadGenerator build() {
+            if (httpClientTransportBuilder == null) {
+                httpClientTransportBuilder = new HTTP1ClientTransportBuilder();
             }
-
-            if ( StringUtil.isBlank( host ) )
-            {
-                throw new IllegalArgumentException( "host cannot be null or blank" );
-            }
-
-            if ( port < 1 )
-            {
-                throw new IllegalArgumentException( "port must be a positive integer" );
-            }
-
-            if ( this.resource == null )
-            {
-                throw new IllegalArgumentException( "a profile is mandatory" );
-            }
-
-            if ( this.httpClientTransport == null )
-            {
-                throw new IllegalArgumentException( "httpClientTransport cannot be null" );
-            }
-
+            return new LoadGenerator(this);
         }
 
+        // TODO: verify how these listeners are actually used.
+
+        public Builder responseTimeListeners(ResponseTimeListener... responseTimeListeners) {
+            return this;
+        }
+
+        public Builder latencyTimeListeners(LatencyTimeListener... latencyTimeListeners) {
+            return this;
+        }
     }
 
+    public interface Listener extends EventListener {
+    }
+
+    public interface BeginListener extends Listener {
+        public void onBegin(LoadGenerator generator);
+    }
+
+    public interface EndListener extends Listener {
+        public void onEnd(LoadGenerator generator);
+    }
 }

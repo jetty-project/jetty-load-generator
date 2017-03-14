@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -57,25 +57,13 @@ public class LoadGeneratorStarter
         try
         {
             LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs );
-            if ( runnerArgs.getRunIteration() > 0 )
-            {
-                runner.run( runnerArgs.getRunIteration() );
-            }
-            else if ( runnerArgs.getRunningTime() > 0 && runnerArgs.getRunningTimeUnit() != null )
-            {
-                runner.run( runnerArgs.getRunningTime(), runnerArgs.getRunningTimeUnit(), false );
-            }
-            else
-            {
-                runner.run();
-            }
+            runner.run();
 
             if (runnerArgs.isDisplayStatsAtEnd())
             {
 
             }
 
-            runner.getLoadGenerator().interrupt();
         }
         catch ( Exception e )
         {

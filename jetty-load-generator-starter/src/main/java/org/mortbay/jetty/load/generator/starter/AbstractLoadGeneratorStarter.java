@@ -1,6 +1,6 @@
 //
 //  ========================================================================
-//  Copyright (c) 1995-2016 Mort Bay Consulting Pty. Ltd.
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
 //  ------------------------------------------------------------------------
 //  All rights reserved. This program and the accompanying materials
 //  are made available under the terms of the Eclipse Public License v1.0
@@ -18,31 +18,33 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import groovy.lang.GroovyShell;
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.eclipse.jetty.client.HttpClientTransport;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.StringUtil;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.xml.XmlConfiguration;
-import org.mortbay.jetty.load.generator.Http2TransportBuilder;
-import org.mortbay.jetty.load.generator.HttpFCGITransportBuilder;
-import org.mortbay.jetty.load.generator.HttpTransportBuilder;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.profile.Resource;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import groovy.lang.GroovyShell;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.xml.XmlConfiguration;
+import org.mortbay.jetty.load.generator.HTTP1ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HTTP2ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
+import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 
 /**
  *
@@ -50,13 +52,13 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractLoadGeneratorStarter
 {
 
+    private Logger logger = Log.getLogger( getClass() );
+
     private LoadGeneratorStarterArgs starterArgs;
 
     private ExecutorService executorService;
 
     private Resource resource;
-
-    private LoadGenerator loadGenerator;
 
     public AbstractLoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
@@ -66,58 +68,83 @@ public abstract class AbstractLoadGeneratorStarter
     public void run()
         throws Exception
     {
-        LoadGenerator loadGenerator = getLoadGenerator();
 
-        loadGenerator.run( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
+        Resource resourceProfile = getResource();
 
-        loadGenerator.interrupt();
+        LoadGenerator.Builder loadGeneratorBuilder = new LoadGenerator.Builder() //
+            .host( starterArgs.getHost() ) //
+            .port( starterArgs.getPort() ) //
+            .iterationsPerThread( starterArgs.getRunIteration() )
+            .usersPerThread( starterArgs.getUsers() ) //
+            .resourceRate( starterArgs.getTransactionRate() ) //
+            .httpClientTransportBuilder( httpClientTransportBuilder() )
+            .sslContextFactory( sslContextFactory() ) //
+            .resource( resourceProfile ) //
+            .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
+            .responseTimeListeners( getResponseTimeListeners() ) //
+            .scheme( starterArgs.getScheme() ) //
+            .latencyTimeListeners( getLatencyTimeListeners() ); //
 
+        if (starterArgs.getMaxRequestsQueued() > 0)
+        {
+            loadGeneratorBuilder.maxRequestsQueued( starterArgs.getMaxRequestsQueued() );
+        }
+
+        if (getExecutorService() != null)
+        {
+            loadGeneratorBuilder.executor( getExecutorService() );
+        }
+
+        boolean runFor = false;
+
+        if (starterArgs.getRunningTime() > 0)
+        {
+            loadGeneratorBuilder.runFor( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
+            runFor = true;
+        }
+
+        for (Resource.Listener listener : getResourceListeners())
+        {
+            loadGeneratorBuilder.resourceListener( listener );
+        }
+
+        for ( Request.Listener listener : getListeners() )
+        {
+            loadGeneratorBuilder.requestListener( listener );
+        }
+
+        for ( LoadGenerator.Listener listener : getLoadGeneratorListeners() )
+        {
+            loadGeneratorBuilder.listener( listener );
+        }
+
+        LoadGenerator loadGenerator = loadGeneratorBuilder.build();
+        logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString());
+        CompletableFuture<Void> cf = loadGenerator.begin();
+
+
+        if (runFor)
+        {
+            logger.info( "runFor" );
+            long ts = TimeUnit.MILLISECONDS.convert( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
+            try
+            {
+                cf.get(ts + 20, TimeUnit.MILLISECONDS);
+            }
+            catch ( InterruptedException | ExecutionException | TimeoutException e )
+            {
+                logger.ignore( e );
+            }
+        }
+
+        logger.info( "load test done" );
+
+    }
+
+    public void displayStats(LoadGenerator loadGenerator)
+        throws Exception
+    {
         writeStats( loadGenerator );
-
-    }
-
-    public void run( int iteration )
-        throws Exception
-    {
-        this.run( iteration, true );
-    }
-
-    public void run( long time, TimeUnit timeUnit, boolean interrupt )
-        throws Exception
-    {
-
-        LoadGenerator loadGenerator = getLoadGenerator();
-
-        loadGenerator.run( time, timeUnit );
-
-        if ( interrupt )
-        {
-            loadGenerator.interrupt();
-            writeStats( loadGenerator );
-        }
-
-    }
-
-    public void displayStats()
-        throws Exception
-    {
-        writeStats( getLoadGenerator() );
-    }
-
-    public void run( int iteration, boolean interrupt )
-        throws Exception
-    {
-        LoadGenerator loadGenerator = getLoadGenerator();
-
-        loadGenerator.run( iteration );
-
-        if ( interrupt )
-        {
-            loadGenerator.interrupt();
-            writeStats( loadGenerator );
-        }
-
-
     }
 
 
@@ -125,7 +152,8 @@ public abstract class AbstractLoadGeneratorStarter
         throws Exception
     {
         if ( starterArgs.getStatsFile() != null //
-            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse() ) )
+//            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse() ) )
+            )
         {
             Path path = Paths.get( starterArgs.getStatsFile() );
             if ( Files.notExists( path ) )
@@ -133,42 +161,23 @@ public abstract class AbstractLoadGeneratorStarter
                 Files.createFile( path );
             }
 
-            Files.write( path, loadGenerator.getEndStatsResponse().getBytes() );
+//            Files.write( path, loadGenerator.getEndStatsResponse().getBytes() );
 
         }
     }
 
-    protected LoadGenerator getLoadGenerator()
-        throws Exception
+    protected LoadGenerator.Listener[] getLoadGeneratorListeners()
     {
-        Resource resourceProfile = getResource();
+        return new LoadGenerator.Listener[0];
+    }
 
-        if (this.loadGenerator != null)
-        {
-            return this.loadGenerator;
-        }
-
-        LoadGenerator loadGenerator = new LoadGenerator.Builder() //
-            .host( starterArgs.getHost() ) //
-            .port( starterArgs.getPort() ) //
-            .users( starterArgs.getUsers() ) //
-            .transactionRate( starterArgs.getTransactionRate() ) //
-            .transport( starterArgs.getTransport() ) //
-            .httpClientTransport( httpClientTransport() ) //
-            .sslContextFactory( sslContextFactory() ) //
-            .resource( resourceProfile ) //
-            .responseTimeListeners( getResponseTimeListeners() ) //
-            .latencyTimeListeners( getLatencyTimeListeners() ) //
-            .executorService( getExecutorService() != null ? getExecutorService() : null ) //
-            .requestListeners( getListeners() ) //
-            .build();
-
-        return loadGenerator;
+    protected Resource.Listener[] getResourceListeners() {
+        return new Resource.Listener[0];
     }
 
     protected Request.Listener[] getListeners()
     {
-        return null;
+        return new Request.Listener[0];
     }
 
     public ExecutorService getExecutorService()
@@ -254,32 +263,27 @@ public abstract class AbstractLoadGeneratorStarter
         this.resource = resource;
     }
 
-    public HttpClientTransport httpClientTransport()
+    public HTTPClientTransportBuilder httpClientTransportBuilder()
     {
         switch ( starterArgs.getTransport() )
         {
             case HTTP:
             case HTTPS:
             {
-                return new HttpTransportBuilder().selectors( starterArgs.getSelectors() ).build();
+                return new HTTP1ClientTransportBuilder().selectors( starterArgs.getSelectors() );
             }
             case H2C:
             case H2:
             {
-                return new Http2TransportBuilder().selectors( starterArgs.getSelectors() ).build();
+                return new HTTP2ClientTransportBuilder().selectors( starterArgs.getSelectors() );
             }
-            case FCGI:
-            {
-                return new HttpFCGITransportBuilder().build();
-            }
-
             default:
             {
                 // nothing this weird case already handled by #provideClientTransport
             }
 
         }
-        throw new IllegalArgumentException( "unknown httpClientTransport" );
+        throw new IllegalArgumentException( "unknown httpClientTransportBuilder" );
     }
 
     public SslContextFactory sslContextFactory()

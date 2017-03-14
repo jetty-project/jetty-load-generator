@@ -1,0 +1,170 @@
+//
+//  ========================================================================
+//  Copyright (c) 1995-2017 Mort Bay Consulting Pty. Ltd.
+//  ------------------------------------------------------------------------
+//  All rights reserved. This program and the accompanying materials
+//  are made available under the terms of the Eclipse Public License v1.0
+//  and Apache License v2.0 which accompanies this distribution.
+//
+//      The Eclipse Public License is available at
+//      http://www.eclipse.org/legal/epl-v10.html
+//
+//      The Apache License v2.0 is available at
+//      http://www.opensource.org/licenses/apache2.0.php
+//
+//  You may elect to redistribute this code under either of these licenses.
+//  ========================================================================
+//
+
+package org.mortbay.jetty.load.generator;
+
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.eclipse.jetty.util.Atomics;
+
+public class MonitoringThreadPoolExecutor extends ThreadPoolExecutor {
+    private final AtomicLong tasks = new AtomicLong();
+    private final AtomicLong maxTaskLatency = new AtomicLong();
+    private final AtomicLong totalTaskLatency = new AtomicLong();
+    private final MonitoringLinkedBlockingQueue queue;
+    private final AtomicLong maxQueueLatency = new AtomicLong();
+    private final AtomicLong totalQueueLatency = new AtomicLong();
+    private final AtomicInteger threads = new AtomicInteger();
+    private final AtomicInteger maxThreads = new AtomicInteger();
+
+    public MonitoringThreadPoolExecutor(int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
+        this(maximumPoolSize, keepAliveTime, unit, new AbortPolicy());
+    }
+
+    public MonitoringThreadPoolExecutor(int maximumPoolSize, long keepAliveTime, TimeUnit unit, RejectedExecutionHandler handler) {
+        super(maximumPoolSize, maximumPoolSize, keepAliveTime, unit, new MonitoringLinkedBlockingQueue(), handler);
+        queue = (MonitoringLinkedBlockingQueue)getQueue();
+    }
+
+    public void reset() {
+        tasks.set(0);
+        maxTaskLatency.set(0);
+        totalTaskLatency.set(0);
+        queue.reset();
+        maxQueueLatency.set(0);
+        totalQueueLatency.set(0);
+        threads.set(0);
+        maxThreads.set(0);
+    }
+
+    public long getTasks() {
+        return tasks.get();
+    }
+
+    public long getMaxTaskLatency() {
+        return maxTaskLatency.get();
+    }
+
+    public long getAverageTaskLatency() {
+        long count = tasks.get();
+        return count == 0 ? -1 : totalTaskLatency.get() / count;
+    }
+
+    public long getMaxQueueLatency() {
+        return maxQueueLatency.get();
+    }
+
+    public long getAverageQueueLatency() {
+        long count = tasks.get();
+        return count == 0 ? -1 : totalQueueLatency.get() / count;
+    }
+
+    public int getMaxQueueSize() {
+        return queue.maxSize.get();
+    }
+
+    public int getMaxActiveThreads() {
+        return maxThreads.get();
+    }
+
+    @Override
+    public void execute(final Runnable task) {
+        final long begin = System.nanoTime();
+        super.execute(new Runnable() {
+            public void run() {
+                long latency = System.nanoTime() - begin;
+                tasks.incrementAndGet();
+                Atomics.updateMax(maxQueueLatency, latency);
+                totalQueueLatency.addAndGet(latency);
+                Atomics.updateMax(maxThreads, threads.incrementAndGet());
+                long start = System.nanoTime();
+                try {
+                    task.run();
+                } finally {
+                    long taskLatency = System.nanoTime() - start;
+                    threads.decrementAndGet();
+                    Atomics.updateMax(maxTaskLatency, taskLatency);
+                    totalTaskLatency.addAndGet(taskLatency);
+                }
+            }
+        });
+    }
+
+    private static class MonitoringLinkedBlockingQueue extends LinkedBlockingQueue<Runnable> {
+        private final AtomicInteger size = new AtomicInteger();
+        private final AtomicInteger maxSize = new AtomicInteger();
+
+        public void reset() {
+            size.set(0);
+            maxSize.set(0);
+        }
+
+        @Override
+        public void clear() {
+            reset();
+            super.clear();
+        }
+
+        @Override
+        public boolean offer(Runnable task) {
+            boolean added = super.offer(task);
+            if (added) {
+                increment();
+            }
+            return added;
+        }
+
+        private void increment() {
+            Atomics.updateMax(maxSize, size.incrementAndGet());
+        }
+
+        @Override
+        public Runnable poll() {
+            Runnable task = super.poll();
+            if (task != null) {
+                decrement();
+            }
+            return task;
+        }
+
+        @Override
+        public Runnable poll(long timeout, TimeUnit unit) throws InterruptedException {
+            Runnable task = super.poll(timeout, unit);
+            if (task != null) {
+                decrement();
+            }
+            return task;
+        }
+
+        @Override
+        public Runnable take() throws InterruptedException {
+            Runnable task = super.take();
+            decrement();
+            return task;
+        }
+
+        private void decrement() {
+            size.decrementAndGet();
+        }
+    }
+}

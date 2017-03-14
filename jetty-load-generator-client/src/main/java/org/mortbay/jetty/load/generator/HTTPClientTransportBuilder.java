@@ -16,30 +16,10 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.collector;
+package org.mortbay.jetty.load.generator;
 
+import org.eclipse.jetty.client.HttpClientTransport;
 
-import java.util.Map;
-
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.CollectorInformations;
-
-/**
- *
- */
-public class LoggerCollectorResultHandler
-    implements CollectorResultHandler
-{
-    private static final Logger LOGGER = Log.getLogger( LoggerCollectorResultHandler.class );
-
-
-    @Override
-    public void handleResponseTime( Map<String, CollectorInformations> responseTimePerPath )
-    {
-        for ( Map.Entry<String, CollectorInformations> entry : responseTimePerPath.entrySet() )
-        {
-            LOGGER.info( "path: {}, responseTime: {}", entry.getKey(), entry.getValue() );
-        }
-    }
+public interface HTTPClientTransportBuilder {
+    HttpClientTransport build();
 }
