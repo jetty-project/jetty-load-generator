@@ -130,7 +130,8 @@ public class CollectorTest
                 .host( "localhost" ) //
                 .port( port ) //
                 .usersPerThread( 2 ) //
-                .resourceRate( 5 ) //
+                .iterationsPerThread( 10 ) //
+                .resourceRate( 20 ) //
 //                .transport( LoadGenerator.Transport.HTTP ) //
                 .httpClientTransportBuilder( new HTTP1ClientTransportBuilder() ) //
                 //.scheduler( scheduler ) //
