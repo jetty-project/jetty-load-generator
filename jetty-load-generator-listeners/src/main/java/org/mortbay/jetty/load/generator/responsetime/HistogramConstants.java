@@ -28,7 +28,7 @@ public interface HistogramConstants
 
     long LOWEST_DISCERNIBLE_VALUE = TimeUnit.MILLISECONDS.toNanos( 1 );
 
-    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 1000 );
+    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 100000 );
 
     int NUMBER_OF_SIGNIFICANT_VALUE_DIGITS = 3;
 

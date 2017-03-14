@@ -136,7 +136,8 @@ public class CollectorTest
                 .httpClientTransportBuilder( new HTTP1ClientTransportBuilder() ) //
                 //.scheduler( scheduler ) //
                 .resource( profile ) //
-                .responseTimeListeners( collectorServer ) //
+                // FIXME here
+                //.responseTimeListeners( collectorServer ) //
                 .requestListener( testRequestListener ) //
                 .build();
 

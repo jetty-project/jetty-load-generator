@@ -55,8 +55,6 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 
 @ManagedObject("Jetty LoadGenerator")
 public class LoadGenerator extends ContainerLifeCycle {
@@ -775,16 +773,6 @@ public class LoadGenerator extends ContainerLifeCycle {
                 httpClientTransportBuilder = new HTTP1ClientTransportBuilder();
             }
             return new LoadGenerator(this);
-        }
-
-        // TODO: verify how these listeners are actually used.
-
-        public Builder responseTimeListeners(ResponseTimeListener... responseTimeListeners) {
-            return this;
-        }
-
-        public Builder latencyTimeListeners(LatencyTimeListener... latencyTimeListeners) {
-            return this;
         }
     }
 

@@ -29,7 +29,10 @@
     <dependency>
       <groupId>org.mortbay.jetty.loadgenerator</groupId>
       <artifactId>jetty-load-generator-client</artifactId>
-      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mortbay.jetty.loadgenerator</groupId>
+      <artifactId>jetty-load-generator-listeners</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>

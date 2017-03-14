@@ -47,6 +47,7 @@
   <modules>
     <module>jetty-load-generator-client</module>
     <module>jetty-load-generator-collector</module>
+    <module>jetty-load-generator-listeners</module>
     <module>jetty-load-generator-starter</module>
   </modules>
 
@@ -68,6 +69,16 @@
       <dependency>
         <groupId>org.mortbay.jetty.loadgenerator</groupId>
         <artifactId>jetty-load-generator-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty.loadgenerator</groupId>
+        <artifactId>jetty-load-generator-listeners</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty.loadgenerator</groupId>
+        <artifactId>jetty-load-generator-collector</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

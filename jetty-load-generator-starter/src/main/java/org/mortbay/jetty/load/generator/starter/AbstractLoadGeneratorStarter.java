@@ -81,9 +81,9 @@ public abstract class AbstractLoadGeneratorStarter
             .sslContextFactory( sslContextFactory() ) //
             .resource( resourceProfile ) //
             .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
-            .responseTimeListeners( getResponseTimeListeners() ) //
-            .scheme( starterArgs.getScheme() ) //
-            .latencyTimeListeners( getLatencyTimeListeners() ); //
+            //.responseTimeListeners( getResponseTimeListeners() ) //
+            .scheme( starterArgs.getScheme() ); //
+            //.latencyTimeListeners( getLatencyTimeListeners() ); //
 
         if (starterArgs.getMaxRequestsQueued() > 0)
         {

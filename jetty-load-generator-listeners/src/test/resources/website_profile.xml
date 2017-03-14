@@ -1,0 +1,78 @@
+<Configure class="org.mortbay.jetty.load.generator.Resource">
+  <Arg>
+    <Array type="org.mortbay.jetty.load.generator.Resource">
+    <Item>
+        <New class="org.mortbay.jetty.load.generator.Resource">
+          <Arg>index.html</Arg>
+          <Arg>
+            <Array type="org.mortbay.jetty.load.generator.Resource">
+              <Item>
+                <New class="org.mortbay.jetty.load.generator.Resource">
+                  <Arg>/style.css</Arg>
+                  <Arg>
+                    <Array type="org.mortbay.jetty.load.generator.Resource">
+                      <Item>
+                        <New class="org.mortbay.jetty.load.generator.Resource">
+                          <Arg>/logo.gif</Arg>
+                        </New>
+                      </Item>
+                      <Item>
+                        <New class="org.mortbay.jetty.load.generator.Resource">
+                          <Arg>/spacer.png</Arg>
+                        </New>
+                      </Item>
+                    </Array>
+                  </Arg>
+                </New>
+              </Item>
+              <Item>
+                <New class="org.mortbay.jetty.load.generator.Resource">
+                  <Arg>fancy.css</Arg>
+                </New>
+              </Item>
+              <Item>
+                <New class="org.mortbay.jetty.load.generator.Resource">
+                  <Arg>script.js</Arg>
+                  <Arg>
+                    <Array type="org.mortbay.jetty.load.generator.Resource">
+                      <Item>
+                        <New class="org.mortbay.jetty.load.generator.Resource">
+                          <Arg>/library.js</Arg>
+                        </New>
+                      </Item>
+                      <Item>
+                        <New class="org.mortbay.jetty.load.generator.Resource">
+                          <Arg>/morestuff.js</Arg>
+                        </New>
+                      </Item>
+                    </Array>
+                  </Arg>
+                </New>
+              </Item>
+              <Item>
+                <New class="org.mortbay.jetty.load.generator.Resource">
+                  <Arg>/anotherScript.js</Arg>
+                </New>
+              </Item>
+              <Item>
+                <New class="org.mortbay.jetty.load.generator.Resource">
+                  <Arg>iframeContents.html</Arg>
+                </New>
+              </Item>
+              <Item>
+                <New class="org.mortbay.jetty.load.generator.Resource">
+                  <Arg>/moreIframeContents.html</Arg>
+                </New>
+              </Item>
+              <Item>
+                <New class="org.mortbay.jetty.load.generator.Resource">
+                  <Arg>/favicon.ico</Arg>
+                </New>
+              </Item>
+            </Array>
+          </Arg>
+        </New>
+      </Item>
+    </Array>
+  </Arg>
+</Configure>
