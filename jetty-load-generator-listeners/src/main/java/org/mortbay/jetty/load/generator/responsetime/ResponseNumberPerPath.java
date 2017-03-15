@@ -17,24 +17,26 @@
 
 package org.mortbay.jetty.load.generator.responsetime;
 
+import org.mortbay.jetty.load.generator.Resource;
+
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created by olamy on 27/9/16.
+ *
  */
 public class ResponseNumberPerPath
-    implements ResponseTimeListener, Serializable
+    implements Resource.NodeListener, Serializable
 {
 
     private final Map<String, AtomicInteger> responseNumberPerPath = new ConcurrentHashMap<>();
 
     @Override
-    public void onResponseTimeValue( Values values )
+    public void onResourceNode( Resource.Info info )
     {
-        String path = values.getPath();
+        String path = info.getResource().getPath();
 
         // response number record
         {
@@ -51,13 +53,6 @@ public class ResponseNumberPerPath
             }
 
         }
-    }
-
-
-    @Override
-    public void onLoadGeneratorStop()
-    {
-
     }
 
     public Map<String, AtomicInteger> getResponseNumberPerPath()

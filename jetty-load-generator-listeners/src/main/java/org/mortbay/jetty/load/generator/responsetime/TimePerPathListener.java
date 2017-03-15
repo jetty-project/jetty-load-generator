@@ -18,18 +18,18 @@
 
 package org.mortbay.jetty.load.generator.responsetime;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.HdrHistogram.AtomicHistogram;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.CollectorInformations;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
+import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p>Use {@link AtomicHistogram} to tracker response/latency time per path</p>
@@ -39,7 +39,7 @@ import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
  * </p>
  */
 public class TimePerPathListener
-    implements ResponseTimeListener, LatencyTimeListener, Serializable
+    implements Resource.NodeListener, LoadGenerator.EndListener, LoadGenerator.BeginListener, Serializable
 {
 
     private static final Logger LOGGER = Log.getLogger( TimePerPathListener.class );
@@ -86,7 +86,7 @@ public class TimePerPathListener
     }
 
     @Override
-    public void onLoadGeneratorStart( LoadGenerator loadGenerator )
+    public void onBegin( LoadGenerator loadGenerator )
     {
         // we initialize Maps to avoid concurrent issues
         responseTimePerPath = new ConcurrentHashMap<>();
@@ -111,12 +111,11 @@ public class TimePerPathListener
         }
     }
 
-
     @Override
-    public void onResponseTimeValue( Values values )
+    public void onResourceNode( Resource.Info info )
     {
-        String path = values.getPath();
-        long responseTime = values.getTime();
+        String path = info.getResource().getPath();
+        long responseTime = info.getResponseTime();
         AtomicHistogram atomicHistogram = responseTimePerPath.get( path );
         if ( atomicHistogram == null )
         {
@@ -133,18 +132,9 @@ public class TimePerPathListener
         {
             LOGGER.warn( "skip error recording time {}, {}", responseTime, e.getMessage() );
         }
-    }
 
-    @Override
-    public void onLatencyTimeValue( Values values )
-    {
-        if ( LOGGER.isDebugEnabled() )
-        {
-            LOGGER.debug( "onLatencyTimeValue:" + values.toString() );
-        }
-        String path = values.getPath();
-        long time = values.getTime();
-        AtomicHistogram atomicHistogram = latencyTimePerPath.get( path );
+        long time = info.getLatencyTime();
+        atomicHistogram = latencyTimePerPath.get( path );
         if ( atomicHistogram == null )
         {
             atomicHistogram = new AtomicHistogram( lowestDiscernibleValue, //
@@ -163,7 +153,7 @@ public class TimePerPathListener
     }
 
     @Override
-    public void onLoadGeneratorStop()
+    public void onEnd( LoadGenerator generator )
     {
         if ( printOnEnd )
         {

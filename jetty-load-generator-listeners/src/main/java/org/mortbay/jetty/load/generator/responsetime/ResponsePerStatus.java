@@ -17,13 +17,15 @@
 
 package org.mortbay.jetty.load.generator.responsetime;
 
+import org.mortbay.jetty.load.generator.Resource;
+
 import java.util.concurrent.atomic.LongAdder;
 
 /**
  *
  */
 public class ResponsePerStatus
-    implements ResponseTimeListener
+    implements Resource.NodeListener
 {
 
     private final LongAdder _responses1xx = new LongAdder();
@@ -37,9 +39,9 @@ public class ResponsePerStatus
     private final LongAdder _responses5xx = new LongAdder();
 
     @Override
-    public void onResponseTimeValue( Values values )
+    public void onResourceNode( Resource.Info info )
     {
-        switch ( values.getStatus() / 100 )
+        switch ( info.getStatus() / 100 )
         {
             case 1:
                 _responses1xx.increment();
@@ -59,12 +61,6 @@ public class ResponsePerStatus
             default:
                 break;
         }
-    }
-
-    @Override
-    public void onLoadGeneratorStop()
-    {
-        // no op
     }
 
     public long getResponses1xx()

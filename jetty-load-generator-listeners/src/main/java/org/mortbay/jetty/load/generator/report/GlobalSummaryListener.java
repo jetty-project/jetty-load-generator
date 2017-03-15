@@ -22,7 +22,7 @@ import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
+import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
 
 /**
  * This will collect a global histogram for all response and latency times

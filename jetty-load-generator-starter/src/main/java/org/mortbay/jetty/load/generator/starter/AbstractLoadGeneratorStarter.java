@@ -42,8 +42,6 @@ import org.mortbay.jetty.load.generator.HTTP2ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
 import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
 
 /**
@@ -196,14 +194,9 @@ public abstract class AbstractLoadGeneratorStarter
         return this;
     }
 
-    public ResponseTimeListener[] getResponseTimeListeners()
+    public Resource.NodeListener[] getNodeListeners()
     {
-        return new ResponseTimeListener[]{ new TimePerPathListener() };
-    }
-
-    public LatencyTimeListener[] getLatencyTimeListeners()
-    {
-        return new LatencyTimeListener[]{ new TimePerPathListener() };
+        return new Resource.NodeListener[]{ new TimePerPathListener() };
     }
 
 

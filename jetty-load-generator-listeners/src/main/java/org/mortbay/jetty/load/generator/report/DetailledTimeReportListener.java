@@ -18,58 +18,39 @@
 
 package org.mortbay.jetty.load.generator.report;
 
-import java.io.Serializable;
-
 import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.ValueListener;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
+
+import java.io.Serializable;
 
 /**
  * Use this one to collect all values
  */
 public class DetailledTimeReportListener
-    implements ResponseTimeListener, LatencyTimeListener, Serializable, Resource.NodeListener
+    implements  Serializable, Resource.NodeListener
 {
-    private DetailledTimeValuesReport detailledTimeValuesReport = new DetailledTimeValuesReport();
+    private DetailledTimeValuesReport detailledResponseTimeValuesReport = new DetailledTimeValuesReport();
 
     private DetailledTimeValuesReport detailledLatencyTimeValuesReport = new DetailledTimeValuesReport();
 
     @Override
-    public void onLoadGeneratorStop()
-    {
-        // no op
-    }
-
-    @Override
-    public void onResponseTimeValue( ValueListener.Values values )
-    {
-        this.detailledTimeValuesReport.addEntry(
-            new DetailledTimeValuesReport.Entry( values.getEventTimestamp(), //
-                                                 values.getPath(), //
-                                                 values.getStatus(), //
-                                                 values.getTime() ) );
-    }
-
-    @Override
-    public void onLatencyTimeValue( ValueListener.Values values )
-    {
-        this.detailledLatencyTimeValuesReport.addEntry(
-            new DetailledTimeValuesReport.Entry( values.getEventTimestamp(), //
-                                                 values.getPath(), //
-                                                 values.getStatus(), //
-                                                 values.getTime() ) );
-    }
-
-    @Override
     public void onResourceNode( Resource.Info info )
     {
-        //info.
+        this.detailledLatencyTimeValuesReport.addEntry(
+            new DetailledTimeValuesReport.Entry( info.getRequestTime(), //
+                                                 info.getResource().getPath(), //
+                                                 info.getStatus(), //
+                                                 info.getLatencyTime() ) );
+
+        this.detailledResponseTimeValuesReport.addEntry(
+            new DetailledTimeValuesReport.Entry( info.getRequestTime(), //
+                                                 info.getResource().getPath(), //
+                                                 info.getStatus(), //
+                                                 info.getResponseTime()) );
     }
 
     public DetailledTimeValuesReport getDetailledResponseTimeValuesReport()
     {
-        return detailledTimeValuesReport;
+        return detailledResponseTimeValuesReport;
     }
 
     public DetailledTimeValuesReport getDetailledLatencyTimeValuesReport()

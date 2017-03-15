@@ -19,17 +19,6 @@
 
 package org.mortbay.jetty.load.generator;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.server.ConnectionFactory;
@@ -43,13 +32,22 @@ import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class CollectorServer
-    implements ResponseTimeListener
+    implements Resource.NodeListener
 {
 
     private static final Logger LOGGER = Log.getLogger( CollectorServer.class );
@@ -154,9 +152,9 @@ public class CollectorServer
     }
 
     @Override
-    public void onResponseTimeValue( Values responseTimeValue )
+    public void onResourceNode( Resource.Info info )
     {
-        String path = responseTimeValue.getPath();
+        String path = info.getResource().getPath();
 
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
@@ -168,7 +166,7 @@ public class CollectorServer
         }
 
 
-        long time = responseTimeValue.getTime();
+        long time = info.getResponseTime();
         try
         {
             recorder.recordValue( time );
@@ -179,11 +177,5 @@ public class CollectorServer
         }
 
 
-    }
-
-    @Override
-    public void onLoadGeneratorStop()
-    {
-        // no op
     }
 }

@@ -34,13 +34,13 @@ import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.CollectorInformations;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
+import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
 
 /**
  *
  */
 public class LatencyTimeDisplayListener
-    implements LatencyTimeListener
+    implements Resource.NodeListener, LoadGenerator.BeginListener, LoadGenerator.EndListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LatencyTimeDisplayListener.class );
@@ -84,7 +84,7 @@ public class LatencyTimeDisplayListener
     }
 
     @Override
-    public void onLoadGeneratorStart( LoadGenerator loadGenerator )
+    public void onBegin( LoadGenerator loadGenerator )
     {
         // we initialize Maps to avoid concurrent issues
         recorderPerPath = new ConcurrentHashMap<>();
@@ -141,10 +141,10 @@ public class LatencyTimeDisplayListener
     }
 
     @Override
-    public void onLatencyTimeValue( Values values )
+    public void onResourceNode( Resource.Info info )
     {
-        String path = values.getPath();
-        long time = values.getTime();
+        String path = info.getResource().getPath();
+        long time = info.getLatencyTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {
@@ -164,13 +164,12 @@ public class LatencyTimeDisplayListener
     }
 
     @Override
-    public void onLoadGeneratorStop()
+    public void onEnd( LoadGenerator generator )
     {
         scheduledExecutorService.shutdown();
         // last run
         runnable.run();
     }
-
 
     interface ValueListener
     {

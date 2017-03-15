@@ -21,8 +21,7 @@ package org.mortbay.jetty.load.generator.starter;
 import com.beust.jcommander.JCommander;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.latency.LatencyTimeListener;
-import org.mortbay.jetty.load.generator.responsetime.ResponseTimeListener;
+import org.mortbay.jetty.load.generator.Resource;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -42,28 +41,16 @@ public class JenkinsRemoteStarter
 
     private static final Logger LOGGER = Log.getLogger( JenkinsRemoteStarter.class );
 
-    public static List<ResponseTimeListener> responseTimeListeners;
+    public static List<Resource.NodeListener> nodeListeners;
 
-    public static List<ResponseTimeListener> getResponseTimeListeners()
+    public static List<Resource.NodeListener> getNodeListeners()
     {
-        return responseTimeListeners;
+        return nodeListeners;
     }
 
-    public static void setResponseTimeListeners( List<ResponseTimeListener> responseTimeListeners )
+    public static void setNodeListeners( List<Resource.NodeListener> nodeListeners )
     {
-        JenkinsRemoteStarter.responseTimeListeners = responseTimeListeners;
-    }
-
-    public static List<LatencyTimeListener> latencyTimeListeners;
-
-    public static List<LatencyTimeListener> getLatencyTimeListeners()
-    {
-        return latencyTimeListeners;
-    }
-
-    public static void setLatencyTimeListeners( List<LatencyTimeListener> latencyTimeListeners )
-    {
-        JenkinsRemoteStarter.latencyTimeListeners = latencyTimeListeners;
+        JenkinsRemoteStarter.nodeListeners = nodeListeners;
     }
 
     public static void main( String... args)  throws Exception {
@@ -156,16 +143,11 @@ public class JenkinsRemoteStarter
             LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs )
             {
                 @Override
-                public ResponseTimeListener[] getResponseTimeListeners()
+                public Resource.NodeListener[] getNodeListeners()
                 {
-                    return responseTimeListeners.toArray( new ResponseTimeListener[responseTimeListeners.size()] );
+                    return nodeListeners.toArray(new Resource.NodeListener[nodeListeners.size()]);
                 }
 
-                @Override
-                public LatencyTimeListener[] getLatencyTimeListeners()
-                {
-                    return latencyTimeListeners.toArray( new LatencyTimeListener[latencyTimeListeners.size()] );
-                }
             };
 
             LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost() + " for " + runnerArgs.getRunningTime() + " "

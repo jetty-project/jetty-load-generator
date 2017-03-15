@@ -16,24 +16,21 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator.responsetime;
+package org.mortbay.jetty.load.generator.listeners;
 
-
-import org.mortbay.jetty.load.generator.ValueListener;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
-public interface ResponseTimeListener
-    extends ValueListener
+public interface HistogramConstants
 {
-    /**
-     * triggered with an http client response time value
-     *
-     * @param values the response time values
-     */
-    void onResponseTimeValue( Values values );
 
+    long LOWEST_DISCERNIBLE_VALUE = TimeUnit.MILLISECONDS.toNanos( 1 );
 
+    long HIGHEST_TRACKABLE_VALUE = TimeUnit.MINUTES.toNanos( 100000 );
+
+    int NUMBER_OF_SIGNIFICANT_VALUE_DIGITS = 3;
 
 }
+

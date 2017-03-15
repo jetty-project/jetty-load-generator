@@ -34,12 +34,13 @@ import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.CollectorInformations;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
 
 /**
  *
  */
 public class ResponseTimeDisplayListener
-    implements ResponseTimeListener
+    implements Resource.NodeListener, LoadGenerator.BeginListener, LoadGenerator.EndListener
 {
 
     private static final Logger LOGGER = Log.getLogger( ResponseTimeDisplayListener.class );
@@ -85,7 +86,7 @@ public class ResponseTimeDisplayListener
     }
 
     @Override
-    public void onLoadGeneratorStart( LoadGenerator loadGenerator )
+    public void onBegin( LoadGenerator loadGenerator )
     {
         // we initialize Maps to avoid concurrent issues
         recorderPerPath = new ConcurrentHashMap<>();
@@ -141,11 +142,10 @@ public class ResponseTimeDisplayListener
         }
     }
 
-
     @Override
-    public void onResponseTimeValue( Values values )
+    public void onResourceNode( Resource.Info info )
     {
-        String path = values.getPath();
+        String path = info.getResource().getPath();
 
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
@@ -156,7 +156,7 @@ public class ResponseTimeDisplayListener
             recorderPerPath.put( path, recorder );
         }
 
-        long time = values.getTime();
+        long time = info.getResponseTime();
         try
         {
             recorder.recordValue( time );
@@ -169,7 +169,7 @@ public class ResponseTimeDisplayListener
     }
 
     @Override
-    public void onLoadGeneratorStop()
+    public void onEnd( LoadGenerator generator )
     {
         scheduledExecutorService.shutdown();
         // last run

@@ -23,7 +23,7 @@ import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.responsetime.HistogramConstants;
+import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
 
 import java.net.InetAddress;
 import java.util.concurrent.Executors;
