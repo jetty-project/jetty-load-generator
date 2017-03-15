@@ -24,10 +24,12 @@ import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
 
+import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpMethod;
 
 public class Resource {
     private final List<Resource> resources = new ArrayList<>();
+    private final HttpFields headers = new HttpFields();
     private String method = HttpMethod.GET.asString();
     private String path = "/";
     private int requestLength;
@@ -73,6 +75,20 @@ public class Resource {
     public Resource requestLength(int requestLength) {
         this.requestLength = requestLength;
         return this;
+    }
+
+    public Resource requestHeader(String name, String value) {
+        this.headers.add(name, value);
+        return this;
+    }
+
+    public Resource requestHeaders(HttpFields headers) {
+        this.headers.addAll(headers);
+        return this;
+    }
+
+    public HttpFields getRequestHeaders() {
+        return headers;
     }
 
     public int getRequestLength() {
@@ -156,10 +172,6 @@ public class Resource {
             return resource;
         }
 
-        /**
-         *
-         * @return timestamp in nano when the request has been sent
-         */
         public long getRequestTime() {
             return requestTime;
         }
@@ -168,16 +180,6 @@ public class Resource {
             this.requestTime = requestTime;
         }
 
-        public Info requestTime(long requestTime) {
-            this.requestTime = requestTime;
-            return this;
-        }
-
-        /**
-         *
-         * @return timestamp in nano for latency calculation.
-         *          You must use {@link #getRequestTime()} as well to calculate the latency time
-         */
         public long getLatencyTime() {
             return latencyTime;
         }
@@ -186,16 +188,6 @@ public class Resource {
             this.latencyTime = latencyTime;
         }
 
-        public Info latencyTime(long latencyTime) {
-            this.latencyTime = latencyTime;
-            return this;
-        }
-
-        /**
-         *
-         * @return timestamp in nano for response time calculation.
-         *          You must use {@link #getRequestTime()} as well to calculate the response time
-         */
         public long getResponseTime() {
             return responseTime;
         }
@@ -204,27 +196,12 @@ public class Resource {
             this.responseTime = responseTime;
         }
 
-        public Info responseTime(long responseTime) {
-            this.responseTime = responseTime;
-            return this;
-        }
-
-        /**
-         *
-         * @return timestamp in nano for whole tree received calculation.
-         *          You must use {@link #getRequestTime()} as well to calculate the latency time
-         */
         public long getTreeTime() {
             return treeTime;
         }
 
         public void setTreeTime(long treeTime) {
             this.treeTime = treeTime;
-        }
-
-        public Info treeTime(long treeTime) {
-            this.treeTime = treeTime;
-            return this;
         }
 
         public void addContent(int bytes) {
@@ -235,50 +212,31 @@ public class Resource {
             return contentLength;
         }
 
-        /**
-         *
-         * @return <code>true</code> if the resource has been downloaded from an http2 push
-         */
         public boolean isPushed() {
             return pushed;
         }
 
-        public void setPushed( boolean pushed) {
+        public void setPushed(boolean pushed) {
             this.pushed = pushed;
         }
 
-        public Info pushed( boolean pushed) {
-            this.pushed = pushed;
-            return this;
-        }
-
-        /**
-         *
-         * @return the http status of the response
-         */
         public int getStatus() {
             return status;
         }
 
-        public void setStatus( int status ) {
+        public void setStatus(int status) {
             this.status = status;
         }
-
-        public Info status( int status ) {
-            this.status = status;
-            return this;
-        }
-
     }
 
     public interface Listener extends EventListener {
     }
 
     public interface NodeListener extends Listener {
-        void onResourceNode(Info info);
+        public void onResourceNode(Info info);
     }
 
     public interface TreeListener extends Listener {
-        void onResourceTree(Info info);
+        public void onResourceTree(Info info);
     }
 }

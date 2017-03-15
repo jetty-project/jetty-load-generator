@@ -14,6 +14,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mortbay.jetty.load.generator.util.MonitoringThreadPoolExecutor;
@@ -44,6 +45,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         LoadGenerator loadGenerator = prepareLoadGenerator(new HTTP2ClientTransportBuilder())
                 .warmupIterationsPerThread(10)
                 .iterationsPerThread(100)
+//                .warmupIterationsPerThread(1000)
 //                .runFor(2, TimeUnit.MINUTES)
                 .usersPerThread(100)
                 .channelsPerUser(1000)
@@ -67,13 +69,28 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
                 })
                 .build();
 
+        serverStats.statsReset();
         loadGenerator.begin().join();
+        long elapsed = serverStats.getStatsOnMs();
+
+        Assert.assertEquals(0, requests.get());
+
+        int serverRequests = serverStats.getRequests();
+        System.err.printf("%nserver - requests: %d, rate: %.3f, max_request_time: %d%n%n",
+                serverRequests,
+                elapsed > 0 ? serverRequests * 1000F / elapsed : 0F,
+                serverStats.getRequestTimeMax());
 
         HistogramSnapshot treeSnapshot = new HistogramSnapshot(treeHistogram, 20, "tree response time", "us", TimeUnit.NANOSECONDS::toMicros);
         System.err.println(treeSnapshot);
         HistogramSnapshot rootSnapshot = new HistogramSnapshot(rootHistogram, 20, "root response time", "us", TimeUnit.NANOSECONDS::toMicros);
         System.err.println(rootSnapshot);
-        System.err.printf("queued requests: %d%n", requests.get());
+
+        System.err.printf("client thread pool - max_threads: %d, max_queue_size: %d, max_queue_latency: %dms%n%n",
+                executor.getMaxActiveThreads(),
+                executor.getMaxQueueSize(),
+                TimeUnit.NANOSECONDS.toMillis(executor.getMaxQueueLatency())
+        );
 
         executor.shutdown();
     }

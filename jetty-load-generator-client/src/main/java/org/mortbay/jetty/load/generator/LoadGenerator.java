@@ -262,8 +262,9 @@ public class LoadGenerator extends ContainerLifeCycle {
         Request request = client.newRequest(config.getHost(), config.getPort())
                 .scheme(config.getScheme())
                 .method(resource.getMethod())
-                .path(resource.getPath())
-                .header("JLG-Response-Length", Integer.toString(resource.getResponseLength()));
+                .path(resource.getPath());
+        request.getHeaders().addAll(resource.getRequestHeaders());
+        request.header("JLG-Response-Length", Integer.toString(resource.getResponseLength()));
         int requestLength = resource.getRequestLength();
         if (requestLength > 0) {
             request.content(new BytesContentProvider(new byte[requestLength]));
@@ -379,22 +380,6 @@ public class LoadGenerator extends ContainerLifeCycle {
                 if (resource.getPath() != null) {
                     HttpRequest httpRequest = (HttpRequest)newRequest(client, config, resource);
 
-                    httpRequest.pushListener((request, pushed) -> {
-                        URI pushedURI = pushed.getURI();
-                        Resource child = resource.findDescendant(pushedURI);
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("pushed {}", child);
-                        }
-                        if (child != null && pushCache.add(pushedURI)) {
-                            Resource.Info pushedInfo = child.newInfo();
-                            pushedInfo.setRequestTime(System.nanoTime());
-                            pushedInfo.setPushed(true);
-                            return new ResponseHandler(pushedInfo);
-                        } else {
-                            return null;
-                        }
-                    });
-
                     if (pushCache.contains(httpRequest.getURI())) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("skip sending pushed {}", resource);
@@ -403,6 +388,23 @@ public class LoadGenerator extends ContainerLifeCycle {
                         if (logger.isDebugEnabled()) {
                             logger.debug("sending {}{}", warmup ? "warmup " : "", resource);
                         }
+
+                        httpRequest.pushListener((request, pushed) -> {
+                            URI pushedURI = pushed.getURI();
+                            Resource child = resource.findDescendant(pushedURI);
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("pushed {}", child);
+                            }
+                            if (child != null && pushCache.add(pushedURI)) {
+                                Resource.Info pushedInfo = child.newInfo();
+                                pushedInfo.setRequestTime(System.nanoTime());
+                                pushedInfo.setPushed(true);
+                                return new ResponseHandler(pushedInfo);
+                            } else {
+                                return null;
+                            }
+                        });
+
                         Request request = config.getRequestListeners().stream()
                                 .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
                         request.send(new ResponseHandler(info));

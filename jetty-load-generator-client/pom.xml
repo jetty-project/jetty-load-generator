@@ -15,7 +15,6 @@
 
   <properties>
     <bundle-symbolic-name>${project.groupId}.load.generator.client</bundle-symbolic-name>
-    <test.users>1</test.users>
   </properties>
 
   <dependencies>
@@ -127,17 +126,7 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <argLine>${argLine} -Xbootclasspath/p:${project.build.directory}/alpn/alpn-boot-${alpn.version}.jar</argLine>
-          <systemPropertyVariables>
-            <test.users>${test.users}</test.users>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
     </plugins>
-
   </build>
 
 </project>
