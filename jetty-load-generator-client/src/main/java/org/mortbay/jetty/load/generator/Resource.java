@@ -164,12 +164,22 @@ public class Resource {
             this.requestTime = requestTime;
         }
 
+        public Info requestTime(long requestTime) {
+            this.requestTime = requestTime;
+            return this;
+        }
+
         public long getLatencyTime() {
             return latencyTime;
         }
 
         public void setLatencyTime(long latencyTime) {
             this.latencyTime = latencyTime;
+        }
+
+        public Info latencyTime(long latencyTime) {
+            this.latencyTime = latencyTime;
+            return this;
         }
 
         public long getResponseTime() {
@@ -180,12 +190,22 @@ public class Resource {
             this.responseTime = responseTime;
         }
 
+        public Info responseTime(long responseTime) {
+            this.responseTime = responseTime;
+            return this;
+        }
+
         public long getTreeTime() {
             return treeTime;
         }
 
         public void setTreeTime(long treeTime) {
             this.treeTime = treeTime;
+        }
+
+        public Info treeTime(long treeTime) {
+            this.treeTime = treeTime;
+            return this;
         }
 
         public void addContent(int bytes) {
@@ -204,6 +224,11 @@ public class Resource {
             this.pushed = pushed;
         }
 
+        public Info pushed( boolean pushed) {
+            this.pushed = pushed;
+            return this;
+        }
+
         public int getStatus() {
             return status;
         }
@@ -212,6 +237,10 @@ public class Resource {
             this.status = status;
         }
 
+        public Info status( int status ) {
+            this.status = status;
+            return this;
+        }
 
     }
 
