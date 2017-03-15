@@ -9,38 +9,36 @@ More documentation https://jetty-project.github.io/jetty-load-generator/
 ## Documentation
 
 ### Profile
-You can use the API to define a running resource (steps with url to hit)
+You can use the API to define a running resource (steps with url to hit). This can be a single urls or a tree.
 
 ```java
-        Resource resource =
-            new Resource( //
-                new Resource( "/index.html" ) //
-            ); 
+Resource resource = new Resource("/",
+            new Resource("/styles.css"),
+            new Resource("/pagenavi-css.css"),
+            
+    );
 ```
 
 ### Load Generator 
-Then you run the load generator with this resource
+Then you simply run the load generator with this resource
 
 ```java
-        LoadGenerator loadGenerator = new LoadGenerator.Builder() //
-            .host( your host ) //
-            .port( the port ) //
-            .users( a users number ) //
-            .transactionRate( 1 ) // number of transaction per second. Transaction means all the request from the Resource
-            .transport( transport ) // the type of transport.
-            .httpClientTransport( HttpClientTransport instance have a look at the various builder ) //
-            .scheduler( scheduler ) //
-            .sslContextFactory( sslContextFactory ) //
-            .resource( resource ) //
-            .responseTimeListeners( some listeners you can build your own or use existing one ) // some listeners you can build your own
-            .requestListeners( some listeners you can build your own or use existing one ) //
-            .build();
+     
+        LoadGenerator.Builder builder = new LoadGenerator.Builder()
+                .host( your host )
+                .port( the port )
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .resource(resource)
+                .warmupIterationsPerThread(10)
+                .iterationsPerThread(100)
+                .runFor(2, TimeUnit.MINUTES) // if you want to for 2 minutes (this wil override iterationsPerThread)
+                .usersPerThread(100)
+                .build();                
 
-        LoadGeneratorResult result = loadGenerator.run();
+        loadGenerator.begin();
         
         Now you generator is running
         
-        you can now modify the transaction rate
         
         loadGenerator.interrupt();
         
@@ -62,56 +60,23 @@ With all listeners we have, we can take measure in different places
 
 #### Response Time
 
-The responseTime exposed using ResponseTimeListener is the time taken just before 1. and 9.
+The responseTime is the time taken just before 1. and 9.
 
 #### Latency Time
 
-The latencyTime exposed using LatencyTimeListener is the time taken just before 2. and 6.
-
-### Exposed results
-The LoadGenerator start a collector server you can query to get some informations as: 
-
-* totalCount: number of request part of the result
-* minValue: the minimum value
-* maxValue: the maximum value
-* value50: the value at 50 percentile.
-* value90: the value at 90 percentile.
-* mean: the mean value
-* stdDeviation: the computed standard deviation
-* startTimeStamp: the start time for the values
-* endTimeStamp: the end time for the values
-
-You can get those information trough Json result via GET request
-
-* /collector/response-times will return per http path the response times informations
-
-### Results Collector
-The Collector client will help to collect statistics on collector server.
-To use it
-
-```java
-
-            CollectorClient collectorClient = CollectorClient.Builder.builder() //
-                .addAddress( "localhost:187" ) //
-                .addAddress( "beer.org:80" ) //
-                .scheduleDelayInMillis( 1000 ) //
-                .build();
-
-            collectorClient.start();
-        
-```
+The latencyTime is the time taken just before 2. and 6.
 
 ### Using uber jar
 
 ```
-java -jar jetty-load-generator-starter-0.3-SNAPSHOT-uber.jar -h localhost -p 8080 -pgp ./simple_profile.groovy -t http -rt 10 -rtu s -tr 40 -u 100
+java -jar jetty-load-generator-starter-1.0.0-SNAPSHOT-uber.jar -h localhost -p 8080 -pgp ./simple_profile.groovy -t http -rt 10 -rtu s -tr 40 -u 100
 ```
 See --help for usage
 
 ### Groovy profile file
 
 ```
-import org.mortbay.jetty.load.generator.profile.Resource
+import org.mortbay.jetty.load.generator.Resource
 
 return new Resource(new Resource( "index.html",
                                          new Resource( "/css/bootstrap.css",
@@ -144,6 +109,41 @@ To build, use:
 ```
 
 It is possible to bypass tests by building with `mvn -DskipTests install`
+
+
+### WIP DOC TO UPDATE
+### Exposed results
+The LoadGenerator start a collector server you can query to get some informations as: 
+
+* totalCount: number of request part of the result
+* minValue: the minimum value
+* maxValue: the maximum value
+* value50: the value at 50 percentile.
+* value90: the value at 90 percentile.
+* mean: the mean value
+* stdDeviation: the computed standard deviation
+* startTimeStamp: the start time for the values
+* endTimeStamp: the end time for the values
+
+You can get those information trough Json result via GET request
+
+* /collector/response-times will return per http path the response times informations
+
+### Results Collector
+The Collector client will help to collect statistics on collector server.
+To use it
+
+```java
+
+            CollectorClient collectorClient = CollectorClient.Builder.builder() //
+                .addAddress( "localhost:187" ) //
+                .addAddress( "beer.org:80" ) //
+                .scheduleDelayInMillis( 1000 ) //
+                .build();
+
+            collectorClient.start();
+        
+```
 
 ## Professional Services
 
