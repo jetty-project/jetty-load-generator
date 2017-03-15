@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator.report;
+package org.mortbay.jetty.load.generator.listeners.report;
 
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.util.log.Log;

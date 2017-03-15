@@ -50,7 +50,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mortbay.jetty.load.generator.CollectorServer;
+import org.mortbay.jetty.load.generator.listeners.CollectorServer;
 import org.mortbay.jetty.load.generator.HTTP1ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;

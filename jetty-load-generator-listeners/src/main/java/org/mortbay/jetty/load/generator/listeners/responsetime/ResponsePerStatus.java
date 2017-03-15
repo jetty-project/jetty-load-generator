@@ -15,7 +15,7 @@
 //  You may elect to redistribute this code under either of these licenses.
 //  ========================================================================
 
-package org.mortbay.jetty.load.generator.responsetime;
+package org.mortbay.jetty.load.generator.listeners.responsetime;
 
 import org.mortbay.jetty.load.generator.Resource;
 

@@ -23,7 +23,7 @@ import java.util.Map;
 
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.CollectorInformations;
+import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 
 /**
  *

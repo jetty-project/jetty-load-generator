@@ -16,14 +16,14 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator;
+package org.mortbay.jetty.load.generator.listeners;
 
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 
 import java.net.InetAddress;
 import java.util.concurrent.Executors;

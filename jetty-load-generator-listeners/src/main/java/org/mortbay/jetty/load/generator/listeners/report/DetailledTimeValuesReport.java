@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator.report;
+package org.mortbay.jetty.load.generator.listeners.report;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

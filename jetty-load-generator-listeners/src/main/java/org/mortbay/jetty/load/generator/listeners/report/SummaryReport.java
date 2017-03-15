@@ -16,9 +16,9 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator.report;
+package org.mortbay.jetty.load.generator.listeners.report;
 
-import org.mortbay.jetty.load.generator.CollectorInformations;
+import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

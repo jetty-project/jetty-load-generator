@@ -42,7 +42,7 @@ import org.mortbay.jetty.load.generator.HTTP2ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.responsetime.TimePerPathListener;
+import org.mortbay.jetty.load.generator.listeners.responsetime.TimePerPathListener;
 
 /**
  *

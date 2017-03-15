@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator;
+package org.mortbay.jetty.load.generator.listeners;
 
 import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;

@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator.report;
+package org.mortbay.jetty.load.generator.listeners.report;
 
 import org.mortbay.jetty.load.generator.Resource;
 

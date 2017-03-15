@@ -17,7 +17,7 @@
 //
 
 
-package org.mortbay.jetty.load.generator;
+package org.mortbay.jetty.load.generator.listeners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.HdrHistogram.Recorder;
@@ -32,6 +32,7 @@ import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.mortbay.jetty.load.generator.Resource;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;

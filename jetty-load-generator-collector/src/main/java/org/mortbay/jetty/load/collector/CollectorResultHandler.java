@@ -20,7 +20,7 @@ package org.mortbay.jetty.load.collector;
 
 import java.util.Map;
 
-import org.mortbay.jetty.load.generator.CollectorInformations;
+import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 
 /**
  *
