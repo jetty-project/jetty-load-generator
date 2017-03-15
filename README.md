@@ -31,7 +31,7 @@ Then you simply run the load generator with this resource
                 .resource(resource)
                 .warmupIterationsPerThread(10)
                 .iterationsPerThread(100)
-                .runFor(2, TimeUnit.MINUTES) // if you want to for 2 minutes (this wil override iterationsPerThread)
+                .runFor(2, TimeUnit.MINUTES) // if you want to run for 2 minutes (this wil override iterationsPerThread)
                 .usersPerThread(100)
                 .build();                
 
@@ -78,27 +78,26 @@ See --help for usage
 ```
 import org.mortbay.jetty.load.generator.Resource
 
-return new Resource(new Resource( "index.html",
-                                         new Resource( "/css/bootstrap.css",
-                                                       new Resource( "/css/bootstrap-theme.css" ),
-                                                       new Resource( "/js/jquery-3.1.1.min.js"),
-                                                       new Resource( "/js/jquery-3.1.1.min.js"),
-                                                       new Resource( "/js/jquery-3.1.1.min.js"),
-                                                       new Resource( "/js/jquery-3.1.1.min.js")
-                                         ),
-                                         new Resource( "/js/bootstrap.js" ,
-                                                       new Resource( "/js/bootstrap.js" ),
-                                                       new Resource( "/js/bootstrap.js" ),
-                                                       new Resource( "/js/bootstrap.js" )
-                                         ),
-                                         new Resource( "/hello" ),
-                                         new Resource( "/dump.jsp?wine=foo&foo=bar" ),
-                                         new Resource( "/not_here.html" ),
-                                         new Resource( "/hello?name=foo" ),
-                                         new Resource( "/hello?name=foo" ),
-                                         new Resource( "/upload" ).method("PUT").size(8192),
-                                         )
-);
+return new Resource( "index.html",
+                     new Resource( "/css/bootstrap.css",
+                        new Resource( "/css/bootstrap-theme.css" ),
+                        new Resource( "/js/jquery-3.1.1.min.js"),
+                        new Resource( "/js/jquery-3.1.1.min.js"),
+                        new Resource( "/js/jquery-3.1.1.min.js"),
+                        new Resource( "/js/jquery-3.1.1.min.js")
+                     ),
+                     new Resource( "/js/bootstrap.js" ,
+                        new Resource( "/js/bootstrap.js" ),
+                        new Resource( "/js/bootstrap.js" ),
+                        new Resource( "/js/bootstrap.js" )
+                     ),
+                     new Resource( "/hello" ),
+                     new Resource( "/dump.jsp?wine=foo&foo=bar" ),
+                     new Resource( "/not_here.html" ),
+                     new Resource( "/hello?name=foo" ),
+                     new Resource( "/hello?name=foo" ),
+                     new Resource( "/upload" ).method("PUT").size(8192),
+                     );
 ```
 
 ## Building
