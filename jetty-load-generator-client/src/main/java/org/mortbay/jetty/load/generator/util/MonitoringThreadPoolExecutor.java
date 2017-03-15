@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.generator;
+package org.mortbay.jetty.load.generator.util;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;

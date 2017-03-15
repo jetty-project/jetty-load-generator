@@ -28,6 +28,7 @@ import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
 import org.junit.Before;
 import org.junit.Test;
+import org.mortbay.jetty.load.generator.util.MonitoringThreadPoolExecutor;
 
 public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
     @Before
@@ -37,7 +38,7 @@ public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
 
     @Test
     public void testHTTP1() throws Exception {
-        MonitoringThreadPoolExecutor executor = new MonitoringThreadPoolExecutor(1024, 60, TimeUnit.SECONDS);
+        MonitoringThreadPoolExecutor executor = new MonitoringThreadPoolExecutor( 1024, 60, TimeUnit.SECONDS);
 
         AtomicLong requests = new AtomicLong();
         Histogram treeHistogram = new AtomicHistogram(TimeUnit.MICROSECONDS.toNanos(1), TimeUnit.SECONDS.toNanos(10), 3);
