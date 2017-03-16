@@ -77,6 +77,17 @@ The interfaces to implement are:
 * ``` org.mortbay.jetty.load.generator.LoadGenerator.BeginListener ```
 * ``` org.mortbay.jetty.load.generator.LoadGenerator.EndListener ```
 
+They can be added to the ``` LoadGenerator using Builder method```
+```
+loadGeneratorBuilder.listener( listener )
+```
+#### Http Request Listener
+You can use Request.Listener from the HttpClient API.
+
+They can be added to the ``` LoadGenerator using Builder method```
+```
+loadGeneratorBuilder.requestListener(Request.Listener listener)
+```
 
 
 ### Time Measure
