@@ -167,7 +167,7 @@ public class CollectorServer
         }
 
 
-        long time = info.getResponseTime();
+        long time = info.getResponseTime() - info.getRequestTime();
         try
         {
             recorder.recordValue( time );

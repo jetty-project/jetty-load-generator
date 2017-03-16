@@ -780,10 +780,10 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     public interface BeginListener extends Listener {
-        public void onBegin(LoadGenerator generator);
+        void onBegin(LoadGenerator generator);
     }
 
     public interface EndListener extends Listener {
-        public void onEnd(LoadGenerator generator);
+        void onEnd(LoadGenerator generator);
     }
 }

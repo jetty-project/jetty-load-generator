@@ -144,7 +144,7 @@ public class LatencyTimeDisplayListener
     public void onResourceNode( Resource.Info info )
     {
         String path = info.getResource().getPath();
-        long time = info.getLatencyTime();
+        long time = info.getLatencyTime() - info.getRequestTime();
         Recorder recorder = recorderPerPath.get( path );
         if ( recorder == null )
         {

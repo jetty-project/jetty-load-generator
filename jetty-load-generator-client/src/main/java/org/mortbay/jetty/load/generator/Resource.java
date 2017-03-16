@@ -156,6 +156,10 @@ public class Resource {
             return resource;
         }
 
+        /**
+         *
+         * @return timestamp in nano when the request has been sent
+         */
         public long getRequestTime() {
             return requestTime;
         }
@@ -169,6 +173,11 @@ public class Resource {
             return this;
         }
 
+        /**
+         *
+         * @return timestamp in nano for latency calculation.
+         *          You must use {@link #getRequestTime()} as well to calculate the latency time
+         */
         public long getLatencyTime() {
             return latencyTime;
         }
@@ -182,6 +191,11 @@ public class Resource {
             return this;
         }
 
+        /**
+         *
+         * @return timestamp in nano for response time calculation.
+         *          You must use {@link #getRequestTime()} as well to calculate the response time
+         */
         public long getResponseTime() {
             return responseTime;
         }
@@ -195,6 +209,11 @@ public class Resource {
             return this;
         }
 
+        /**
+         *
+         * @return timestamp in nano for whole tree received calculation.
+         *          You must use {@link #getRequestTime()} as well to calculate the latency time
+         */
         public long getTreeTime() {
             return treeTime;
         }
@@ -216,6 +235,10 @@ public class Resource {
             return contentLength;
         }
 
+        /**
+         *
+         * @return <code>true</code> if the resource has been downloaded from an http2 push
+         */
         public boolean isPushed() {
             return pushed;
         }
@@ -229,6 +252,10 @@ public class Resource {
             return this;
         }
 
+        /**
+         *
+         * @return the http status of the response
+         */
         public int getStatus() {
             return status;
         }
@@ -248,10 +275,10 @@ public class Resource {
     }
 
     public interface NodeListener extends Listener {
-        public void onResourceNode(Info info);
+        void onResourceNode(Info info);
     }
 
     public interface TreeListener extends Listener {
-        public void onResourceTree(Info info);
+        void onResourceTree(Info info);
     }
 }

@@ -39,13 +39,13 @@ public class DetailledTimeReportListener
             new DetailledTimeValuesReport.Entry( info.getRequestTime(), //
                                                  info.getResource().getPath(), //
                                                  info.getStatus(), //
-                                                 info.getLatencyTime() ) );
+                                                 info.getLatencyTime() - info.getRequestTime() ) );
 
         this.detailledResponseTimeValuesReport.addEntry(
             new DetailledTimeValuesReport.Entry( info.getRequestTime(), //
                                                  info.getResource().getPath(), //
                                                  info.getStatus(), //
-                                                 info.getResponseTime()) );
+                                                 info.getResponseTime() - info.getRequestTime()) );
     }
 
     public DetailledTimeValuesReport getDetailledResponseTimeValuesReport()

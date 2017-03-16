@@ -115,7 +115,7 @@ public class TimePerPathListener
     public void onResourceNode( Resource.Info info )
     {
         String path = info.getResource().getPath();
-        long responseTime = info.getResponseTime();
+        long responseTime = info.getResponseTime() - info.getRequestTime();
         AtomicHistogram atomicHistogram = responseTimePerPath.get( path );
         if ( atomicHistogram == null )
         {
@@ -133,7 +133,7 @@ public class TimePerPathListener
             LOGGER.warn( "skip error recording time {}, {}", responseTime, e.getMessage() );
         }
 
-        long time = info.getLatencyTime();
+        long time = info.getLatencyTime() - info.getRequestTime();
         atomicHistogram = latencyTimePerPath.get( path );
         if ( atomicHistogram == null )
         {

@@ -57,7 +57,7 @@ public class GlobalSummaryListener
     {
         try
         {
-            latencyHistogram.recordValue( info.getLatencyTime() );
+            latencyHistogram.recordValue( info.getLatencyTime() - info.getRequestTime() );
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
@@ -65,7 +65,7 @@ public class GlobalSummaryListener
         }
         try
         {
-            responseHistogram.recordValue( info.getResponseTime() );
+            responseHistogram.recordValue( info.getResponseTime() - info.getRequestTime() );
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {

@@ -44,6 +44,41 @@ Then you simply run the load generator with this resource
         
 ```
 
+### Listeners
+#### Resource Listeners
+To count or do some statistics on load you can create your own listeners.
+The inferface to implement is ``` org.mortbay.jetty.load.generator.Resource.NodeListener ```.
+
+You will have some time available via ``` org.mortbay.jetty.load.generator.Resource.Info ```
+
+They can be added to the ``` LoadGenerator using Builder method```
+```
+loadGeneratorBuilder.resourceListener( listener )
+```
+
+The latencyTime and responseTime (in nano seconds) are available using the dedicated methods.
+
+**Note** This is not calculation of the data but the timestamp of the event happened. So you need to use the requestTime
+ to calculate the values.
+
+#### Tree listener
+You can have a listener for resource tree sent.
+The interface to implement is ``` org.mortbay.jetty.load.generator.Resource.TreeListener ```.
+
+You will have some time available via ``` org.mortbay.jetty.load.generator.Resource.Info ```
+
+They can be added to the ``` LoadGenerator using Builder method```
+```
+loadGeneratorBuilder.resourceListener( listener )
+```
+#### Load Generator Listener
+There are 2 listeners for the LoadGenerator lifecycle (start and end).
+The interfaces to implement are:
+* ``` org.mortbay.jetty.load.generator.LoadGenerator.BeginListener ```
+* ``` org.mortbay.jetty.load.generator.LoadGenerator.EndListener ```
+
+
+
 ### Time Measure
 
 With all listeners we have, we can take measure in different places
