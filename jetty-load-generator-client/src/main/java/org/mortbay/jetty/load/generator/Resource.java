@@ -27,7 +27,18 @@ import java.util.List;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpMethod;
 
+/**
+ * <p>A resource node to be fetched by the load generator.</p>
+ * <p>Resources are organized in a tree, and the load generator
+ * fetches parent resources before children resources, while sibling
+ * resources are sent in parallel.</p>
+ * <p>A Resource without a path is a <em>group</em> resource,
+ * only meant to group resources together (for example to fetch all
+ * JavaScript resources as a group before fetching the image resources).</p>
+ */
 public class Resource {
+    public static final String RESPONSE_LENGTH = "JLG-Response-Length";
+
     private final List<Resource> resources = new ArrayList<>();
     private final HttpFields headers = new HttpFields();
     private String method = HttpMethod.GET.asString();
@@ -54,6 +65,10 @@ public class Resource {
         }
     }
 
+    /**
+     * @param method the HTTP method to use to fetch the resource
+     * @return this Resource
+     */
     public Resource method(String method) {
         this.method = method;
         return this;
@@ -63,6 +78,10 @@ public class Resource {
         return method;
     }
 
+    /**
+     * @param path the resource path
+     * @return this Resource
+     */
     public Resource path(String path) {
         this.path = path.startsWith("/") ? path : "/" + path;
         return this;
@@ -72,16 +91,37 @@ public class Resource {
         return path;
     }
 
+    /**
+     * @param requestLength the request content length
+     * @return this Resource
+     */
     public Resource requestLength(int requestLength) {
         this.requestLength = requestLength;
         return this;
     }
 
+    public int getRequestLength() {
+        return requestLength;
+    }
+
+    /**
+     * Adds a request header.
+     *
+     * @param name the header name
+     * @param value the header value
+     * @return this Resource
+     */
     public Resource requestHeader(String name, String value) {
         this.headers.add(name, value);
         return this;
     }
 
+    /**
+     * Adds request headers.
+     *
+     * @param headers the headers
+     * @return this Resource
+     */
     public Resource requestHeaders(HttpFields headers) {
         this.headers.addAll(headers);
         return this;
@@ -91,10 +131,15 @@ public class Resource {
         return headers;
     }
 
-    public int getRequestLength() {
-        return requestLength;
-    }
-
+    /**
+     * <p>Sets the response content length.</p>
+     * <p>The response content length is conveyed as the request header
+     * specified by {@link #RESPONSE_LENGTH}. Servers may ignore it
+     * or honor it, responding with the desired response content length.</p>
+     *
+     * @param responseLength the response content length
+     * @return this Resource
+     */
     public Resource responseLength(int responseLength) {
         this.responseLength = responseLength;
         return this;
@@ -104,10 +149,19 @@ public class Resource {
         return responseLength;
     }
 
+    /**
+     * @return the children resources
+     */
     public List<Resource> getResources() {
         return resources;
     }
 
+    /**
+     * Finds a descendant resource by path and query with the given URI.
+     *
+     * @param uri the URI with the path and query to find
+     * @return a matching descendant resource, or null if there is no match
+     */
     public Resource findDescendant(URI uri) {
         String pathQuery = uri.getRawPath();
         String query = uri.getRawQuery();
@@ -127,6 +181,9 @@ public class Resource {
         return null;
     }
 
+    /**
+     * @return the number of descendant resource nodes
+     */
     public int descendantCount() {
         return descendantCount(this);
     }
@@ -139,6 +196,9 @@ public class Resource {
         return result;
     }
 
+    /**
+     * @return a new Info object
+     */
     public Info newInfo() {
         return new Info(this);
     }
@@ -154,6 +214,9 @@ public class Resource {
                 getResponseLength());
     }
 
+    /**
+     * Value class containing information per-resource and per-request.
+     */
     public static class Info {
         private final Resource resource;
         private long requestTime;
@@ -168,10 +231,16 @@ public class Resource {
             this.resource = resource;
         }
 
+        /**
+         * @return the corresponding Resource
+         */
         public Resource getResource() {
             return resource;
         }
 
+        /**
+         * @return the time, in ns, the request is being sent
+         */
         public long getRequestTime() {
             return requestTime;
         }
@@ -180,6 +249,9 @@ public class Resource {
             this.requestTime = requestTime;
         }
 
+        /**
+         * @return the time, in ns, the response first byte arrived
+         */
         public long getLatencyTime() {
             return latencyTime;
         }
@@ -188,6 +260,9 @@ public class Resource {
             this.latencyTime = latencyTime;
         }
 
+        /**
+         * @return the time, in ns, the response last byte arrived
+         */
         public long getResponseTime() {
             return responseTime;
         }
@@ -196,6 +271,9 @@ public class Resource {
             this.responseTime = responseTime;
         }
 
+        /**
+         * @return the time, in ns, the last byte of the whole resource tree arrived
+         */
         public long getTreeTime() {
             return treeTime;
         }
@@ -204,14 +282,23 @@ public class Resource {
             this.treeTime = treeTime;
         }
 
+        /**
+         * @param bytes the number of bytes to add to the response content length
+         */
         public void addContent(int bytes) {
             contentLength += bytes;
         }
 
+        /**
+         * @return the response content length in bytes
+         */
         public long getContentLength() {
             return contentLength;
         }
 
+        /**
+         * @return whether the resource has been pushed by the server
+         */
         public boolean isPushed() {
             return pushed;
         }
@@ -220,6 +307,9 @@ public class Resource {
             this.pushed = pushed;
         }
 
+        /**
+         * @return the response HTTP status code
+         */
         public int getStatus() {
             return status;
         }
@@ -232,10 +322,18 @@ public class Resource {
     public interface Listener extends EventListener {
     }
 
+    /**
+     * <p>Listener for node events.</p>
+     * <p>Node events are emitted for non-warmup resource requests that completed successfully.</p>
+     */
     public interface NodeListener extends Listener {
         public void onResourceNode(Info info);
     }
 
+    /**
+     * <p>Listener for tree node events.</p>
+     * <p>Tree node events are emitted for the non-warmup root resource.</p>
+     */
     public interface TreeListener extends Listener {
         public void onResourceTree(Info info);
     }

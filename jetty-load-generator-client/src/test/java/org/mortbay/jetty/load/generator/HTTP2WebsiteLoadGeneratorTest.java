@@ -102,7 +102,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
                 for (Resource resource : resource.getResources()) {
                     jettyRequest.getPushBuilder()
                             .path(resource.getPath())
-                            .setHeader("JLG-Response-Length", Integer.toString(resource.getResponseLength()))
+                            .setHeader(Resource.RESPONSE_LENGTH, Integer.toString(resource.getResponseLength()))
                             .push();
                 }
             }

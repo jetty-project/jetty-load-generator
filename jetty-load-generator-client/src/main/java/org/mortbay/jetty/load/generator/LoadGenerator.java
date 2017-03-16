@@ -264,7 +264,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                 .method(resource.getMethod())
                 .path(resource.getPath());
         request.getHeaders().addAll(resource.getRequestHeaders());
-        request.header("JLG-Response-Length", Integer.toString(resource.getResponseLength()));
+        request.header(Resource.RESPONSE_LENGTH, Integer.toString(resource.getResponseLength()));
         int requestLength = resource.getRequestLength();
         if (requestLength > 0) {
             request.content(new BytesContentProvider(new byte[requestLength]));

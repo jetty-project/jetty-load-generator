@@ -31,7 +31,7 @@ public class TestHandler extends AbstractHandler {
     @Override
     public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         jettyRequest.setHandled(true);
-        String header = request.getHeader("JLG-Response-Length");
+        String header = request.getHeader(Resource.RESPONSE_LENGTH);
         if (header != null) {
             OutputStream output = response.getOutputStream();
             int length = Integer.parseInt(header);

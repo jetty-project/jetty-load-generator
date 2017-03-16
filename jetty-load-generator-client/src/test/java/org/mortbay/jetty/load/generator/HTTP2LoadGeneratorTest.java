@@ -63,11 +63,11 @@ public class HTTP2LoadGeneratorTest {
                 if ("/".equals(target)) {
                     jettyRequest.getPushBuilder()
                             .path("/1")
-                            .setHeader("JLG-Response-Length", String.valueOf(10 * 1024))
+                            .setHeader(Resource.RESPONSE_LENGTH, String.valueOf(10 * 1024))
                             .push();
                     jettyRequest.getPushBuilder()
                             .path("/2")
-                            .setHeader("JLG-Response-Length", String.valueOf(32 * 1024))
+                            .setHeader(Resource.RESPONSE_LENGTH, String.valueOf(32 * 1024))
                             .push();
                 }
                 super.handle(target, jettyRequest, request, response);
