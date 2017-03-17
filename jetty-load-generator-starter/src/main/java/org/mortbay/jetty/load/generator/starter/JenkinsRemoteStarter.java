@@ -19,9 +19,13 @@
 package org.mortbay.jetty.load.generator.starter;
 
 import com.beust.jcommander.JCommander;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.listeners.QpsListenerDisplay;
+import org.mortbay.jetty.load.generator.listeners.RequestQueuedListenerDisplay;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -32,6 +36,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class to start remote process for Jenkins
@@ -51,6 +56,18 @@ public class JenkinsRemoteStarter
     public static void setNodeListeners( List<Resource.NodeListener> nodeListeners )
     {
         JenkinsRemoteStarter.nodeListeners = nodeListeners;
+    }
+
+    public static List<LoadGenerator.Listener> loadGeneratorListeners;
+
+    public static List<LoadGenerator.Listener> getLoadGeneratorListeners()
+    {
+        return loadGeneratorListeners;
+    }
+
+    public static void setLoadGeneratorListeners( List<LoadGenerator.Listener> loadGeneratorListeners )
+    {
+        JenkinsRemoteStarter.loadGeneratorListeners = loadGeneratorListeners;
     }
 
     public static void main( String... args)  throws Exception {
@@ -142,12 +159,33 @@ public class JenkinsRemoteStarter
         {
             LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs )
             {
+
+                QpsListenerDisplay qpsListenerDisplay =
+                    new QpsListenerDisplay( 10, 30, TimeUnit.SECONDS );
+
+                private RequestQueuedListenerDisplay requestQueuedListenerDisplay = //
+                    // FIXME those values need to be configurable!! //
+                    new RequestQueuedListenerDisplay(10, 30, TimeUnit.SECONDS);
+
                 @Override
-                public Resource.NodeListener[] getNodeListeners()
+                protected Resource.Listener[] getResourceListeners()
                 {
-                    return nodeListeners.toArray(new Resource.NodeListener[nodeListeners.size()]);
+                    return nodeListeners.toArray(new Resource.Listener[nodeListeners.size()]);
                 }
 
+                @Override
+                protected LoadGenerator.Listener[] getLoadGeneratorListeners()
+                {
+                    loadGeneratorListeners.add( qpsListenerDisplay );
+                    loadGeneratorListeners.add( requestQueuedListenerDisplay );
+                    return loadGeneratorListeners.toArray( new LoadGenerator.Listener[loadGeneratorListeners.size()] );
+                }
+
+                @Override
+                protected Request.Listener[] getListeners()
+                {
+                    return new Request.Listener[]{qpsListenerDisplay, requestQueuedListenerDisplay};
+                }
             };
 
             LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost() + " for " + runnerArgs.getRunningTime() + " "

@@ -74,14 +74,14 @@ public abstract class AbstractLoadGeneratorStarter
         LoadGenerator.Builder loadGeneratorBuilder = new LoadGenerator.Builder() //
             .host( starterArgs.getHost() ) //
             .port( starterArgs.getPort() ) //
-            .iterationsPerThread( starterArgs.getRunIteration() ).usersPerThread( starterArgs.getUsers() ) //
+            .iterationsPerThread( starterArgs.getRunIteration() ) //
+            .usersPerThread( starterArgs.getUsers() ) //
             .resourceRate( starterArgs.getTransactionRate() ) //
-            .httpClientTransportBuilder( httpClientTransportBuilder() ).sslContextFactory( sslContextFactory() ) //
+            .httpClientTransportBuilder( httpClientTransportBuilder() ) //
+            .sslContextFactory( sslContextFactory() ) //
             .resource( resourceProfile ) //
             .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
-            //.responseTimeListeners( getResponseTimeListeners() ) //
             .scheme( starterArgs.getScheme() ); //
-        //.latencyTimeListeners( getLatencyTimeListeners() ); //
 
         if ( starterArgs.getMaxRequestsQueued() > 0 )
         {
@@ -119,20 +119,17 @@ public abstract class AbstractLoadGeneratorStarter
         LoadGenerator loadGenerator = loadGeneratorBuilder.build();
         logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString() );
         CompletableFuture<Void> cf = loadGenerator.begin();
-
+        cf.join();
+        /*
         if ( runFor )
         {
             logger.info( "runFor" );
             long ts = TimeUnit.MILLISECONDS.convert( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
-            try
-            {
-                cf.get( ts + 20, TimeUnit.MILLISECONDS );
-            }
-            catch ( InterruptedException | ExecutionException | TimeoutException e )
-            {
-                logger.ignore( e );
-            }
-        }
+            cf.get( ts + 20, TimeUnit.MILLISECONDS ); // join ?
+        } else
+        {
+            cf.join();
+        }*/
 
         logger.info( "load test done" );
 
@@ -193,12 +190,6 @@ public abstract class AbstractLoadGeneratorStarter
         this.executorService = executor;
         return this;
     }
-
-    public Resource.NodeListener[] getNodeListeners()
-    {
-        return new Resource.NodeListener[]{ new TimePerPathListener() };
-    }
-
 
     public Resource getResource()
         throws Exception
