@@ -40,7 +40,7 @@ public class Resource {
     public static final String RESPONSE_LENGTH = "JLG-Response-Length";
 
     private final List<Resource> resources = new ArrayList<>();
-    private final HttpFields headers = new HttpFields();
+    private final HttpFields requestHeaders = new HttpFields();
     private String method = HttpMethod.GET.asString();
     private String path = "/";
     private int requestLength;
@@ -112,23 +112,23 @@ public class Resource {
      * @return this Resource
      */
     public Resource requestHeader(String name, String value) {
-        this.headers.add(name, value);
+        this.requestHeaders.add( name, value);
         return this;
     }
 
     /**
      * Adds request headers.
      *
-     * @param headers the headers
+     * @param headers the request headers
      * @return this Resource
      */
     public Resource requestHeaders(HttpFields headers) {
-        this.headers.addAll(headers);
+        this.requestHeaders.addAll( headers);
         return this;
     }
 
     public HttpFields getRequestHeaders() {
-        return headers;
+        return requestHeaders;
     }
 
     /**

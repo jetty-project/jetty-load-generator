@@ -18,18 +18,9 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.eclipse.jetty.client.api.Request;
@@ -43,6 +34,17 @@ import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.listeners.responsetime.TimePerPathListener;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -72,36 +74,34 @@ public abstract class AbstractLoadGeneratorStarter
         LoadGenerator.Builder loadGeneratorBuilder = new LoadGenerator.Builder() //
             .host( starterArgs.getHost() ) //
             .port( starterArgs.getPort() ) //
-            .iterationsPerThread( starterArgs.getRunIteration() )
-            .usersPerThread( starterArgs.getUsers() ) //
+            .iterationsPerThread( starterArgs.getRunIteration() ).usersPerThread( starterArgs.getUsers() ) //
             .resourceRate( starterArgs.getTransactionRate() ) //
-            .httpClientTransportBuilder( httpClientTransportBuilder() )
-            .sslContextFactory( sslContextFactory() ) //
+            .httpClientTransportBuilder( httpClientTransportBuilder() ).sslContextFactory( sslContextFactory() ) //
             .resource( resourceProfile ) //
             .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
             //.responseTimeListeners( getResponseTimeListeners() ) //
             .scheme( starterArgs.getScheme() ); //
-            //.latencyTimeListeners( getLatencyTimeListeners() ); //
+        //.latencyTimeListeners( getLatencyTimeListeners() ); //
 
-        if (starterArgs.getMaxRequestsQueued() > 0)
+        if ( starterArgs.getMaxRequestsQueued() > 0 )
         {
             loadGeneratorBuilder.maxRequestsQueued( starterArgs.getMaxRequestsQueued() );
         }
 
-        if (getExecutorService() != null)
+        if ( getExecutorService() != null )
         {
             loadGeneratorBuilder.executor( getExecutorService() );
         }
 
         boolean runFor = false;
 
-        if (starterArgs.getRunningTime() > 0)
+        if ( starterArgs.getRunningTime() > 0 )
         {
             loadGeneratorBuilder.runFor( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
             runFor = true;
         }
 
-        for (Resource.Listener listener : getResourceListeners())
+        for ( Resource.Listener listener : getResourceListeners() )
         {
             loadGeneratorBuilder.resourceListener( listener );
         }
@@ -117,17 +117,16 @@ public abstract class AbstractLoadGeneratorStarter
         }
 
         LoadGenerator loadGenerator = loadGeneratorBuilder.build();
-        logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString());
+        logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString() );
         CompletableFuture<Void> cf = loadGenerator.begin();
 
-
-        if (runFor)
+        if ( runFor )
         {
             logger.info( "runFor" );
             long ts = TimeUnit.MILLISECONDS.convert( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
             try
             {
-                cf.get(ts + 20, TimeUnit.MILLISECONDS);
+                cf.get( ts + 20, TimeUnit.MILLISECONDS );
             }
             catch ( InterruptedException | ExecutionException | TimeoutException e )
             {
@@ -139,7 +138,7 @@ public abstract class AbstractLoadGeneratorStarter
 
     }
 
-    public void displayStats(LoadGenerator loadGenerator)
+    public void displayStats( LoadGenerator loadGenerator )
         throws Exception
     {
         writeStats( loadGenerator );
@@ -169,7 +168,8 @@ public abstract class AbstractLoadGeneratorStarter
         return new LoadGenerator.Listener[0];
     }
 
-    protected Resource.Listener[] getResourceListeners() {
+    protected Resource.Listener[] getResourceListeners()
+    {
         return new Resource.Listener[0];
     }
 
@@ -213,8 +213,7 @@ public abstract class AbstractLoadGeneratorStarter
             Path profilePath = Paths.get( starterArgs.getProfileJsonPath() );
             if ( Files.exists( profilePath ) )
             {
-                ObjectMapper objectMapper = new ObjectMapper();
-                return resource = objectMapper.readValue( profilePath.toFile(), Resource.class );
+                return resource = evaluateJson( profilePath );
             }
         }
         if ( starterArgs.getProfileXmlPath() != null )
@@ -238,10 +237,28 @@ public abstract class AbstractLoadGeneratorStarter
         throw new IllegalArgumentException( "not resource profile file defined" );
     }
 
-    private Object evaluateScript( Reader script )
+    protected static Resource evaluateJson( Path profilePath )
         throws Exception
     {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
+        return objectMapper.readValue( profilePath.toFile(), Resource.class );
 
+    }
+
+    protected static String writeAsJsonTmp( Resource resource )
+        throws Exception
+    {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
+        Path tmpPath = Files.createTempFile( "profile", ".tmp" );
+        objectMapper.writeValue( tmpPath.toFile(), resource );
+        return tmpPath.toString();
+    }
+
+    protected static Object evaluateScript( Reader script )
+        throws Exception
+    {
         CompilerConfiguration config = new CompilerConfiguration( CompilerConfiguration.DEFAULT );
         config.setDebug( true );
         config.setVerbose( true );

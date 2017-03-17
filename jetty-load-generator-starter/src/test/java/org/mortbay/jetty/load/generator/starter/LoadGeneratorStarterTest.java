@@ -16,6 +16,7 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -31,6 +32,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mortbay.jetty.load.generator.Resource;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -38,6 +40,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -58,77 +64,101 @@ public class LoadGeneratorStarterTest
     TestHandler testHandler;
 
     @Before
-    public void startJetty() throws Exception {
-      QueuedThreadPool serverThreads = new QueuedThreadPool();
-      serverThreads.setName( "server" );
-      server = new Server( serverThreads );
-      connector = new ServerConnector( server, new HttpConnectionFactory( new HttpConfiguration() ) );
-      server.addConnector( connector );
+    public void startJetty()
+        throws Exception
+    {
+        QueuedThreadPool serverThreads = new QueuedThreadPool();
+        serverThreads.setName( "server" );
+        server = new Server( serverThreads );
+        connector = new ServerConnector( server, new HttpConnectionFactory( new HttpConfiguration() ) );
+        server.addConnector( connector );
 
-      server.setHandler( statisticsHandler );
+        server.setHandler( statisticsHandler );
 
-      ServletContextHandler statsContext = new ServletContextHandler( statisticsHandler, "/" );
+        ServletContextHandler statsContext = new ServletContextHandler( statisticsHandler, "/" );
 
-      statsContext.addServlet( new ServletHolder( new StatisticsServlet() ), "/stats" );
+        statsContext.addServlet( new ServletHolder( new StatisticsServlet() ), "/stats" );
 
-      testHandler = new TestHandler();
+        testHandler = new TestHandler();
 
-      statsContext.addServlet( new ServletHolder( testHandler ), "/" );
+        statsContext.addServlet( new ServletHolder( testHandler ), "/" );
 
-      statsContext.setSessionHandler( new SessionHandler() );
+        statsContext.setSessionHandler( new SessionHandler() );
 
-      server.start();
+        server.start();
     }
 
     @After
-    public void stopJetty() throws Exception {
+    public void stopJetty()
+        throws Exception
+    {
         server.stop();
     }
 
     @Test
-    public void simpletest() throws Exception {
+    public void simpletest()
+        throws Exception
+    {
 
-        List<String> args = new ArrayList<>(  );
+        List<String> args = new ArrayList<>();
         args.add( "--warmup-number" );
         args.add( "10" );
         args.add( "-h" );
         args.add( "localhost" );
         args.add( "--port" );
-        args.add( Integer.toString( connector.getLocalPort()) );
-        args.add( "--running-time");
-        args.add( "10");
-        args.add( "--running-time-unit");
+        args.add( Integer.toString( connector.getLocalPort() ) );
+        args.add( "--running-time" );
+        args.add( "10" );
+        args.add( "--running-time-unit" );
         args.add( "s" );
         args.add( "--transaction-rate" );
         args.add( "3" );
-        args.add( "--transport");
-        args.add( "http");
-        args.add( "--users");
-        args.add( "3");
-        args.add( "--profile-groovy-path");
-        args.add( "src/test/resources/loadgenerator_profile.groovy");
+        args.add( "--transport" );
+        args.add( "http" );
+        args.add( "--users" );
+        args.add( "3" );
+        args.add( "--profile-groovy-path" );
+        args.add( "src/test/resources/loadgenerator_profile.groovy" );
 
-        LoadGeneratorStarter.main( args.toArray(new String[args.size()]) );
+        LoadGeneratorStarter.main( args.toArray( new String[args.size()] ) );
 
         int getNumber = testHandler.getNumber.get();
 
-        Assert.assertTrue("getNumber return: " + getNumber, getNumber > 10);
+        Assert.assertTrue( "getNumber return: " + getNumber, getNumber > 10 );
     }
 
 
-    static class TestHandler extends HttpServlet {
+    @Test
+    public void json_serial_deserial_from_groovy()
+        throws Exception
+    {
+        try (Reader reader = Files.newBufferedReader( Paths.get( "src/test/resources/loadgenerator_profile.groovy" ) ))
+        {
+            Resource resource = (Resource) AbstractLoadGeneratorStarter.evaluateScript( reader );
+            String path = AbstractLoadGeneratorStarter.writeAsJsonTmp( resource );
+            Resource fromJson = AbstractLoadGeneratorStarter.evaluateJson( Paths.get( path ) );
+            Assert.assertEquals( resource.descendantCount(), fromJson.descendantCount() );
+        }
+    }
 
-      AtomicInteger getNumber = new AtomicInteger( 0 ), postNumber = new AtomicInteger( 0 );
+    static class TestHandler
+        extends HttpServlet
+    {
 
-      @Override
-      protected void service( HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
+        AtomicInteger getNumber = new AtomicInteger( 0 ), postNumber = new AtomicInteger( 0 );
 
-        String method = request.getMethod().toUpperCase( Locale.ENGLISH );
+        @Override
+        protected void service( HttpServletRequest request, HttpServletResponse response )
+            throws ServletException, IOException
+        {
 
-        HttpSession httpSession = request.getSession();
+            String method = request.getMethod().toUpperCase( Locale.ENGLISH );
 
-        switch ( method ) {
-          case "GET":
+            HttpSession httpSession = request.getSession();
+
+            switch ( method )
+            {
+                case "GET":
                 {
                     response.getOutputStream().write( "Jetty rocks!!".getBytes() );
                     response.flushBuffer();
