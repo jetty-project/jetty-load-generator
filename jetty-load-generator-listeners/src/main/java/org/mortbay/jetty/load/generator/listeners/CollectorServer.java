@@ -142,8 +142,7 @@ public class CollectorServer
                 Map<String, CollectorInformations> infos = new HashMap<>( recorderPerPath.size() );
                 for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
                 {
-                    infos.put( entry.getKey(), new CollectorInformations( entry.getValue().getIntervalHistogram(), //
-                                                                          CollectorInformations.InformationType.REQUEST ) );
+                    infos.put( entry.getKey(), new CollectorInformations( entry.getValue().getIntervalHistogram()) );
                 }
                 mapper.writeValue( resp.getOutputStream(), infos );
                 return;

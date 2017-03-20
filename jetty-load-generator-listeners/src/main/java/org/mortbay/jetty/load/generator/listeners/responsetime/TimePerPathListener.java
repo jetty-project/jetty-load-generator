@@ -169,8 +169,7 @@ public class TimePerPathListener
                 {
                     latencyTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
                     CollectorInformations collectorInformations =
-                        new CollectorInformations( entry.getValue(), //
-                                                   CollectorInformations.InformationType.REQUEST );
+                        new CollectorInformations( entry.getValue() );
                     latencyTimeMessage.append( nanoDisplay
                                                    ? collectorInformations.toStringInNanos( true )
                                                    : collectorInformations.toString( true ) ) //
@@ -196,8 +195,7 @@ public class TimePerPathListener
                 {
                     responseTimeMessage.append( "Path:" ).append( entry.getKey() ).append( System.lineSeparator() );
                     CollectorInformations collectorInformations =
-                        new CollectorInformations( entry.getValue(), //
-                                                   CollectorInformations.InformationType.REQUEST );
+                        new CollectorInformations( entry.getValue() );
 
                     responseTimeMessage.append( nanoDisplay
                                                     ? collectorInformations.toStringInNanos( true )

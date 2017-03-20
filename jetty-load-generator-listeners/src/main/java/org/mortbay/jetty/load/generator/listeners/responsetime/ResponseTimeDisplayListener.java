@@ -189,8 +189,7 @@ public class ResponseTimeDisplayListener
         public void onValue( String path, Histogram histogram )
         {
             StringBuilder message = new StringBuilder( "Path:" ).append( path ).append( System.lineSeparator() );
-            message.append( new CollectorInformations( histogram, //
-                                                       CollectorInformations.InformationType.REQUEST ) //
+            message.append( new CollectorInformations( histogram ) //
                                 .toStringInNanos( true ) ) //
                 .append( System.lineSeparator() );
             LOGGER.info( message.toString() );

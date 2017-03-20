@@ -26,14 +26,6 @@ import org.HdrHistogram.Histogram;
 public class CollectorInformations
 {
 
-    public enum InformationType
-    {
-        REQUEST,
-        MONITORING;
-    }
-
-    private InformationType informationType;
-
     private long totalCount;
 
     private long minValue;
@@ -57,23 +49,33 @@ public class CollectorInformations
         // no op to help json mapper
     }
 
-    public CollectorInformations( Histogram histogram )
+
+    /**
+     * per default values will be in nanos
+     * @param histogram
+     */
+    public CollectorInformations( Histogram histogram)
     {
-        this( histogram, InformationType.REQUEST );
+        this(histogram, TimeUnit.NANOSECONDS, TimeUnit.NANOSECONDS);
     }
 
-    public CollectorInformations( Histogram histogram, InformationType informationType )
+    /**
+     *
+     * @param histogram
+     * @param source the {@link TimeUnit} of the source values
+     * @param target the {@link TimeUnit} the stored values
+     */
+    public CollectorInformations( Histogram histogram, TimeUnit source, TimeUnit target )
     {
-        this.informationType = informationType;
         this.totalCount = histogram.getTotalCount();
-        this.minValue = histogram.getMinValue();
-        this.maxValue = histogram.getMaxValue();
-        this.mean = histogram.getMean();
-        this.value50 = histogram.getValueAtPercentile( 50D );
-        this.value90 = histogram.getValueAtPercentile( 90D );
+        this.minValue = target.convert( histogram.getMinValue(), source);
+        this.maxValue = target.convert( histogram.getMaxValue(), source);
+        this.mean = target.convert( Math.round( histogram.getMean()), source);
+        this.value50 = target.convert( histogram.getValueAtPercentile( 50D ), source);
+        this.value90 = target.convert( histogram.getValueAtPercentile( 90D ), source);
         this.startTimeStamp = histogram.getStartTimeStamp();
         this.endTimeStamp = histogram.getEndTimeStamp();
-        this.stdDeviation = histogram.getStdDeviation();
+        this.stdDeviation = target.convert( Math.round( histogram.getStdDeviation()), source);
     }
 
     public long getEndTimeStamp()
@@ -188,16 +190,6 @@ public class CollectorInformations
         return this;
     }
 
-    public InformationType getInformationType()
-    {
-        return informationType;
-    }
-
-    public void setInformationType( InformationType informationType )
-    {
-        this.informationType = informationType;
-    }
-
     public long getValue50()
     {
         return value50;
@@ -240,8 +232,7 @@ public class CollectorInformations
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
         return "CollectorInformations millis:" + ( ls ? System.lineSeparator() : "" ) //
-            + "informationType=" + informationType + ( ls ? System.lineSeparator() : "" ) //
-            + ",totalCount=" + totalCount //
+            + "totalCount=" + totalCount //
             + ( ls ? System.lineSeparator() : "" ) //
             + ", minValue=" + TimeUnit.NANOSECONDS.toMillis( getMinValue() ) //
             + ( ls ? System.lineSeparator() : "" ) //
@@ -263,8 +254,7 @@ public class CollectorInformations
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
         return "CollectorInformations nanos:" + ( ls ? System.lineSeparator() : "" ) //
-            + "informationType=" + informationType + ( ls ? System.lineSeparator() : "" ) //
-            + ",totalCount=" + totalCount //
+            + "totalCount=" + totalCount //
             + ( ls ? System.lineSeparator() : "" ) //
             + ", minValue=" + getMinValue()  //
             + ( ls ? System.lineSeparator() : "" ) //
