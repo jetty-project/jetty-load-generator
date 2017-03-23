@@ -6,6 +6,10 @@ You can generate load for both HTTP/1.1 and HTTP/2
 
 More documentation https://jetty-project.github.io/jetty-load-generator/
 
+Snapshots available here: http://oss.sonatype.org/content/repositories/jetty-snapshots
+
+Current snapshot version: 1.0.0-SNAPSHOT
+
 ## Documentation
 
 ### Profile
