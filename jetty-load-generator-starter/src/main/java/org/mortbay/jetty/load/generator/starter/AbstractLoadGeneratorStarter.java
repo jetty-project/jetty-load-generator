@@ -98,7 +98,6 @@ public abstract class AbstractLoadGeneratorStarter
         if ( starterArgs.getRunningTime() > 0 )
         {
             loadGeneratorBuilder.runFor( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
-            runFor = true;
         }
 
         for ( Resource.Listener listener : getResourceListeners() )
@@ -120,19 +119,7 @@ public abstract class AbstractLoadGeneratorStarter
         logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString() );
         CompletableFuture<Void> cf = loadGenerator.begin();
         cf.join();
-        /*
-        if ( runFor )
-        {
-            logger.info( "runFor" );
-            long ts = TimeUnit.MILLISECONDS.convert( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
-            cf.get( ts + 20, TimeUnit.MILLISECONDS ); // join ?
-        } else
-        {
-            cf.join();
-        }*/
-
         logger.info( "load test done" );
-
     }
 
     public void displayStats( LoadGenerator loadGenerator )
