@@ -16,7 +16,8 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.beust.jcommander.JCommander;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -27,6 +28,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.StatisticsServlet;
 import org.eclipse.jetty.util.IO;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.junit.After;
 import org.junit.Assert;
@@ -42,7 +45,6 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LoadGeneratorStarterTest
 {
+    private static final Logger LOGGER = Log.getLogger( LoadGeneratorStarterTest.class);
 
     Server server;
 
@@ -80,19 +83,24 @@ public class LoadGeneratorStarterTest
         statsContext.addServlet( new ServletHolder( new StatisticsServlet() ), "/stats" );
 
         testHandler = new TestHandler();
+        testHandler.server = server;
 
         statsContext.addServlet( new ServletHolder( testHandler ), "/" );
 
         statsContext.setSessionHandler( new SessionHandler() );
 
         server.start();
+
     }
 
     @After
     public void stopJetty()
         throws Exception
     {
-        server.stop();
+        if (server.isRunning())
+        {
+            server.stop();
+        }
     }
 
     @Test
@@ -119,14 +127,74 @@ public class LoadGeneratorStarterTest
         args.add( "3" );
         args.add( "--profile-groovy-path" );
         args.add( "src/test/resources/loadgenerator_profile.groovy" );
-
         LoadGeneratorStarter.main( args.toArray( new String[args.size()] ) );
-
         int getNumber = testHandler.getNumber.get();
-
+        LOGGER.debug( "received get: {}", getNumber );
         Assert.assertTrue( "getNumber return: " + getNumber, getNumber > 10 );
     }
 
+
+    @Test
+    public void fail_fast()
+        throws Exception
+    {
+
+        List<String> args = new ArrayList<>();
+        args.add( "--warmup-number" );
+        args.add( "10" );
+        args.add( "-h" );
+        args.add( "localhost" );
+        args.add( "--port" );
+        args.add( Integer.toString( connector.getLocalPort() ) );
+        args.add( "--running-time" );
+        args.add( "10" );
+        args.add( "--running-time-unit" );
+        args.add( "s" );
+        args.add( "--transaction-rate" );
+        args.add( "3" );
+        args.add( "--transport" );
+        args.add( "http" );
+        args.add( "--users" );
+        args.add( "1" );
+        args.add( "--profile-groovy-path" );
+        args.add( "src/test/resources/single_resource.groovy" );
+
+        LoadGeneratorStarterArgs runnerArgs = new LoadGeneratorStarterArgs();
+        new JCommander( runnerArgs, args.toArray( new String[args.size()] ) );
+
+        AtomicInteger onFailure = new AtomicInteger( 0 ), onCommit = new AtomicInteger( 0 );
+        Request.Listener.Adapter adapter = new Request.Listener.Adapter() {
+            @Override
+            public void onFailure( Request request, Throwable failure )
+            {
+                LOGGER.info( "fail: {}", onFailure.incrementAndGet() );
+            }
+
+            @Override
+            public void onCommit( Request request )
+            {
+                LOGGER.info( "onCommit: {}", onCommit.incrementAndGet() );
+            }
+        };
+
+        LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs );
+        runner.setListeners( new Request.Listener[] { adapter } );
+        boolean exception = false;
+        try
+        {
+            runner.run();
+        }
+        catch ( Exception e )
+        {
+            exception = true;
+        }
+        LOGGER.info( "onFailure: {}, onCommit: {}", onFailure, onCommit);
+        Assert.assertTrue("not in exception", exception );
+        int getNumber = testHandler.getNumber.get();
+        LOGGER.debug( "received get: {}", getNumber );
+        Assert.assertTrue( "getNumber return: " + getNumber, getNumber == 5 );
+        Assert.assertTrue( onFailure.get() < 10 );
+    }
 
     @Test
     public void json_serial_deserial_from_groovy()
@@ -147,6 +215,8 @@ public class LoadGeneratorStarterTest
 
         AtomicInteger getNumber = new AtomicInteger( 0 ), postNumber = new AtomicInteger( 0 );
 
+        Server server;
+
         @Override
         protected void service( HttpServletRequest request, HttpServletResponse response )
             throws ServletException, IOException
@@ -160,6 +230,21 @@ public class LoadGeneratorStarterTest
             {
                 case "GET":
                 {
+                    String fail = request.getParameter( "fail" );
+                    if (fail != null)
+                    {
+                        if ( getNumber.get() >= Integer.parseInt( fail ) )
+                        {
+                            try
+                            {
+                                server.stop();
+                            }
+                            catch ( Exception e )
+                            {
+                                throw new RuntimeException( e.getMessage(), e );
+                            }
+                        }
+                    }
                     response.getOutputStream().write( "Jetty rocks!!".getBytes() );
                     response.flushBuffer();
                     getNumber.addAndGet( 1 );

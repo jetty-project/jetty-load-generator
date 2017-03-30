@@ -108,13 +108,13 @@ With all listeners we have, we can take measure in different places
 8. response body start received ( ContentListener#onContent() ) 
 9. response body completed ( CompleteListener#onComplete() )
 
-#### Response Time
-
-The responseTime is the time taken just before 1. and 9.
-
 #### Latency Time
 
-The latencyTime is the time taken just before 2. and 6.
+The latencyTime is the time taken just before 2. and 6. (time to get the first byte of the response)
+
+#### Response Time
+
+The responseTime is the time taken just before 1. and 9. (time to get the last byte of the response) 
 
 ### Using uber jar
 

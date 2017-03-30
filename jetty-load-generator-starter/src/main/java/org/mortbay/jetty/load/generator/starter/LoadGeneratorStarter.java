@@ -19,6 +19,8 @@
 package org.mortbay.jetty.load.generator.starter;
 
 import com.beust.jcommander.JCommander;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 /**
  *
@@ -26,6 +28,8 @@ import com.beust.jcommander.JCommander;
 public class LoadGeneratorStarter
     extends AbstractLoadGeneratorStarter
 {
+
+    private static final Logger LOGGER = Log.getLogger( LoadGeneratorStarter.class);
 
     public LoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
@@ -67,9 +71,8 @@ public class LoadGeneratorStarter
         }
         catch ( Exception e )
         {
-            e.printStackTrace();
+            LOGGER.info( "error happened", e);
             new JCommander( runnerArgs ).usage();
-            System.exit( 1 );
         }
     }
 
