@@ -149,7 +149,6 @@ public class FailFastTest
                 {
                     throw new RuntimeException( e.getMessage(), e );
                 }
-
             }
             response.getOutputStream().write( "Jetty rocks!!".getBytes() );
             response.flushBuffer();
