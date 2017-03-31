@@ -41,8 +41,6 @@ public class QpsListenerDisplay
 
     private static final Logger LOGGER = Log.getLogger( QpsListenerDisplay.class );
 
-    public static final String START_RESPONSE_TIME_HEADER = "X-Jetty-LoadGenerator-Start-Response-Time";
-
     private ScheduledExecutorService scheduledExecutorService;
 
     private volatile Recorder recorder;
@@ -90,7 +88,15 @@ public class QpsListenerDisplay
     @Override
     public void onFailure( Request request, Throwable failure )
     {
-        LOGGER.warn( "failure to send request: {} : {}",failure.getClass(), failure.getMessage() );
+
+        if ( LOGGER.isDebugEnabled() )
+        {
+            LOGGER.debug( "fail to send request", failure );
+        }
+        else
+        {
+            LOGGER.warn( "failure to send request: {} : {}", failure.getClass(), failure.getMessage() );
+        }
     }
 
     private static class ValueDisplayRunnable
