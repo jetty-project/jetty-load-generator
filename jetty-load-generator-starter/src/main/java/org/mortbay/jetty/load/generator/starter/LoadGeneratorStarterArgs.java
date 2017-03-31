@@ -49,9 +49,6 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--users", "-u" }, description = "Simulated users number" )
     private int users = 1;
 
-    @Parameter( names = { "--threads" }, description = "Threads number" )
-    private int threads = 0;
-
     @Parameter( names = { "--transaction-rate", "-tr" }, description = "Transaction rate / second" )
     private int transactionRate = 1;
 
@@ -379,13 +376,8 @@ public class LoadGeneratorStarterArgs
     {
         return "LoadGeneratorStarterArgs{" + "profileXmlPath='" + profileXmlPath + '\'' + ", profileJsonPath='"
             + profileJsonPath + '\'' + ", profileGroovyPath='" + profileGroovyPath + '\'' + ", host='" + host + '\''
-<<<<<<< HEAD
             + ", port=" + port + ", users=" + users + ", transactionRate=" + transactionRate + ", transport='"
             + transport + '\'' + ", selectors=" + selectors + ", threads=" + threads + ", runningTime=" + runningTime
-=======
-            + ", port=" + port + ", users=" + users + ", threads=" + threads + ", transactionRate=" + transactionRate
-            + ", transport='" + transport + '\'' + ", selectors=" + selectors + ", runningTime=" + runningTime
->>>>>>> implements fail fast when sending request fail #13
             + ", runningTimeUnit='" + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='"
             + reportHost + '\'' + ", scheme='" + scheme + '\'' + ", reportPort=" + reportPort + ", notInterrupt="
             + notInterrupt + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help

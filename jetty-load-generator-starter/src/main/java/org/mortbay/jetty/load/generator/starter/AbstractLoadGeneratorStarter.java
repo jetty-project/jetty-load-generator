@@ -81,11 +81,6 @@ public abstract class AbstractLoadGeneratorStarter
             .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
             .scheme( starterArgs.getScheme() ); //
 
-        if (starterArgs.getThreads() > 0)
-        {
-            loadGeneratorBuilder.threads( starterArgs.getThreads() );
-        }
-
         if ( starterArgs.getMaxRequestsQueued() > 0 )
         {
             loadGeneratorBuilder.maxRequestsQueued( starterArgs.getMaxRequestsQueued() );
@@ -94,6 +89,11 @@ public abstract class AbstractLoadGeneratorStarter
         if ( getExecutorService() != null )
         {
             loadGeneratorBuilder.executor( getExecutorService() );
+        }
+
+        if ( starterArgs.getThreads() > 0 )
+        {
+            loadGeneratorBuilder.threads( starterArgs.getThreads() );
         }
 
         if ( starterArgs.getRunningTime() > 0 )
