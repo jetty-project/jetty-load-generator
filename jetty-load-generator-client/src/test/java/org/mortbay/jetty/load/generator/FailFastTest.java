@@ -43,6 +43,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FailFastTest
@@ -86,7 +87,7 @@ public class FailFastTest
     }
 
     @Test
-    public void should_fail_fast()
+    public void should_fail_fast_on_server_stop()
         throws Exception
     {
         AtomicInteger onFailure = new AtomicInteger( 0 ), onCommit = new AtomicInteger( 0 );
@@ -129,7 +130,6 @@ public class FailFastTest
         Assert.assertTrue("onFailureCall is " + onFailureCall, onFailureCall < 5);
     }
 
-
     static class TestHandler
         extends HttpServlet
     {
@@ -152,6 +152,7 @@ public class FailFastTest
                 {
                     throw new RuntimeException( e.getMessage(), e );
                 }
+
             }
             response.getOutputStream().write( "Jetty rocks!!".getBytes() );
             response.flushBuffer();

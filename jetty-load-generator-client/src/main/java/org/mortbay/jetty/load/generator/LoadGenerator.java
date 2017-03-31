@@ -207,7 +207,7 @@ public class LoadGenerator extends ContainerLifeCycle {
 
                 sendResourceTree(client, config.getResource(), warmup, c);
 
-                if (lastIteration || ranEnough) {
+                if (lastIteration || ranEnough || process.isCompletedExceptionally()) {
                     break;
                 }
                 if (interrupt) {
@@ -294,7 +294,6 @@ public class LoadGenerator extends ContainerLifeCycle {
                     logger.debug("failed tree for {}", resource);
                 }
                 callback.failed(x);
-                LoadGenerator.this.interrupt();
             }
         }, nodes);
         Sender sender = new Sender(client, warmup, treeCallback);
