@@ -58,6 +58,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--selectors", "-s" }, description = "HttpClientTransport selectors" )
     private int selectors = 1;
 
+    @Parameter( names = { "--threads" }, description = "LoadGenerator threads" )
+    private int threads = 0;
+
     @Parameter( names = { "--running-time", "-rt" }, description = "Running Time" )
     private long runningTime = 1;
 
@@ -358,18 +361,28 @@ public class LoadGeneratorStarterArgs
         this.maxRequestsQueued = maxRequestsQueued;
     }
 
+    public int getThreads()
+    {
+        return threads;
+    }
+
+    public void setThreads( int threads )
+    {
+        this.threads = threads;
+    }
+
     @Override
     public String toString()
     {
         return "LoadGeneratorStarterArgs{" + "profileXmlPath='" + profileXmlPath + '\'' + ", profileJsonPath='"
             + profileJsonPath + '\'' + ", profileGroovyPath='" + profileGroovyPath + '\'' + ", host='" + host + '\''
             + ", port=" + port + ", users=" + users + ", transactionRate=" + transactionRate + ", transport='"
-            + transport + '\'' + ", selectors=" + selectors + ", runningTime=" + runningTime + ", runningTimeUnit='"
-            + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='" + reportHost + '\''
-            + ", scheme='" + scheme + '\'' + ", reportPort=" + reportPort + ", notInterrupt=" + notInterrupt
-            + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help + ", displayStatsAtEnd="
-            + displayStatsAtEnd + ", collectServerStats=" + collectServerStats + ", warmupNumber=" + warmupNumber
-            + ", maxRequestsQueued=" + maxRequestsQueued + '}';
+            + transport + '\'' + ", selectors=" + selectors + ", threads=" + threads + ", runningTime=" + runningTime
+            + ", runningTimeUnit='" + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='"
+            + reportHost + '\'' + ", scheme='" + scheme + '\'' + ", reportPort=" + reportPort + ", notInterrupt="
+            + notInterrupt + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help
+            + ", displayStatsAtEnd=" + displayStatsAtEnd + ", collectServerStats=" + collectServerStats
+            + ", warmupNumber=" + warmupNumber + ", maxRequestsQueued=" + maxRequestsQueued + '}';
     }
 
     public enum Transport {

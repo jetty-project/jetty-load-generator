@@ -33,7 +33,6 @@ import org.mortbay.jetty.load.generator.HTTP2ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.listeners.responsetime.TimePerPathListener;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -41,10 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -93,7 +89,10 @@ public abstract class AbstractLoadGeneratorStarter
             loadGeneratorBuilder.executor( getExecutorService() );
         }
 
-        boolean runFor = false;
+        if ( starterArgs.getThreads() > 0 )
+        {
+            loadGeneratorBuilder.threads( starterArgs.getThreads() );
+        }
 
         if ( starterArgs.getRunningTime() > 0 )
         {
