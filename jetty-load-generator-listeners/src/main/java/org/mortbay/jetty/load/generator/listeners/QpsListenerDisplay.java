@@ -25,6 +25,8 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -88,7 +90,16 @@ public class QpsListenerDisplay
     @Override
     public void onFailure( Request request, Throwable failure )
     {
-        LOGGER.warn( "fail to send request", failure );
+        // gcloud log doesn't show stack trace to turn it to a String
+        LOGGER.warn( "fail to send request {}", toString( failure ) );
+    }
+
+    private String toString(Throwable t)
+    {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter( sw);
+        t.printStackTrace(pw);
+        return sw.getBuffer().toString();
     }
 
     private static class ValueDisplayRunnable
