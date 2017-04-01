@@ -56,6 +56,8 @@ public abstract class AbstractLoadGeneratorStarter
 
     private Resource resource;
 
+    private Request.Listener[] listeners;
+
     public AbstractLoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
         this.starterArgs = runnerArgs;
@@ -79,6 +81,11 @@ public abstract class AbstractLoadGeneratorStarter
             .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
             .scheme( starterArgs.getScheme() ); //
 
+        if (starterArgs.getThreads() > 0)
+        {
+            loadGeneratorBuilder.threads( starterArgs.getThreads() );
+        }
+
         if ( starterArgs.getMaxRequestsQueued() > 0 )
         {
             loadGeneratorBuilder.maxRequestsQueued( starterArgs.getMaxRequestsQueued() );
@@ -87,11 +94,6 @@ public abstract class AbstractLoadGeneratorStarter
         if ( getExecutorService() != null )
         {
             loadGeneratorBuilder.executor( getExecutorService() );
-        }
-
-        if ( starterArgs.getThreads() > 0 )
-        {
-            loadGeneratorBuilder.threads( starterArgs.getThreads() );
         }
 
         if ( starterArgs.getRunningTime() > 0 )
@@ -158,7 +160,12 @@ public abstract class AbstractLoadGeneratorStarter
 
     protected Request.Listener[] getListeners()
     {
-        return new Request.Listener[0];
+        return listeners == null ? new Request.Listener[0] : this.listeners;
+    }
+
+    protected void setListeners(Request.Listener[] listeners)
+    {
+        this.listeners = listeners;
     }
 
     public ExecutorService getExecutorService()
