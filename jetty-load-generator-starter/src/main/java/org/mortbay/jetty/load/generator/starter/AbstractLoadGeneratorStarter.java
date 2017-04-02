@@ -71,7 +71,6 @@ public abstract class AbstractLoadGeneratorStarter
 
         LoadGenerator.Builder loadGeneratorBuilder = new LoadGenerator.Builder() //
             .host( starterArgs.getHost() ) //
-            .port( starterArgs.getPort() ) //
             .iterationsPerThread( starterArgs.getRunIteration() ) //
             .usersPerThread( starterArgs.getUsers() ) //
             .resourceRate( starterArgs.getTransactionRate() ) //
@@ -80,6 +79,11 @@ public abstract class AbstractLoadGeneratorStarter
             .resource( resourceProfile ) //
             .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
             .scheme( starterArgs.getScheme() ); //
+
+        if ( starterArgs.getPort() > 0 )
+        {
+            loadGeneratorBuilder.port( starterArgs.getPort() );
+        }
 
         if (starterArgs.getThreads() > 0)
         {

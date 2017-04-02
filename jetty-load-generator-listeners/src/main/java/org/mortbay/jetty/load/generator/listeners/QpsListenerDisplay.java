@@ -91,15 +91,7 @@ public class QpsListenerDisplay
     public void onFailure( Request request, Throwable failure )
     {
         // gcloud log doesn't show stack trace to turn it to a String
-        LOGGER.warn( "fail to send request {}", toString( failure ) );
-    }
-
-    private String toString(Throwable t)
-    {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter( sw);
-        t.printStackTrace(pw);
-        return sw.getBuffer().toString();
+        LOGGER.warn( "fail to send request {}", Utils.toString( failure ) );
     }
 
     private static class ValueDisplayRunnable
