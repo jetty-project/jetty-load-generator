@@ -166,7 +166,7 @@ public class PerPathLatencyTimeDisplayListener
     @Override
     public void onEnd( LoadGenerator generator )
     {
-        scheduledExecutorService.shutdown();
+        scheduledExecutorService.shutdownNow();
         // last run
         runnable.run();
     }

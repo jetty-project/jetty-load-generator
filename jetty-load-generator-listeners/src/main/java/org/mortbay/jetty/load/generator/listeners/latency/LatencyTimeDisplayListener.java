@@ -137,9 +137,7 @@ public class LatencyTimeDisplayListener
     @Override
     public void onEnd( LoadGenerator generator )
     {
-        scheduledExecutorService.shutdown();
-        // last run
-        runnable.run();
+        scheduledExecutorService.shutdownNow();
     }
 
     public interface ValueListener
