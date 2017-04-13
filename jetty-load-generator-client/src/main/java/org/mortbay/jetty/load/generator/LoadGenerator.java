@@ -63,7 +63,7 @@ public class LoadGenerator extends ContainerLifeCycle {
     private final PlatformTimer timer = PlatformTimer.detect();
     private final Config config;
     private final CyclicBarrier barrier;
-    private ExecutorService threads;
+    private ExecutorService executorService;
     private volatile boolean interrupt;
 
     private LoadGenerator(Config config) {
@@ -83,7 +83,7 @@ public class LoadGenerator extends ContainerLifeCycle {
 
     @Override
     protected void doStart() throws Exception {
-        threads = Executors.newCachedThreadPool();
+        executorService = config.getExecutor() == null ? Executors.newCachedThreadPool() : config.getExecutor();
         interrupt = false;
         super.doStart();
         fireBeginEvent(this);
@@ -104,7 +104,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         fireEndEvent(this);
         super.doStop();
         interrupt();
-        threads.shutdown();
+        executorService.shutdown();
     }
 
     public Config getConfig() {
@@ -120,10 +120,10 @@ public class LoadGenerator extends ContainerLifeCycle {
 
         CompletableFuture[] futures = new CompletableFuture[config.getThreads()];
         for (int i = 0; i < futures.length; ++i) {
-            futures[i] = CompletableFuture.supplyAsync(this::process, threads).thenCompose(Function.identity());
+            futures[i] = CompletableFuture.supplyAsync(this::process, executorService).thenCompose(Function.identity());
         }
 
-        return CompletableFuture.allOf(futures).whenCompleteAsync((r, x) -> halt(), threads);
+        return CompletableFuture.allOf(futures).whenCompleteAsync((r, x) -> halt(), executorService);
     }
 
     @ManagedOperation(value = "Interrupts this LoadGenerator", impact = "ACTION")
@@ -149,7 +149,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                     logger.debug("stopping http clients");
                 }
                 Arrays.stream(clients).forEach(this::stopHttpClient);
-            }, threads);
+            }, executorService);
             for (int i = 0; i < clients.length; ++i) {
                 clients[i] = newHttpClient(getConfig());
                 clients[i].start();

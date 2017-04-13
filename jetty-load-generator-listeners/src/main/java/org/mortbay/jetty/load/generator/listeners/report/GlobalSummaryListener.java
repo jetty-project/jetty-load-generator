@@ -74,6 +74,8 @@ public class GlobalSummaryListener
     }
 
 
+
+
     public Recorder getResponseTimeHistogram()
     {
         return responseHistogram;
