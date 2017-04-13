@@ -18,38 +18,36 @@
 
 package org.mortbay.jetty.load.generator.listeners.latency;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  */
 public class LatencyTimeDisplayListener
-    implements Resource.NodeListener, LoadGenerator.BeginListener, LoadGenerator.EndListener
+    implements Resource.NodeListener, LoadGenerator.EndListener
 {
 
     private static final Logger LOGGER = Log.getLogger( LatencyTimeDisplayListener.class );
 
-    private volatile Map<String, Recorder> recorderPerPath;
-
     private ScheduledExecutorService scheduledExecutorService;
 
     private ValueListenerRunnable runnable;
+
+    private Recorder recorder;
 
     private final long lowestDiscernibleValue;
     private final long highestTrackableValue;
@@ -65,7 +63,7 @@ public class LatencyTimeDisplayListener
               initial, //
               delay,  //
               timeUnit, //
-              Arrays.asList(new PrintValueListener()) );
+              Collections.emptyList() );
     }
 
     public LatencyTimeDisplayListener( long lowestDiscernibleValue, long highestTrackableValue,
@@ -73,8 +71,10 @@ public class LatencyTimeDisplayListener
                                        TimeUnit timeUnit, List<ValueListener> valueListeners )
     {
         this.valueListeners.addAll( valueListeners );
-        this.recorderPerPath = new ConcurrentHashMap<>();
-        this.runnable = new ValueListenerRunnable( recorderPerPath, this.valueListeners );
+        recorder  = new Recorder( lowestDiscernibleValue, //
+                                  highestTrackableValue, //
+                                  numberOfSignificantValueDigits );
+        this.runnable = new ValueListenerRunnable( recorder, this.valueListeners );
         // FIXME configurable or using a shared one
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
         scheduledExecutorService.scheduleWithFixedDelay( runnable, initial, delay, timeUnit );
@@ -83,28 +83,10 @@ public class LatencyTimeDisplayListener
         this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
     }
 
-    @Override
-    public void onBegin( LoadGenerator loadGenerator )
+    public LatencyTimeDisplayListener addValueListener( ValueListener valueListener)
     {
-        // we initialize Maps to avoid concurrent issues
-        recorderPerPath = new ConcurrentHashMap<>();
-        initializeMap( recorderPerPath, loadGenerator.getConfig().getResource().getResources() );
-    }
-
-    private void initializeMap( Map<String, Recorder> recorderMap, List<Resource> resources )
-    {
-        for ( Resource resource : resources )
-        {
-            Recorder recorder = recorderMap.get( resource.getPath() );
-            if ( recorder == null )
-            {
-                recorder = new Recorder( lowestDiscernibleValue, //
-                                         highestTrackableValue, //
-                                         numberOfSignificantValueDigits );
-                recorderMap.put( resource.getPath(), recorder );
-            }
-            initializeMap( recorderMap, resource.getResources() );
-        }
+        this.valueListeners.add( valueListener );
+        return this;
     }
 
     public LatencyTimeDisplayListener()
@@ -115,44 +97,33 @@ public class LatencyTimeDisplayListener
     private static class ValueListenerRunnable
         implements Runnable
     {
-        private final Map<String, Recorder> recorderPerPath;
+        private final Recorder recorder;
 
         private final List<ValueListener> valueListeners;
 
-        private ValueListenerRunnable( Map<String, Recorder> recorderPerPath, List<ValueListener> valueListeners )
+        private ValueListenerRunnable(Recorder recorder, List<ValueListener> valueListeners )
         {
-            this.recorderPerPath = recorderPerPath;
+            this.recorder = recorder;
             this.valueListeners = valueListeners;
         }
 
         @Override
         public void run()
         {
-            for ( Map.Entry<String, Recorder> entry : recorderPerPath.entrySet() )
+            Histogram histogram = recorder.getIntervalHistogram();
+
+            for ( ValueListener valueListener : valueListeners )
             {
-                String path = entry.getKey();
-                Histogram histogram = entry.getValue().getIntervalHistogram();
-                for (ValueListener valueListener : valueListeners )
-                {
-                    valueListener.onValue( path, histogram );
-                }
+                valueListener.onValue( histogram );
             }
+
         }
     }
 
     @Override
     public void onResourceNode( Resource.Info info )
     {
-        String path = info.getResource().getPath();
         long time = info.getLatencyTime() - info.getRequestTime();
-        Recorder recorder = recorderPerPath.get( path );
-        if ( recorder == null )
-        {
-            recorder = new Recorder( lowestDiscernibleValue, //
-                                     highestTrackableValue, //
-                                     numberOfSignificantValueDigits );
-            recorderPerPath.put( path, recorder );
-        }
         try
         {
             recorder.recordValue( time );
@@ -173,16 +144,16 @@ public class LatencyTimeDisplayListener
 
     public interface ValueListener
     {
-        void onValue( String path, Histogram histogram );
+        void onValue( Histogram histogram );
     }
 
     public static class PrintValueListener
         implements ValueListener
     {
         @Override
-        public void onValue( String path, Histogram histogram )
+        public void onValue(Histogram histogram )
         {
-            StringBuilder message = new StringBuilder( "Path:" ).append( path ).append( System.lineSeparator() );
+            StringBuilder message = new StringBuilder( ).append( System.lineSeparator() );
             message.append( new CollectorInformations( histogram ) //
                                 .toString( true ) ) //
                 .append( System.lineSeparator() );
