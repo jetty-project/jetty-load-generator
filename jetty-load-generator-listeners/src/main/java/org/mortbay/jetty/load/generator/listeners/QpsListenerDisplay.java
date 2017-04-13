@@ -122,7 +122,7 @@ public class QpsListenerDisplay
             LOGGER.info( "----------------------------------------" );
             long timeInSeconds = TimeUnit.SECONDS.convert( end - start, TimeUnit.MILLISECONDS );
             long qps = totalRequestCommitted / timeInSeconds;
-            LOGGER.info( "host '" + hostname + "' estimated QPS : " + qps );
+            LOGGER.info( "host '" + hostname + "' estimated_live QPS : " + qps );
             LOGGER.info( "----------------------------------------" );
             LOGGER.info( "--------  Request commit time  ----------" );
             LOGGER.info( "-----------------------------------------" );
