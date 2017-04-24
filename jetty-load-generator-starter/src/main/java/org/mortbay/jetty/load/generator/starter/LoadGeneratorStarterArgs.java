@@ -213,13 +213,21 @@ public class LoadGeneratorStarterArgs
     public TimeUnit getRunningTimeUnit()
     {
         switch ( this.runningTimeUnit ) {
-            case "h":
-                return TimeUnit.HOURS;
             case "m":
+            case "minutes":
+            case "MINUTES":
                 return TimeUnit.MINUTES;
+            case "h":
+            case "hours":
+            case "HOURS":
+                return TimeUnit.HOURS;
             case "s":
+            case "seconds":
+            case "SECONDS":
                 return TimeUnit.SECONDS;
             case "ms":
+            case "milliseconds":
+            case "MILLISECONDS":
                 return TimeUnit.MILLISECONDS;
             default:
                 throw new IllegalArgumentException( runningTimeUnit + " is not recognized" );
