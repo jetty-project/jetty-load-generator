@@ -120,6 +120,11 @@ public abstract class AbstractLoadGeneratorStarter
             loadGeneratorBuilder.listener( listener );
         }
 
+        if ( starterArgs.getChannelPerUser() > 0 )
+        {
+            loadGeneratorBuilder.channelsPerUser( starterArgs.getChannelPerUser() );
+        }
+
         LoadGenerator loadGenerator = loadGeneratorBuilder.build();
         logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString() );
         CompletableFuture<Void> cf = loadGenerator.begin();

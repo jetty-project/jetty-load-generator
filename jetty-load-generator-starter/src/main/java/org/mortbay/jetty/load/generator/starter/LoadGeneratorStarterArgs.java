@@ -103,6 +103,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--max-requests-queued", "-mrq" }, description = "Max Requests Queued" )
     private int maxRequestsQueued = -1;
 
+    @Parameter( names = { "--channel-per-user", "-cpu" }, description = "Connections per user" )
+    private int channelPerUser = -1;
+
     public LoadGeneratorStarterArgs()
     {
         // no op
@@ -379,6 +382,16 @@ public class LoadGeneratorStarterArgs
         this.threads = threads;
     }
 
+    public int getChannelPerUser()
+    {
+        return channelPerUser;
+    }
+
+    public void setChannelPerUser( int channelPerUser )
+    {
+        this.channelPerUser = channelPerUser;
+    }
+
     @Override
     public String toString()
     {
@@ -390,7 +403,8 @@ public class LoadGeneratorStarterArgs
             + reportHost + '\'' + ", scheme='" + scheme + '\'' + ", reportPort=" + reportPort + ", notInterrupt="
             + notInterrupt + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help
             + ", displayStatsAtEnd=" + displayStatsAtEnd + ", collectServerStats=" + collectServerStats
-            + ", warmupNumber=" + warmupNumber + ", maxRequestsQueued=" + maxRequestsQueued + '}';
+            + ", warmupNumber=" + warmupNumber + ", maxRequestsQueued=" + maxRequestsQueued + ", channelPerUser="
+            + channelPerUser + '}';
     }
 
     public enum Transport {
