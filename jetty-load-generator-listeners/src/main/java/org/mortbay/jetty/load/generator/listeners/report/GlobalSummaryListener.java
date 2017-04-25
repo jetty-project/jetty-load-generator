@@ -24,6 +24,8 @@ import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * This will collect a global histogram for all response and latency times
  */
@@ -57,7 +59,14 @@ public class GlobalSummaryListener
     {
         try
         {
-            latencyHistogram.recordValue( info.getLatencyTime() - info.getRequestTime() );
+            long latencyTime = info.getLatencyTime() - info.getRequestTime();
+            if (LOGGER.isDebugEnabled())
+            {
+                LOGGER.debug( "latencyTime: {} resource: {}", //
+                              TimeUnit.MILLISECONDS.convert( latencyTime, TimeUnit.NANOSECONDS ), //
+                              info.getResource().getPath());
+            }
+            latencyHistogram.recordValue( latencyTime );
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
@@ -65,7 +74,11 @@ public class GlobalSummaryListener
         }
         try
         {
-            responseHistogram.recordValue( info.getResponseTime() - info.getRequestTime() );
+            long responseTime = info.getResponseTime() - info.getRequestTime();
+            LOGGER.debug( "responseTime: {} resource: {}", //
+                          TimeUnit.MILLISECONDS.convert( responseTime, TimeUnit.NANOSECONDS ), //
+                          info.getResource().getPath());
+            responseHistogram.recordValue( responseTime );
         }
         catch ( ArrayIndexOutOfBoundsException e )
         {
