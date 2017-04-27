@@ -62,9 +62,10 @@ public class GlobalSummaryListener
             long latencyTime = info.getLatencyTime() - info.getRequestTime();
             if (LOGGER.isDebugEnabled())
             {
-                LOGGER.debug( "latencyTime: {} resource: {}", //
+                LOGGER.debug( "latencyTime: {} resource: {}, status: {}", //
                               TimeUnit.MILLISECONDS.convert( latencyTime, TimeUnit.NANOSECONDS ), //
-                              info.getResource().getPath());
+                              info.getResource().getPath(), //
+                              info.getStatus());
             }
             latencyHistogram.recordValue( latencyTime );
         }
@@ -75,9 +76,10 @@ public class GlobalSummaryListener
         try
         {
             long responseTime = info.getResponseTime() - info.getRequestTime();
-            LOGGER.debug( "responseTime: {} resource: {}", //
+            LOGGER.debug( "responseTime: {} resource: {}, status: {}", //
                           TimeUnit.MILLISECONDS.convert( responseTime, TimeUnit.NANOSECONDS ), //
-                          info.getResource().getPath());
+                          info.getResource().getPath(), //
+                          info.getStatus());
             responseHistogram.recordValue( responseTime );
         }
         catch ( ArrayIndexOutOfBoundsException e )
