@@ -44,18 +44,19 @@ public class RequestQueuedListenerDisplay
 
     public RequestQueuedListenerDisplay()
     {
-        this(10, 30, TimeUnit.SECONDS);
+        this( 10, 30, TimeUnit.SECONDS );
     }
 
     public RequestQueuedListenerDisplay( long initial, long delay, TimeUnit timeUnit )
     {
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        scheduledExecutorService.scheduleWithFixedDelay( () -> {
-                                                             LOGGER.info( "----------------------------------------" );
-                                                             LOGGER.info( "  Requests in queue: "+ requestsQueued.get()   );
-                                                             LOGGER.info( "----------------------------------------" );
-                                                         },//
-                                                         initial, delay, timeUnit );
+        scheduledExecutorService.scheduleWithFixedDelay( () ->
+            {
+                LOGGER.info( "----------------------------------------" );
+                LOGGER.info( "  Requests in queue: " + requestsQueued.get() );
+                LOGGER.info( "----------------------------------------" );
+            },//
+            initial, delay, timeUnit );
     }
 
     @Override

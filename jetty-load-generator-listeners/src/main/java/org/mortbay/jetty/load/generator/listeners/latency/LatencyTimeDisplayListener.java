@@ -26,6 +26,7 @@ import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
+import org.mortbay.jetty.load.generator.listeners.report.GlobalSummaryListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,14 +45,13 @@ public class LatencyTimeDisplayListener
     private static final Logger LOGGER = Log.getLogger( LatencyTimeDisplayListener.class );
 
     private ScheduledExecutorService scheduledExecutorService;
-
     private ValueListenerRunnable runnable;
-
     private Recorder recorder;
-
     private final long lowestDiscernibleValue;
     private final long highestTrackableValue;
     private final int numberOfSignificantValueDigits;
+
+    private List<Integer> excludeHttpStatusFamily = new ArrayList<>();
 
     private List<ValueListener> valueListeners = new ArrayList<>();
 
@@ -89,6 +89,23 @@ public class LatencyTimeDisplayListener
         return this;
     }
 
+    /**
+     * @param httpStatusFamilies if you want to exclude 1xx or 5xx, add 100 or 500
+     * @return
+     */
+    public LatencyTimeDisplayListener addExcludeHttpStatusFamily( int... httpStatusFamilies )
+    {
+        if ( httpStatusFamilies == null )
+        {
+            return this;
+        }
+        for ( int status : httpStatusFamilies )
+        {
+            this.excludeHttpStatusFamily.add( status / 100 );
+        }
+        return this;
+    }
+
     public LatencyTimeDisplayListener()
     {
         this( 0, 5, TimeUnit.SECONDS );
@@ -123,6 +140,14 @@ public class LatencyTimeDisplayListener
     @Override
     public void onResourceNode( Resource.Info info )
     {
+        if ( this.excludeHttpStatusFamily.contains( info.getStatus() / 100 ) )
+        {
+            if ( LOGGER.isDebugEnabled() )
+            {
+                LOGGER.debug( "exclude http status: {}", info.getStatus() );
+            }
+            return;
+        }
         long time = info.getLatencyTime() - info.getRequestTime();
         try
         {

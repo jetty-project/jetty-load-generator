@@ -24,7 +24,10 @@ import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * This will collect a global histogram for all response and latency times
@@ -37,6 +40,13 @@ public class GlobalSummaryListener
 
     private Recorder responseHistogram, latencyHistogram;
 
+    private List<Integer> excludeHttpStatusFamily = new ArrayList<>();
+
+    private final LongAdder responses1xx = new LongAdder();
+    private final LongAdder responses2xx = new LongAdder();
+    private final LongAdder responses3xx = new LongAdder();
+    private final LongAdder responses4xx = new LongAdder();
+    private final LongAdder responses5xx = new LongAdder();
 
     public GlobalSummaryListener( long lowestDiscernibleValue, long highestTrackableValue,
                                   int numberOfSignificantValueDigits )
@@ -54,18 +64,64 @@ public class GlobalSummaryListener
               HistogramConstants.NUMBER_OF_SIGNIFICANT_VALUE_DIGITS );
     }
 
+    /**
+     * @param httpStatusFamilies if you want to exclude 1xx or 5xx, add 100 or 500
+     * @return
+     */
+    public GlobalSummaryListener addExcludeHttpStatusFamily( int... httpStatusFamilies )
+    {
+        if ( httpStatusFamilies == null )
+        {
+            return this;
+        }
+        for ( int status : httpStatusFamilies )
+        {
+            this.excludeHttpStatusFamily.add( status / 100 );
+        }
+        return this;
+    }
+
     @Override
     public void onResourceNode( Resource.Info info )
     {
+        switch (info.getStatus() / 100)
+        {
+            case 1:
+                responses1xx.increment();
+                break;
+            case 2:
+                responses2xx.increment();
+                break;
+            case 3:
+                responses3xx.increment();
+                break;
+            case 4:
+                responses4xx.increment();
+                break;
+            case 5:
+                responses5xx.increment();
+                break;
+            default:
+                break;
+        }
+
+        if ( this.excludeHttpStatusFamily.contains( info.getStatus() / 100 ) )
+        {
+            if ( LOGGER.isDebugEnabled() )
+            {
+                LOGGER.debug( "exclude http status: {}", info.getStatus() );
+            }
+            return;
+        }
         try
         {
             long latencyTime = info.getLatencyTime() - info.getRequestTime();
-            if (LOGGER.isDebugEnabled())
+            if ( LOGGER.isDebugEnabled() )
             {
                 LOGGER.debug( "latencyTime: {} resource: {}, status: {}", //
                               TimeUnit.MILLISECONDS.convert( latencyTime, TimeUnit.NANOSECONDS ), //
                               info.getResource().getPath(), //
-                              info.getStatus());
+                              info.getStatus() );
             }
             latencyHistogram.recordValue( latencyTime );
         }
@@ -79,7 +135,7 @@ public class GlobalSummaryListener
             LOGGER.debug( "responseTime: {} resource: {}, status: {}", //
                           TimeUnit.MILLISECONDS.convert( responseTime, TimeUnit.NANOSECONDS ), //
                           info.getResource().getPath(), //
-                          info.getStatus());
+                          info.getStatus() );
             responseHistogram.recordValue( responseTime );
         }
         catch ( ArrayIndexOutOfBoundsException e )
@@ -87,8 +143,6 @@ public class GlobalSummaryListener
             LOGGER.warn( "fail to record response time value: {}", info.getLatencyTime() );
         }
     }
-
-
 
 
     public Recorder getResponseTimeHistogram()
@@ -101,4 +155,28 @@ public class GlobalSummaryListener
         return latencyHistogram;
     }
 
+    public LongAdder getResponses1xx()
+    {
+        return responses1xx;
+    }
+
+    public LongAdder getResponses2xx()
+    {
+        return responses2xx;
+    }
+
+    public LongAdder getResponses3xx()
+    {
+        return responses3xx;
+    }
+
+    public LongAdder getResponses4xx()
+    {
+        return responses4xx;
+    }
+
+    public LongAdder getResponses5xx()
+    {
+        return responses5xx;
+    }
 }
