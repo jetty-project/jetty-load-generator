@@ -28,6 +28,8 @@ import org.mortbay.jetty.load.generator.LoadGenerator;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +49,7 @@ public class QpsListenerDisplay
 
     private volatile Recorder recorder;
 
-    private String hostname;
+    private List<ValueListener> valueListeners = new ArrayList<>();
 
     public QpsListenerDisplay( long initial, long delay, TimeUnit timeUnit )
     {
@@ -65,7 +67,7 @@ public class QpsListenerDisplay
         this.recorder = new Recorder( lowestDiscernibleValue, //
                                       highestTrackableValue, //
                                       numberOfSignificantValueDigits );
-
+        String hostname = "";
         try
         {
             hostname = InetAddress.getLocalHost().getHostName();
@@ -75,7 +77,8 @@ public class QpsListenerDisplay
             LOGGER.info( "ignore cannot get hostname:" + e.getMessage() );
         }
         scheduledExecutorService = Executors.newScheduledThreadPool( 1 );
-        scheduledExecutorService.scheduleWithFixedDelay( new ValueDisplayRunnable( recorder, hostname ), //
+        this.valueListeners.add( new PrintValueListener( hostname ) );
+        scheduledExecutorService.scheduleWithFixedDelay( new ValueDisplayRunnable( recorder, valueListeners ), //
                                                          initial, delay, timeUnit );
     }
 
@@ -99,24 +102,47 @@ public class QpsListenerDisplay
     {
         private volatile Recorder recorder;
 
-        private String hostname;
+        private final List<ValueListener> valueListeners;
 
-        public ValueDisplayRunnable( Recorder recorder, String hostname )
+        public ValueDisplayRunnable( Recorder recorder, List<ValueListener> valueListeners )
         {
-            this.hostname = hostname;
             this.recorder = recorder;
+            this.valueListeners = valueListeners;
         }
 
         @Override
         public void run()
         {
             Histogram histogram = this.recorder.getIntervalHistogram();
+            for (ValueListener valueListener : valueListeners)
+            {
+                valueListener.onValue( histogram );
+            }
+        }
+    }
+
+    public interface ValueListener
+    {
+        void onValue( Histogram histogram );
+    }
+
+    public static class PrintValueListener implements ValueListener
+    {
+
+        private String hostname;
+
+        public PrintValueListener( String hostname )
+        {
+            this.hostname = hostname;
+        }
+
+        @Override
+        public void onValue( Histogram histogram )
+        {
             long totalRequestCommitted = histogram.getTotalCount();
             long start = histogram.getStartTimeStamp();
             long end = histogram.getEndTimeStamp();
-
             CollectorInformations collectorInformations = new CollectorInformations( histogram );
-
             LOGGER.info( "----------------------------------------" );
             LOGGER.info( "--------    QPS estimation    ----------" );
             LOGGER.info( "----------------------------------------" );
@@ -127,7 +153,6 @@ public class QpsListenerDisplay
             LOGGER.info( "--------  Request commit time  ----------" );
             LOGGER.info( "-----------------------------------------" );
             LOGGER.info( collectorInformations.toString( true ) );
-
         }
     }
 
