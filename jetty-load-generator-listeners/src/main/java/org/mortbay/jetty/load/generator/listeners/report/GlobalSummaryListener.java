@@ -19,6 +19,7 @@
 package org.mortbay.jetty.load.generator.listeners.report;
 
 import org.HdrHistogram.Recorder;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.Resource;
@@ -33,6 +34,7 @@ import java.util.concurrent.atomic.LongAdder;
  * This will collect a global histogram for all response and latency times
  */
 public class GlobalSummaryListener
+    extends Request.Listener.Adapter
     implements Resource.NodeListener
 {
 
@@ -43,10 +45,16 @@ public class GlobalSummaryListener
     private List<Integer> excludeHttpStatusFamily = new ArrayList<>();
 
     private final LongAdder responses1xx = new LongAdder();
+
     private final LongAdder responses2xx = new LongAdder();
+
     private final LongAdder responses3xx = new LongAdder();
+
     private final LongAdder responses4xx = new LongAdder();
+
     private final LongAdder responses5xx = new LongAdder();
+
+    private final LongAdder requestCommitTotal = new LongAdder();
 
     public GlobalSummaryListener( long lowestDiscernibleValue, long highestTrackableValue,
                                   int numberOfSignificantValueDigits )
@@ -84,7 +92,7 @@ public class GlobalSummaryListener
     @Override
     public void onResourceNode( Resource.Info info )
     {
-        switch (info.getStatus() / 100)
+        switch ( info.getStatus() / 100 )
         {
             case 1:
                 responses1xx.increment();
@@ -180,5 +188,23 @@ public class GlobalSummaryListener
         return responses5xx;
     }
 
+    public long getTotalReponse()
+    {
+        return responses1xx.longValue() //
+            + responses2xx.longValue() //
+            + responses3xx.longValue() //
+            + responses4xx.longValue() //
+            + responses5xx.longValue();
+    }
 
+    @Override
+    public void onCommit( Request request )
+    {
+        requestCommitTotal.increment();
+    }
+
+    public long getRequestCommitTotal()
+    {
+        return requestCommitTotal.longValue();
+    }
 }
