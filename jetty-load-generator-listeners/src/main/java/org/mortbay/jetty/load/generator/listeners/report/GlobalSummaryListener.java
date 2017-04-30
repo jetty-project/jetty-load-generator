@@ -188,7 +188,7 @@ public class GlobalSummaryListener
         return responses5xx;
     }
 
-    public long getTotalReponse()
+    public long getTotalResponse()
     {
         return responses1xx.longValue() //
             + responses2xx.longValue() //
