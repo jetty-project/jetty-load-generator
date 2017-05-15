@@ -12,10 +12,8 @@
 
   <properties>
     <alpn.version>8.1.9.v20160720</alpn.version>
-    <jetty-93-version>9.3.17-SNAPSHOT</jetty-93-version>
-    <jetty-94-version>9.4.3-SNAPSHOT</jetty-94-version>
     <jackson2-version>2.8.1</jackson2-version>
-    <jetty.version>9.3.17.v20170317</jetty.version>
+    <jetty.version>9.4.5.v20170502</jetty.version>
   </properties>
 
   <licenses>
