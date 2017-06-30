@@ -573,15 +573,16 @@ public class LoadGenerator extends ContainerLifeCycle {
 
         @Override
         public String toString() {
-            return String.format("%s[t=%d,i=%d,u=%d,c=%d,r=%d,%s://%s:%d]",
-                    Config.class.getSimpleName(),
-                    threads,
-                    iterationsPerThread,
-                    usersPerThread,
-                    channelsPerUser,
-                    resourceRate,
-                    scheme,
-                    host,
+            return String.format("%s[t=%d,i=%d,u=%d,c=%d,r=%d,rf=%d,%s://%s:%d]", //
+                    Config.class.getSimpleName(), //
+                    threads, //
+                    iterationsPerThread, //
+                    usersPerThread, //
+                    channelsPerUser, //
+                    resourceRate, //
+                    runFor, //
+                    scheme, //
+                    host, //
                     port);
         }
     }

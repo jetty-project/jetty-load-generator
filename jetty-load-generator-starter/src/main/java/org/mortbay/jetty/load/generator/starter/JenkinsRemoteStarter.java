@@ -188,8 +188,10 @@ public class JenkinsRemoteStarter
                 }
             };
 
-            LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost() + " for " + runnerArgs.getRunningTime() + " "
-                             + runnerArgs.getRunningTimeUnit() );
+            LOGGER.info( "start LoadGenerator to " + runnerArgs.getHost() //
+                             + ", runningTime: " + runnerArgs.getRunningTime() //
+                             + ", runningTimeUnit: " + runnerArgs.getRunningTimeUnit() //
+                             + ", runIterations: " + runnerArgs.getRunIteration());
             runner.run();
 
             LOGGER.info( "LoadGenerator stopped" );

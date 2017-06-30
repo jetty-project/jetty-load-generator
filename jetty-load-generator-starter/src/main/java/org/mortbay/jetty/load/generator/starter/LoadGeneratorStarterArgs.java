@@ -62,7 +62,7 @@ public class LoadGeneratorStarterArgs
     private int threads = 0;
 
     @Parameter( names = { "--running-time", "-rt" }, description = "Running Time" )
-    private long runningTime = 1;
+    private long runningTime = -1;
 
     @Parameter( names = { "--running-time-unit", "-rtu" }, description = "Running Time Unit (h/m/s/ms)" )
     private String runningTimeUnit = "s";
