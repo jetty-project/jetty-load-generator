@@ -106,6 +106,9 @@ public class LoadGeneratorStarterArgs
     @Parameter( names = { "--channel-per-user", "-cpu" }, description = "Connections per user" )
     private int channelPerUser = -1;
 
+    @Parameter( names = { "--use-rate-limiter", "-url" }, description = "Use RateLimiter" )
+    private boolean useRateLimiter = false;
+
     public LoadGeneratorStarterArgs()
     {
         // no op
@@ -392,6 +395,16 @@ public class LoadGeneratorStarterArgs
         this.channelPerUser = channelPerUser;
     }
 
+    public boolean isUseRateLimiter()
+    {
+        return useRateLimiter;
+    }
+
+    public void setUseRateLimiter( boolean useRateLimiter )
+    {
+        this.useRateLimiter = useRateLimiter;
+    }
+
     @Override
     public String toString()
     {
@@ -404,7 +417,7 @@ public class LoadGeneratorStarterArgs
             + notInterrupt + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help
             + ", displayStatsAtEnd=" + displayStatsAtEnd + ", collectServerStats=" + collectServerStats
             + ", warmupNumber=" + warmupNumber + ", maxRequestsQueued=" + maxRequestsQueued + ", channelPerUser="
-            + channelPerUser + '}';
+            + channelPerUser + ", useRateLimiter=" + useRateLimiter + '}';
     }
 
     public enum Transport {

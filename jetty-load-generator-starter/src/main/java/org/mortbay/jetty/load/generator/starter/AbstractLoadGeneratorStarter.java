@@ -29,7 +29,9 @@ import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.xml.XmlConfiguration;
 import org.mortbay.jetty.load.generator.HTTP1ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HTTP1ClientTransportRateLimiterBuilder;
 import org.mortbay.jetty.load.generator.HTTP2ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HTTP2ClientTransportRateLimiterBuilder;
 import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
@@ -85,7 +87,7 @@ public abstract class AbstractLoadGeneratorStarter
             loadGeneratorBuilder.port( starterArgs.getPort() );
         }
 
-        if (starterArgs.getThreads() > 0)
+        if ( starterArgs.getThreads() > 0 )
         {
             loadGeneratorBuilder.threads( starterArgs.getThreads() );
         }
@@ -172,7 +174,7 @@ public abstract class AbstractLoadGeneratorStarter
         return listeners == null ? new Request.Listener[0] : this.listeners;
     }
 
-    protected void setListeners(Request.Listener[] listeners)
+    protected void setListeners( Request.Listener[] listeners )
     {
         this.listeners = listeners;
     }
@@ -268,17 +270,37 @@ public abstract class AbstractLoadGeneratorStarter
 
     public HTTPClientTransportBuilder httpClientTransportBuilder()
     {
-        switch ( starterArgs.getTransport() )
+        int transactionRate = getStarterArgs().getTransactionRate();
+        switch ( getStarterArgs().getTransport() )
         {
             case HTTP:
             case HTTPS:
             {
-                return new HTTP1ClientTransportBuilder().selectors( starterArgs.getSelectors() );
+                if ( transactionRate > 1 && getStarterArgs().isUseRateLimiter() )
+                {
+                    logger.info( "use RateLimiter" );
+                    return new HTTP1ClientTransportRateLimiterBuilder( transactionRate ) //
+                        .selectors( getStarterArgs().getSelectors() );
+                }
+                else
+                {
+                    return new HTTP1ClientTransportBuilder().selectors( getStarterArgs().getSelectors() );
+                }
             }
             case H2C:
             case H2:
             {
-                return new HTTP2ClientTransportBuilder().selectors( starterArgs.getSelectors() );
+                if ( transactionRate > 1 && getStarterArgs().isUseRateLimiter() )
+                {
+                    logger.info( "use RateLimiter" );
+                    return new HTTP2ClientTransportRateLimiterBuilder( transactionRate ) //
+                        .selectors( getStarterArgs().getSelectors() );
+                }
+                else
+                {
+                    return new HTTP2ClientTransportBuilder().selectors( getStarterArgs().getSelectors() );
+                }
+
             }
             default:
             {
@@ -296,4 +318,8 @@ public abstract class AbstractLoadGeneratorStarter
         return sslContextFactory;
     }
 
+    public LoadGeneratorStarterArgs getStarterArgs()
+    {
+        return starterArgs;
+    }
 }
