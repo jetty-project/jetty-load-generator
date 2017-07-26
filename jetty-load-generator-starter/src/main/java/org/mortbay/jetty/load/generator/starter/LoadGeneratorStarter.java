@@ -26,6 +26,7 @@ import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 import org.mortbay.jetty.load.generator.listeners.report.GlobalSummaryListener;
 
+import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -101,6 +102,7 @@ public class LoadGeneratorStarter
     public void displayGlobalSummaryListener( GlobalSummaryListener globalSummaryListener )
     {
 
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
         CollectorInformations latencyTimeSummary =
             new CollectorInformations( globalSummaryListener.getLatencyTimeHistogram() //
                                            .getIntervalHistogram() );
@@ -127,6 +129,9 @@ public class LoadGeneratorStarter
                          + fromNanostoMillis( latencyTimeSummary.getValue90() ) );
         LOGGER.info( "stdDeviation:" //
                          + fromNanostoMillis( Math.round( latencyTimeSummary.getStdDeviation() ) ) );
+        LOGGER.info( "start: {}, end: {}", //
+                     simpleDateFormat.format( latencyTimeSummary.getStartTimeStamp() ), //
+                     simpleDateFormat.format( latencyTimeSummary.getEndTimeStamp() ) );
         LOGGER.info( "----------------------------------------------------" );
         LOGGER.info( "-----------     Estimated QPS     ------------------" );
         LOGGER.info( "----------------------------------------------------" );
