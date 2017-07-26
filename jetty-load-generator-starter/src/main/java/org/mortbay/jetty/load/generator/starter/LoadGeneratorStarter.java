@@ -19,8 +19,14 @@
 package org.mortbay.jetty.load.generator.starter;
 
 import com.beust.jcommander.JCommander;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
+import org.mortbay.jetty.load.generator.listeners.report.GlobalSummaryListener;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -29,7 +35,7 @@ public class LoadGeneratorStarter
     extends AbstractLoadGeneratorStarter
 {
 
-    private static final Logger LOGGER = Log.getLogger( LoadGeneratorStarter.class);
+    private static final Logger LOGGER = Log.getLogger( LoadGeneratorStarter.class );
 
     public LoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
     {
@@ -60,21 +66,86 @@ public class LoadGeneratorStarter
 
         try
         {
-            LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs );
+            GlobalSummaryListener globalSummaryListener = new GlobalSummaryListener();
+            LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs )
+            {
+                @Override
+                protected Resource.Listener[] getResourceListeners()
+                {
+                    return new Resource.Listener[]{ globalSummaryListener };
+                }
+
+                @Override
+                protected Request.Listener[] getListeners()
+                {
+                    return new Request.Listener[]{ globalSummaryListener };
+                }
+            };
+
             runner.run();
 
-            if (runnerArgs.isDisplayStatsAtEnd())
+            if ( runnerArgs.isDisplayStatsAtEnd() )
             {
-
+                runner.displayGlobalSummaryListener( globalSummaryListener );
             }
 
         }
         catch ( Exception e )
         {
-            LOGGER.info( "error happened", e);
+            LOGGER.info( "error happened", e );
             new JCommander( runnerArgs ).usage();
         }
     }
 
+
+    public void displayGlobalSummaryListener( GlobalSummaryListener globalSummaryListener )
+    {
+
+        CollectorInformations latencyTimeSummary =
+            new CollectorInformations( globalSummaryListener.getLatencyTimeHistogram() //
+                                           .getIntervalHistogram() );
+
+        long totalRequestCommitted = globalSummaryListener.getRequestCommitTotal();
+        long start = latencyTimeSummary.getStartTimeStamp();
+        long end = latencyTimeSummary.getEndTimeStamp();
+
+        LOGGER.info( "" );
+        LOGGER.info( "" );
+        LOGGER.info( "----------------------------------------------------" );
+        LOGGER.info( "--------    Latency Time Summary     ---------------" );
+        LOGGER.info( "----------------------------------------------------" );
+        LOGGER.info( "total count:" + latencyTimeSummary.getTotalCount() );
+        LOGGER.info( "maxLatency:" //
+                         + fromNanostoMillis( latencyTimeSummary.getMaxValue() ) );
+        LOGGER.info( "minLatency:" //
+                         + fromNanostoMillis( latencyTimeSummary.getMinValue() ) );
+        LOGGER.info( "aveLatency:" //
+                         + fromNanostoMillis( Math.round( latencyTimeSummary.getMean() ) ) );
+        LOGGER.info( "50Latency:" //
+                         + fromNanostoMillis( latencyTimeSummary.getValue50() ) );
+        LOGGER.info( "90Latency:" //
+                         + fromNanostoMillis( latencyTimeSummary.getValue90() ) );
+        LOGGER.info( "stdDeviation:" //
+                         + fromNanostoMillis( Math.round( latencyTimeSummary.getStdDeviation() ) ) );
+        LOGGER.info( "----------------------------------------------------" );
+        LOGGER.info( "-----------     Estimated QPS     ------------------" );
+        LOGGER.info( "----------------------------------------------------" );
+        long timeInSeconds = TimeUnit.SECONDS.convert( end - start, TimeUnit.MILLISECONDS );
+        long qps = totalRequestCommitted / timeInSeconds;
+        LOGGER.info( "estimated QPS : " + qps );
+        LOGGER.info( "----------------------------------------------------" );
+        LOGGER.info( "response 1xx family: " + globalSummaryListener.getResponses1xx().longValue() );
+        LOGGER.info( "response 2xx family: " + globalSummaryListener.getResponses2xx().longValue() );
+        LOGGER.info( "response 3xx family: " + globalSummaryListener.getResponses3xx().longValue() );
+        LOGGER.info( "response 4xx family: " + globalSummaryListener.getResponses4xx().longValue() );
+        LOGGER.info( "response 5xx family: " + globalSummaryListener.getResponses5xx().longValue() );
+        LOGGER.info( "" );
+
+    }
+
+    static long fromNanostoMillis( long nanosValue )
+    {
+        return TimeUnit.MILLISECONDS.convert( nanosValue, TimeUnit.NANOSECONDS );
+    }
 
 }
