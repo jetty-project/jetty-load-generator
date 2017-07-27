@@ -47,6 +47,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -202,7 +203,7 @@ public class LoadGeneratorStarterTest
     {
         try (Reader reader = Files.newBufferedReader( Paths.get( "src/test/resources/loadgenerator_profile.groovy" ) ))
         {
-            Resource resource = (Resource) AbstractLoadGeneratorStarter.evaluateScript( reader );
+            Resource resource = (Resource) AbstractLoadGeneratorStarter.evaluateScript( reader, Collections.emptyMap() );
             String path = AbstractLoadGeneratorStarter.writeAsJsonTmp( resource );
             Resource fromJson = AbstractLoadGeneratorStarter.evaluateJson( Paths.get( path ) );
             Assert.assertEquals( resource.descendantCount(), fromJson.descendantCount() );

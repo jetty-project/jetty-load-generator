@@ -21,6 +21,7 @@ package org.mortbay.jetty.load.generator.starter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.eclipse.jetty.client.api.Request;
@@ -41,6 +42,8 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -69,8 +72,6 @@ public abstract class AbstractLoadGeneratorStarter
         throws Exception
     {
 
-        Resource resourceProfile = getResource();
-
         LoadGenerator.Builder loadGeneratorBuilder = new LoadGenerator.Builder() //
             .host( starterArgs.getHost() ) //
             .iterationsPerThread( starterArgs.getRunIteration() ) //
@@ -78,9 +79,12 @@ public abstract class AbstractLoadGeneratorStarter
             .resourceRate( starterArgs.getTransactionRate() ) //
             .httpClientTransportBuilder( httpClientTransportBuilder() ) //
             .sslContextFactory( sslContextFactory() ) //
-            .resource( resourceProfile ) //
             .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
             .scheme( starterArgs.getScheme() ); //
+
+        Resource resourceProfile = getResource( loadGeneratorBuilder );
+
+        loadGeneratorBuilder.resource( resourceProfile );
 
         if ( starterArgs.getPort() > 0 )
         {
@@ -195,7 +199,7 @@ public abstract class AbstractLoadGeneratorStarter
         return this;
     }
 
-    public Resource getResource()
+    public Resource getResource( LoadGenerator.Builder loadGeneratorBuilder )
         throws Exception
     {
         if ( resource != null )
@@ -225,7 +229,9 @@ public abstract class AbstractLoadGeneratorStarter
 
             try (Reader reader = Files.newBufferedReader( profilePath ))
             {
-                return resource = (Resource) evaluateScript( reader );
+                Map<String, Object> context = new HashMap<>( );
+                context.put( "loadGeneratorBuilder", loadGeneratorBuilder );
+                return resource = (Resource) evaluateScript( reader, context );
             }
         }
 
@@ -251,14 +257,16 @@ public abstract class AbstractLoadGeneratorStarter
         return tmpPath.toString();
     }
 
-    protected static Object evaluateScript( Reader script )
+    protected static Object evaluateScript( Reader script, Map<String, Object> context )
         throws Exception
     {
         CompilerConfiguration config = new CompilerConfiguration( CompilerConfiguration.DEFAULT );
         config.setDebug( true );
         config.setVerbose( true );
+        Binding binding = new Binding( context );
 
-        GroovyShell interpreter = new GroovyShell( config );
+        GroovyShell interpreter = new GroovyShell(binding, config );
+
 
         return interpreter.evaluate( script );
     }
