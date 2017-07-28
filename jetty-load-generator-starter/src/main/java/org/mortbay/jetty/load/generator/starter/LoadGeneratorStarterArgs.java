@@ -18,6 +18,7 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -295,9 +296,7 @@ public class LoadGeneratorStarterArgs {
         String jsonPath = getResourceJSONPath();
         if (jsonPath != null) {
             Path path = Paths.get(jsonPath);
-            if (Files.exists(path)) {
-                return evaluateJSON(path);
-            }
+            return evaluateJSON(path);
         }
         String xmlPath = getResourceXMLPath();
         if (xmlPath != null) {
@@ -318,13 +317,13 @@ public class LoadGeneratorStarterArgs {
         throw new IllegalArgumentException("resource not defined");
     }
 
-    public static Resource evaluateJSON(Path profilePath) throws Exception {
+    public static Resource evaluateJSON(Path profilePath) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         return objectMapper.readValue(profilePath.toFile(), Resource.class);
     }
 
-    public static Resource evaluateGroovy(Reader script, Map<String, Object> context) throws Exception {
+    public static Resource evaluateGroovy(Reader script, Map<String, Object> context) {
         CompilerConfiguration config = new CompilerConfiguration(CompilerConfiguration.DEFAULT);
         config.setDebug(true);
         config.setVerbose(true);

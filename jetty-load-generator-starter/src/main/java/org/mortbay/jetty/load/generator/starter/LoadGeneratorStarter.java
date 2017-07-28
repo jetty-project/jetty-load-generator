@@ -33,7 +33,7 @@ import org.mortbay.jetty.load.generator.listeners.report.GlobalSummaryListener;
 public class LoadGeneratorStarter {
     private static final Logger LOGGER = Log.getLogger(LoadGeneratorStarter.class);
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         LoadGeneratorStarterArgs starterArgs = parse(args);
         if (starterArgs == null) {
             return;
@@ -49,7 +49,9 @@ public class LoadGeneratorStarter {
 
     public static LoadGeneratorStarterArgs parse(String[] args) {
         LoadGeneratorStarterArgs starterArgs = new LoadGeneratorStarterArgs();
-        JCommander jCommander = new JCommander(starterArgs, args);
+        JCommander jCommander = new JCommander(starterArgs);
+        jCommander.setAcceptUnknownOptions(true);
+        jCommander.parse(args);
         if (starterArgs.isHelp()) {
             jCommander.usage();
             return null;
@@ -57,21 +59,25 @@ public class LoadGeneratorStarter {
         return starterArgs;
     }
 
-    public static LoadGenerator.Builder prepare(LoadGeneratorStarterArgs starterArgs) throws Exception {
-        LoadGenerator.Builder builder = new LoadGenerator.Builder();
-        return builder.threads(starterArgs.getThreads())
-                .warmupIterationsPerThread(starterArgs.getWarmupIterations())
-                .iterationsPerThread(starterArgs.getIterations())
-                .usersPerThread(starterArgs.getUsers())
-                .channelsPerUser(starterArgs.getChannelsPerUser())
-                .resource(starterArgs.getResource(builder))
-                .resourceRate(starterArgs.getResourceRate())
-                .httpClientTransportBuilder(starterArgs.getHttpClientTransportBuilder())
-                .sslContextFactory(new SslContextFactory())
-                .scheme(starterArgs.getScheme())
-                .host(starterArgs.getHost())
-                .port(starterArgs.getPort())
-                .maxRequestsQueued(starterArgs.getMaxRequestsQueued());
+    public static LoadGenerator.Builder prepare(LoadGeneratorStarterArgs starterArgs) {
+        try {
+            LoadGenerator.Builder builder = new LoadGenerator.Builder();
+            return builder.threads(starterArgs.getThreads())
+                    .warmupIterationsPerThread(starterArgs.getWarmupIterations())
+                    .iterationsPerThread(starterArgs.getIterations())
+                    .usersPerThread(starterArgs.getUsers())
+                    .channelsPerUser(starterArgs.getChannelsPerUser())
+                    .resource(starterArgs.getResource(builder))
+                    .resourceRate(starterArgs.getResourceRate())
+                    .httpClientTransportBuilder(starterArgs.getHttpClientTransportBuilder())
+                    .sslContextFactory(new SslContextFactory())
+                    .scheme(starterArgs.getScheme())
+                    .host(starterArgs.getHost())
+                    .port(starterArgs.getPort())
+                    .maxRequestsQueued(starterArgs.getMaxRequestsQueued());
+        } catch (Exception x) {
+            throw new RuntimeException(x);
+        }
     }
 
     public static void run(LoadGenerator.Builder builder) {
