@@ -18,153 +18,113 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.internal.Maps;
 
-/**
- *
- */
-public class LoadGeneratorStarterArgs
-{
+public class LoadGeneratorStarterArgs {
+    @Parameter(names = {"--threads", "-t"}, description = "LoadGenerator threads")
+    private int threads = 1;
 
-    @Parameter( names = { "--profile-xml-path", "-pxp" }, description = "Path to profile xml file" )
-    private String profileXmlPath;
+    @Parameter(names = {"--warmup-iterations", "-wi"}, description = "Warmup iterations per thread")
+    private int warmupIterations;
 
-    @Parameter( names = { "--profile-json-path", "-pjp" }, description = "Path to profile json file" )
-    private String profileJsonPath;
+    @Parameter(names = {"--iterations", "-i"}, description = "Iterations per thread")
+    private int iterations = 1;
 
-    @Parameter( names = { "--profile-groovy-path", "-pgp" }, description = "Path to profile groovy file" )
-    private String profileGroovyPath;
-
-    @Parameter( names = { "--host", "-h" }, description = "Target host" )
-    private String host = "localhost";
-
-    @Parameter( names = { "--port", "-p" }, description = "Target port" )
-    private int port = 8080;
-
-    @Parameter( names = { "--users", "-u" }, description = "Simulated users number" )
-    private int users = 1;
-
-    @Parameter( names = { "--transaction-rate", "-tr" }, description = "Transaction rate / second" )
-    private int transactionRate = 1;
-
-    @Parameter( names = { "--transport", "-t" }, description = "Transport (http, https, h2, h2c, fcgi)" )
-    private String transport = "http";
-
-    @Parameter( names = { "--selectors", "-s" }, description = "HttpClientTransport selectors" )
-    private int selectors = 1;
-
-    @Parameter( names = { "--threads" }, description = "LoadGenerator threads" )
-    private int threads = 0;
-
-    @Parameter( names = { "--running-time", "-rt" }, description = "Running Time" )
+    @Parameter(names = {"--running-time", "-rt"}, description = "LoadGenerator Running Time")
     private long runningTime = -1;
 
-    @Parameter( names = { "--running-time-unit", "-rtu" }, description = "Running Time Unit (h/m/s/ms)" )
+    @Parameter(names = {"--running-time-unit", "-rtu"}, description = "LoadGenerator Running Time Unit (h/m/s/ms)")
     private String runningTimeUnit = "s";
 
-    @Parameter( names = { "--running-iteration", "-ri" }, description = "Iteration number to run" )
-    private int runIteration;
+    @Parameter(names = {"--users", "-u"}, description = "Users per thread")
+    private int users = 1;
 
-    @Parameter( names = { "--report-host", "-rh" }, description = "Report host" )
-    private String reportHost = "localhost";
+    @Parameter(names = {"--channels-per-user", "-cpu"}, description = "Channels/Connections per user")
+    private int channelsPerUser = 128;
 
-    @Parameter( names = { "--scheme" }, description = "Scheme (http/https)" )
+    @Parameter(names = {"--resource-xml-path", "-rxp"}, description = "Path to resource XML file")
+    private String resourceXMLPath;
+
+    @Parameter(names = {"--resource-json-path", "-rjp"}, description = "Path to resource JSON file")
+    private String resourceJSONPath;
+
+    @Parameter(names = {"--resource-groovy-path", "-rgp"}, description = "Path to resource Groovy file")
+    private String resourceGroovyPath;
+
+    @Parameter(names = {"--resource-rate", "-rr"}, description = "Resource rate / second")
+    private int resourceRate = 1;
+
+    @Parameter(names = {"--scheme", "-s"}, description = "Target scheme (http/https)")
     private String scheme = "http";
 
-    @Parameter( names = { "--report-port", "-rp" }, description = "Report port" )
-    private int reportPort;
+    @Parameter(names = {"--host", "-h"}, description = "Target host")
+    private String host = "localhost";
 
-    @Parameter( names = { "--no-interrupt", "-notint"}, description = "Not Interrupt Loadgenerator after run" )
-    private boolean notInterrupt = false;
+    @Parameter(names = {"--port", "-p"}, description = "Target port")
+    private int port = 8080;
 
-    @Parameter( names = { "--stats-to-file", "-stf" }, description = "Write stats to this file" )
+    @Parameter(names = {"--transport", "-tr"}, description = "Transport (http, https, h2, h2c)")
+    private String transport = "http";
+
+    @Parameter(names = {"--selectors"}, description = "Number of NIO selectors")
+    private int selectors = 1;
+
+    @Parameter(names = {"--max-requests-queued", "-mrq"}, description = "Max Requests Queued")
+    private int maxRequestsQueued = 1024;
+
+    @Parameter(names = {"--stats-file", "-sf"}, description = "Statistics output file")
     private String statsFile;
 
-    @DynamicParameter(names = "-D", description = "Dynamic parameters go here")
-    public Map<String, String> params = Maps.newHashMap();
+    @Parameter(names = {"--display-stats", "-ds"}, description = "Display statistics")
+    private boolean displayStats;
 
-    @Parameter( names = { "--help"}, description = "Display help" )
+    @Parameter(names = {"--help"}, description = "Displays usage")
     private boolean help;
 
-    @Parameter( names = { "--display-stats-end", "-dse"}, description = "Display stats at the end" )
-    private boolean displayStatsAtEnd;
-
-    @Parameter( names = { "--collect-server-stats", "-css"}, description = "Collect server stats on remote StatisticsServlet" )
-    private boolean collectServerStats;
-
-    @Parameter( names = { "--warmup-number", "-wn" }, description = "Warm up number to run" )
-    private int warmupNumber;
-
-    @Parameter( names = { "--max-requests-queued", "-mrq" }, description = "Max Requests Queued" )
-    private int maxRequestsQueued = -1;
-
-    @Parameter( names = { "--channel-per-user", "-cpu" }, description = "Connections per user" )
-    private int channelPerUser = -1;
-
-    public LoadGeneratorStarterArgs()
-    {
-        // no op
+    public String getResourceXMLPath() {
+        return resourceXMLPath;
     }
 
-    public String getProfileXmlPath()
-    {
-        return profileXmlPath;
+    public void setResourceXMLPath(String resourceXMLPath) {
+        this.resourceXMLPath = resourceXMLPath;
     }
 
-    public void setProfileXmlPath( String profileXmlPath )
-    {
-        this.profileXmlPath = profileXmlPath;
-    }
-
-    public String getHost()
-    {
+    public String getHost() {
         return host;
     }
 
-    public void setHost( String host )
-    {
+    public void setHost(String host) {
         this.host = host;
     }
 
-    public int getPort()
-    {
+    public int getPort() {
         return port;
     }
 
-    public void setPort( int port )
-    {
+    public void setPort(int port) {
         this.port = port;
     }
 
-    public int getUsers()
-    {
+    public int getUsers() {
         return users;
     }
 
-    public void setUsers( int users )
-    {
+    public void setUsers(int users) {
         this.users = users;
     }
 
-    public int getTransactionRate()
-    {
-        return transactionRate;
+    public int getResourceRate() {
+        return resourceRate;
     }
 
-    public void setTransactionRate( int transactionRate )
-    {
-        this.transactionRate = transactionRate;
+    public void setResourceRate(int resourceRate) {
+        this.resourceRate = resourceRate;
     }
 
-    public Transport getTransport()
-    {
-        switch ( this.transport )
-        {
+    public Transport getTransport() {
+        switch (this.transport) {
             case "http":
                 return Transport.HTTP;
             case "https":
@@ -174,48 +134,40 @@ public class LoadGeneratorStarterArgs
             case "h2c":
                 return Transport.H2C;
             default:
-                throw new IllegalArgumentException( transport + " is not recognized" );
+                throw new IllegalArgumentException("unsupported transport " + transport);
         }
     }
 
-    public void setTransport( String transport )
-    {
+    public void setTransport(String transport) {
         this.transport = transport != null ? transport.toLowerCase() : "";
     }
 
-    public int getSelectors()
-    {
+    public int getSelectors() {
         return selectors;
     }
 
-    public void setSelectors( int selectors )
-    {
+    public void setSelectors(int selectors) {
         this.selectors = selectors;
     }
 
-    public boolean isHelp()
-    {
+    public boolean isHelp() {
         return help;
     }
 
-    public void setHelp( boolean help )
-    {
+    public void setHelp(boolean help) {
         this.help = help;
     }
 
-    public long getRunningTime()
-    {
+    public long getRunningTime() {
         return runningTime;
     }
 
-    public void setRunningTime( long runningTime )
-    {
+    public void setRunningTime(long runningTime) {
         this.runningTime = runningTime;
     }
 
-    public TimeUnit getRunningTimeUnit()
-    {
-        switch ( this.runningTimeUnit ) {
+    public TimeUnit getRunningTimeUnit() {
+        switch (this.runningTimeUnit) {
             case "m":
             case "minutes":
             case "MINUTES":
@@ -233,178 +185,92 @@ public class LoadGeneratorStarterArgs
             case "MILLISECONDS":
                 return TimeUnit.MILLISECONDS;
             default:
-                throw new IllegalArgumentException( runningTimeUnit + " is not recognized" );
+                throw new IllegalArgumentException(runningTimeUnit + " is not recognized");
         }
     }
 
-    public int getRunIteration()
-    {
-        return runIteration;
-    }
-
-    public void setRunIteration( int runIteration )
-    {
-        this.runIteration = runIteration;
-    }
-
-    public void setRunningTimeUnit( String runningTimeUnit )
-    {
+    public void setRunningTimeUnit(String runningTimeUnit) {
         this.runningTimeUnit = runningTimeUnit;
     }
 
-    public String getProfileJsonPath()
-    {
-        return profileJsonPath;
+    public int getIterations() {
+        return iterations;
     }
 
-    public void setProfileJsonPath( String profileJsonPath )
-    {
-        this.profileJsonPath = profileJsonPath;
+    public void setIterations(int iterations) {
+        this.iterations = iterations;
     }
 
-    public String getReportHost()
-    {
-        return reportHost;
+    public String getResourceJSONPath() {
+        return resourceJSONPath;
     }
 
-    public void setReportHost( String reportHost )
-    {
-        this.reportHost = reportHost;
+    public void setResourceJSONPath(String resourceJSONPath) {
+        this.resourceJSONPath = resourceJSONPath;
     }
 
-    public int getReportPort()
-    {
-        return reportPort;
-    }
-
-    public void setReportPort( int reportPort )
-    {
-        this.reportPort = reportPort;
-    }
-
-    public boolean isNotInterrupt()
-    {
-        return notInterrupt;
-    }
-
-    public void setNotInterrupt( boolean notInterrupt )
-    {
-        this.notInterrupt = notInterrupt;
-    }
-
-    public String getStatsFile()
-    {
+    public String getStatsFile() {
         return statsFile;
     }
 
-    public void setStatsFile( String statsFile )
-    {
+    public void setStatsFile(String statsFile) {
         this.statsFile = statsFile;
     }
 
-    public Map<String, String> getParams()
-    {
-        return params;
+    public String getResourceGroovyPath() {
+        return resourceGroovyPath;
     }
 
-    public String getProfileGroovyPath()
-    {
-        return profileGroovyPath;
+    public void setResourceGroovyPath(String resourceGroovyPath) {
+        this.resourceGroovyPath = resourceGroovyPath;
     }
 
-    public void setProfileGroovyPath( String profileGroovyPath )
-    {
-        this.profileGroovyPath = profileGroovyPath;
+    public boolean isDisplayStats() {
+        return displayStats;
     }
 
-    public void setParams( Map<String, String> params )
-    {
-        this.params = params;
+    public void setDisplayStats(boolean displayStats) {
+        this.displayStats = displayStats;
     }
 
-    public boolean isDisplayStatsAtEnd()
-    {
-        return displayStatsAtEnd;
+    public int getWarmupIterations() {
+        return warmupIterations;
     }
 
-    public void setDisplayStatsAtEnd( boolean displayStatsAtEnd )
-    {
-        this.displayStatsAtEnd = displayStatsAtEnd;
+    public void setWarmupIterations(int warmupIterations) {
+        this.warmupIterations = warmupIterations;
     }
 
-    public boolean isCollectServerStats()
-    {
-        return collectServerStats;
-    }
-
-    public void setCollectServerStats( boolean collectServerStats )
-    {
-        this.collectServerStats = collectServerStats;
-    }
-
-    public int getWarmupNumber()
-    {
-        return warmupNumber;
-    }
-
-    public void setWarmupNumber( int warmupNumber )
-    {
-        this.warmupNumber = warmupNumber;
-    }
-
-    public String getScheme()
-    {
+    public String getScheme() {
         return scheme;
     }
 
-    public void setScheme( String scheme )
-    {
+    public void setScheme(String scheme) {
         this.scheme = scheme;
     }
 
-    public int getMaxRequestsQueued()
-    {
+    public int getMaxRequestsQueued() {
         return maxRequestsQueued;
     }
 
-    public void setMaxRequestsQueued( int maxRequestsQueued )
-    {
+    public void setMaxRequestsQueued(int maxRequestsQueued) {
         this.maxRequestsQueued = maxRequestsQueued;
     }
 
-    public int getThreads()
-    {
+    public int getThreads() {
         return threads;
     }
 
-    public void setThreads( int threads )
-    {
+    public void setThreads(int threads) {
         this.threads = threads;
     }
 
-    public int getChannelPerUser()
-    {
-        return channelPerUser;
+    public int getChannelsPerUser() {
+        return channelsPerUser;
     }
 
-    public void setChannelPerUser( int channelPerUser )
-    {
-        this.channelPerUser = channelPerUser;
-    }
-
-    @Override
-    public String toString()
-    {
-        return "LoadGeneratorStarterArgs{" + "profileXmlPath='" + profileXmlPath + '\'' + ", profileJsonPath='"
-            + profileJsonPath + '\'' + ", profileGroovyPath='" + profileGroovyPath + '\'' + ", host='" + host + '\''
-            + ", port=" + port + ", users=" + users + ", transactionRate=" + transactionRate + ", transport='"
-            + transport + '\'' + ", selectors=" + selectors + ", threads=" + threads + ", runningTime=" + runningTime
-            + ", runningTimeUnit='" + runningTimeUnit + '\'' + ", runIteration=" + runIteration + ", reportHost='"
-            + reportHost + '\'' + ", scheme='" + scheme + '\'' + ", reportPort=" + reportPort + ", notInterrupt="
-            + notInterrupt + ", statsFile='" + statsFile + '\'' + ", params=" + params + ", help=" + help
-            + ", displayStatsAtEnd=" + displayStatsAtEnd + ", collectServerStats=" + collectServerStats
-            + ", warmupNumber=" + warmupNumber + ", maxRequestsQueued=" + maxRequestsQueued + ", channelPerUser="
-            + channelPerUser + '}';
+    public void setChannelsPerUser(int channelsPerUser) {
+        this.channelsPerUser = channelsPerUser;
     }
 
     public enum Transport {

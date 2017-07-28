@@ -18,6 +18,16 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -35,278 +45,172 @@ import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-
-/**
- *
- */
-public abstract class AbstractLoadGeneratorStarter
-{
-
-    private Logger logger = Log.getLogger( getClass() );
-
+public abstract class AbstractLoadGeneratorStarter {
+    private Logger logger = Log.getLogger(getClass());
     private LoadGeneratorStarterArgs starterArgs;
-
     private ExecutorService executorService;
-
     private Resource resource;
-
     private Request.Listener[] listeners;
 
-    public AbstractLoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
-    {
+    public AbstractLoadGeneratorStarter(LoadGeneratorStarterArgs runnerArgs) {
         this.starterArgs = runnerArgs;
     }
 
-    public void run()
-        throws Exception
-    {
+    public void run() throws Exception {
+        LoadGenerator.Builder builder = new LoadGenerator.Builder();
+        Resource resource = getResource(builder);
+        builder.threads(starterArgs.getThreads())
+                .warmupIterationsPerThread(starterArgs.getWarmupIterations())
+                .iterationsPerThread(starterArgs.getIterations())
+                .usersPerThread(starterArgs.getUsers())
+                .channelsPerUser(starterArgs.getChannelsPerUser())
+                .resource(resource)
+                .resourceRate(starterArgs.getResourceRate())
+                .httpClientTransportBuilder(httpClientTransportBuilder())
+                .sslContextFactory(sslContextFactory())
+                .scheme(starterArgs.getScheme())
+                .host(starterArgs.getHost())
+                .port(starterArgs.getPort())
+                .maxRequestsQueued(starterArgs.getMaxRequestsQueued());
 
-        LoadGenerator.Builder loadGeneratorBuilder = new LoadGenerator.Builder() //
-            .host( starterArgs.getHost() ) //
-            .iterationsPerThread( starterArgs.getRunIteration() ) //
-            .usersPerThread( starterArgs.getUsers() ) //
-            .resourceRate( starterArgs.getTransactionRate() ) //
-            .httpClientTransportBuilder( getHttpClientTransportBuilder() ) //
-            .sslContextFactory( sslContextFactory() ) //
-            .warmupIterationsPerThread( starterArgs.getWarmupNumber() ) //
-            .scheme( starterArgs.getScheme() ); //
-
-        Resource resourceProfile = getResource( loadGeneratorBuilder );
-
-        loadGeneratorBuilder.resource( resourceProfile );
-
-        if ( starterArgs.getPort() > 0 )
-        {
-            loadGeneratorBuilder.port( starterArgs.getPort() );
+        long runFor = starterArgs.getRunningTime();
+        if (runFor > 0) {
+            builder = builder.runFor(runFor, starterArgs.getRunningTimeUnit());
         }
 
-        if ( starterArgs.getThreads() > 0 )
-        {
-            loadGeneratorBuilder.threads( starterArgs.getThreads() );
+        ExecutorService executor = getExecutorService();
+        if (executor != null) {
+            builder = builder.executor(executor);
         }
 
-        if ( starterArgs.getMaxRequestsQueued() > 0 )
-        {
-            loadGeneratorBuilder.maxRequestsQueued( starterArgs.getMaxRequestsQueued() );
+        for (Resource.Listener listener : getResourceListeners()) {
+            builder = builder.resourceListener(listener);
         }
 
-        if ( getExecutorService() != null )
-        {
-            loadGeneratorBuilder.executor( getExecutorService() );
+        for (Request.Listener listener : getRequestListeners()) {
+            builder = builder.requestListener(listener);
         }
 
-        if ( starterArgs.getRunningTime() > 0 )
-        {
-            loadGeneratorBuilder.runFor( starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit() );
+        for (LoadGenerator.Listener listener : getLoadGeneratorListeners()) {
+            builder = builder.listener(listener);
         }
 
-        for ( Resource.Listener listener : getResourceListeners() )
-        {
-            loadGeneratorBuilder.resourceListener( listener );
-        }
-
-        for ( Request.Listener listener : getListeners() )
-        {
-            loadGeneratorBuilder.requestListener( listener );
-        }
-
-        for ( LoadGenerator.Listener listener : getLoadGeneratorListeners() )
-        {
-            loadGeneratorBuilder.listener( listener );
-        }
-
-        if ( starterArgs.getChannelPerUser() > 0 )
-        {
-            loadGeneratorBuilder.channelsPerUser( starterArgs.getChannelPerUser() );
-        }
-
-        LoadGenerator loadGenerator = loadGeneratorBuilder.build();
-        logger.info( "loadgenerator.config: {}", loadGenerator.getConfig().toString() );
+        LoadGenerator loadGenerator = builder.build();
+        logger.info("load generator config: {}", loadGenerator.getConfig());
+        logger.info("load generation begin");
         CompletableFuture<Void> cf = loadGenerator.begin();
-        cf.join();
-        logger.info( "load test done" );
-    }
-
-    public void displayStats( LoadGenerator loadGenerator )
-        throws Exception
-    {
-        writeStats( loadGenerator );
-    }
-
-
-    protected void writeStats( LoadGenerator loadGenerator )
-        throws Exception
-    {
-        if ( starterArgs.getStatsFile() != null //
-//            && StringUtil.isNotBlank( loadGenerator.getEndStatsResponse() ) )
-            )
-        {
-            Path path = Paths.get( starterArgs.getStatsFile() );
-            if ( Files.notExists( path ) )
-            {
-                Files.createFile( path );
+        cf.whenComplete((x, f) -> {
+            if (f == null) {
+                logger.info("load generation complete");
+            } else {
+                logger.info("load generation failure", f);
             }
-
-//            Files.write( path, loadGenerator.getEndStatsResponse().getBytes() );
-
-        }
+        }).join();
     }
 
-    protected LoadGenerator.Listener[] getLoadGeneratorListeners()
-    {
+    protected LoadGenerator.Listener[] getLoadGeneratorListeners() {
         return new LoadGenerator.Listener[0];
     }
 
-    protected Resource.Listener[] getResourceListeners()
-    {
+    protected Resource.Listener[] getResourceListeners() {
         return new Resource.Listener[0];
     }
 
-    protected Request.Listener[] getListeners()
-    {
+    protected Request.Listener[] getRequestListeners() {
         return listeners == null ? new Request.Listener[0] : this.listeners;
     }
 
-    protected void setListeners( Request.Listener[] listeners )
-    {
+    protected void setRequestListeners(Request.Listener[] listeners) {
         this.listeners = listeners;
     }
 
-    public ExecutorService getExecutorService()
-    {
+    public ExecutorService getExecutorService() {
         return executorService;
     }
 
-    public void setExecutorService( ExecutorService executor )
-    {
+    public void setExecutorService(ExecutorService executor) {
         this.executorService = executor;
     }
 
-    public AbstractLoadGeneratorStarter executorService( ExecutorService executor )
-    {
-        this.executorService = executor;
-        return this;
-    }
-
-    public Resource getResource( LoadGenerator.Builder loadGeneratorBuilder )
-        throws Exception
-    {
-        if ( resource != null )
-        {
+    public Resource getResource(LoadGenerator.Builder builder) throws Exception {
+        if (resource != null) {
             return resource;
         }
 
-        if ( starterArgs.getProfileJsonPath() != null )
-        {
-            Path profilePath = Paths.get( starterArgs.getProfileJsonPath() );
-            if ( Files.exists( profilePath ) )
-            {
-                return resource = evaluateJson( profilePath );
+        String jsonPath = starterArgs.getResourceJSONPath();
+        if (jsonPath != null) {
+            Path path = Paths.get(jsonPath);
+            if (Files.exists(path)) {
+                return resource = evaluateJSON(path);
             }
         }
-        if ( starterArgs.getProfileXmlPath() != null )
-        {
-            Path profilePath = Paths.get( starterArgs.getProfileXmlPath() );
-            try (InputStream inputStream = Files.newInputStream( profilePath ))
-            {
-                return resource = (Resource) new XmlConfiguration( inputStream ).configure();
+        String xmlPath = starterArgs.getResourceXMLPath();
+        if (xmlPath != null) {
+            Path path = Paths.get(xmlPath);
+            try (InputStream inputStream = Files.newInputStream(path)) {
+                return resource = (Resource)new XmlConfiguration(inputStream).configure();
             }
         }
-        if ( starterArgs.getProfileGroovyPath() != null )
-        {
-            Path profilePath = Paths.get( starterArgs.getProfileGroovyPath() );
-
-            try (Reader reader = Files.newBufferedReader( profilePath ))
-            {
-                Map<String, Object> context = new HashMap<>( );
-                context.put( "loadGeneratorBuilder", loadGeneratorBuilder );
-                return resource = (Resource) evaluateScript( reader, context );
+        String groovyPath = starterArgs.getResourceGroovyPath();
+        if (groovyPath != null) {
+            Path path = Paths.get(groovyPath);
+            try (Reader reader = Files.newBufferedReader(path)) {
+                Map<String, Object> context = new HashMap<>();
+                context.put("loadGeneratorBuilder", builder);
+                return resource = (Resource)evaluateGroovy(reader, context);
             }
         }
 
-        throw new IllegalArgumentException( "not resource profile file defined" );
+        throw new IllegalArgumentException("resource not defined");
     }
 
-    protected static Resource evaluateJson( Path profilePath )
-        throws Exception
-    {
+    protected static Resource evaluateJSON(Path profilePath) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.disable( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES );
-        return objectMapper.readValue( profilePath.toFile(), Resource.class );
-
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        return objectMapper.readValue(profilePath.toFile(), Resource.class);
     }
 
-    protected static String writeAsJsonTmp( Resource resource )
-        throws Exception
-    {
+    protected static String writeAsJsonTmp(Resource resource) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.disable( SerializationFeature.FAIL_ON_EMPTY_BEANS );
-        Path tmpPath = Files.createTempFile( "profile", ".tmp" );
-        objectMapper.writeValue( tmpPath.toFile(), resource );
+        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        Path tmpPath = Files.createTempFile("profile", ".tmp");
+        objectMapper.writeValue(tmpPath.toFile(), resource);
         return tmpPath.toString();
     }
 
-    protected static Object evaluateScript( Reader script, Map<String, Object> context )
-        throws Exception
-    {
-        CompilerConfiguration config = new CompilerConfiguration( CompilerConfiguration.DEFAULT );
-        config.setDebug( true );
-        config.setVerbose( true );
-        Binding binding = new Binding( context );
-
-        GroovyShell interpreter = new GroovyShell(binding, config );
-
-
-        return interpreter.evaluate( script );
+    protected static Object evaluateGroovy(Reader script, Map<String, Object> context) throws Exception {
+        CompilerConfiguration config = new CompilerConfiguration(CompilerConfiguration.DEFAULT);
+        config.setDebug(true);
+        config.setVerbose(true);
+        Binding binding = new Binding(context);
+        GroovyShell interpreter = new GroovyShell(binding, config);
+        return interpreter.evaluate(script);
     }
 
-    public void setResource( Resource resource )
-    {
-        this.resource = resource;
-    }
-
-    public HTTPClientTransportBuilder getHttpClientTransportBuilder()
-    {
-        int transactionRate = getStarterArgs().getTransactionRate();
-        switch ( getStarterArgs().getTransport() )
-        {
+    public HTTPClientTransportBuilder httpClientTransportBuilder() {
+        LoadGeneratorStarterArgs.Transport transport = getStarterArgs().getTransport();
+        switch (transport) {
             case HTTP:
-            case HTTPS:
-            {
-                return new HTTP1ClientTransportBuilder().selectors( getStarterArgs().getSelectors() );
+            case HTTPS: {
+                return new HTTP1ClientTransportBuilder().selectors(getStarterArgs().getSelectors());
             }
             case H2C:
-            case H2:
-            {
-                return new HTTP2ClientTransportBuilder().selectors( getStarterArgs().getSelectors() );
+            case H2: {
+                return new HTTP2ClientTransportBuilder().selectors(getStarterArgs().getSelectors());
             }
-            default:
-            {
-                // nothing this weird case already handled by #provideClientTransport
+            default: {
+                throw new IllegalArgumentException("unsupported transport " + transport);
             }
-
         }
-        throw new IllegalArgumentException( "unknown getHttpClientTransportBuilder" );
     }
 
-    public SslContextFactory sslContextFactory()
-    {
+    public SslContextFactory sslContextFactory() {
         // FIXME make this more configurable
-        SslContextFactory sslContextFactory = new SslContextFactory( true );
+        SslContextFactory sslContextFactory = new SslContextFactory(true);
         return sslContextFactory;
     }
 
-    public LoadGeneratorStarterArgs getStarterArgs()
-    {
+    public LoadGeneratorStarterArgs getStarterArgs() {
         return starterArgs;
     }
 }

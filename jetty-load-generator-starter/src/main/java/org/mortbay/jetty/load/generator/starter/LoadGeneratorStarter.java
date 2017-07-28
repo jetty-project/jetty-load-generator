@@ -18,6 +18,9 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.text.SimpleDateFormat;
+import java.util.concurrent.TimeUnit;
+
 import com.beust.jcommander.JCommander;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.log.Log;
@@ -26,131 +29,101 @@ import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 import org.mortbay.jetty.load.generator.listeners.report.GlobalSummaryListener;
 
-import java.text.SimpleDateFormat;
-import java.util.concurrent.TimeUnit;
+public class LoadGeneratorStarter extends AbstractLoadGeneratorStarter {
+    private static final Logger LOGGER = Log.getLogger(LoadGeneratorStarter.class);
 
-/**
- *
- */
-public class LoadGeneratorStarter
-    extends AbstractLoadGeneratorStarter
-{
-
-    private static final Logger LOGGER = Log.getLogger( LoadGeneratorStarter.class );
-
-    public LoadGeneratorStarter( LoadGeneratorStarterArgs runnerArgs )
-    {
-        super( runnerArgs );
+    public LoadGeneratorStarter(LoadGeneratorStarterArgs runnerArgs) {
+        super(runnerArgs);
     }
 
-    public static void main( String[] args )
-        throws Exception
-    {
-
+    public static void main(String[] args) throws Exception {
         LoadGeneratorStarterArgs runnerArgs = new LoadGeneratorStarterArgs();
 
-        try
-        {
-            JCommander jCommander = new JCommander( runnerArgs, args );
-            if ( runnerArgs.isHelp() )
-            {
+        try {
+            JCommander jCommander = new JCommander(runnerArgs, args);
+            if (runnerArgs.isHelp()) {
                 jCommander.usage();
                 return;
             }
-        }
-        catch ( Exception e )
-        {
+        } catch (Exception e) {
             e.printStackTrace();
-            new JCommander( runnerArgs ).usage();
+            new JCommander(runnerArgs).usage();
             return;
         }
 
-        try
-        {
+        try {
             GlobalSummaryListener globalSummaryListener = new GlobalSummaryListener();
-            LoadGeneratorStarter runner = new LoadGeneratorStarter( runnerArgs )
-            {
+            LoadGeneratorStarter runner = new LoadGeneratorStarter(runnerArgs) {
                 @Override
-                protected Resource.Listener[] getResourceListeners()
-                {
-                    return new Resource.Listener[]{ globalSummaryListener };
+                protected Resource.Listener[] getResourceListeners() {
+                    return new Resource.Listener[]{globalSummaryListener};
                 }
 
                 @Override
-                protected Request.Listener[] getListeners()
-                {
-                    return new Request.Listener[]{ globalSummaryListener };
+                protected Request.Listener[] getRequestListeners() {
+                    return new Request.Listener[]{globalSummaryListener};
                 }
             };
 
             runner.run();
 
-            if ( runnerArgs.isDisplayStatsAtEnd() )
-            {
-                runner.displayGlobalSummaryListener( globalSummaryListener );
+            if (runnerArgs.isDisplayStats()) {
+                runner.displayGlobalSummaryListener(globalSummaryListener);
             }
 
-        }
-        catch ( Exception e )
-        {
-            LOGGER.info( "error happened", e );
-            new JCommander( runnerArgs ).usage();
+        } catch (Exception e) {
+            LOGGER.info("error happened", e);
+            new JCommander(runnerArgs).usage();
         }
     }
 
-
-    public void displayGlobalSummaryListener( GlobalSummaryListener globalSummaryListener )
-    {
-
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss z" );
+    public void displayGlobalSummaryListener(GlobalSummaryListener globalSummaryListener) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss z");
         CollectorInformations latencyTimeSummary =
-            new CollectorInformations( globalSummaryListener.getLatencyTimeHistogram() //
-                                           .getIntervalHistogram() );
+                new CollectorInformations(globalSummaryListener.getLatencyTimeHistogram() //
+                        .getIntervalHistogram());
 
         long totalRequestCommitted = globalSummaryListener.getRequestCommitTotal();
         long start = latencyTimeSummary.getStartTimeStamp();
         long end = latencyTimeSummary.getEndTimeStamp();
 
-        LOGGER.info( "" );
-        LOGGER.info( "" );
-        LOGGER.info( "----------------------------------------------------" );
-        LOGGER.info( "--------    Latency Time Summary     ---------------" );
-        LOGGER.info( "----------------------------------------------------" );
-        LOGGER.info( "total count:" + latencyTimeSummary.getTotalCount() );
-        LOGGER.info( "maxLatency:" //
-                         + fromNanostoMillis( latencyTimeSummary.getMaxValue() ) );
-        LOGGER.info( "minLatency:" //
-                         + fromNanostoMillis( latencyTimeSummary.getMinValue() ) );
-        LOGGER.info( "aveLatency:" //
-                         + fromNanostoMillis( Math.round( latencyTimeSummary.getMean() ) ) );
-        LOGGER.info( "50Latency:" //
-                         + fromNanostoMillis( latencyTimeSummary.getValue50() ) );
-        LOGGER.info( "90Latency:" //
-                         + fromNanostoMillis( latencyTimeSummary.getValue90() ) );
-        LOGGER.info( "stdDeviation:" //
-                         + fromNanostoMillis( Math.round( latencyTimeSummary.getStdDeviation() ) ) );
-        LOGGER.info( "start: {}, end: {}", //
-                     simpleDateFormat.format( latencyTimeSummary.getStartTimeStamp() ), //
-                     simpleDateFormat.format( latencyTimeSummary.getEndTimeStamp() ) );
-        LOGGER.info( "----------------------------------------------------" );
-        LOGGER.info( "-----------     Estimated QPS     ------------------" );
-        LOGGER.info( "----------------------------------------------------" );
-        long timeInSeconds = TimeUnit.SECONDS.convert( end - start, TimeUnit.MILLISECONDS );
+        LOGGER.info("");
+        LOGGER.info("");
+        LOGGER.info("----------------------------------------------------");
+        LOGGER.info("--------    Latency Time Summary     ---------------");
+        LOGGER.info("----------------------------------------------------");
+        LOGGER.info("total count:" + latencyTimeSummary.getTotalCount());
+        LOGGER.info("maxLatency:" //
+                + nanosToMillis(latencyTimeSummary.getMaxValue()));
+        LOGGER.info("minLatency:" //
+                + nanosToMillis(latencyTimeSummary.getMinValue()));
+        LOGGER.info("aveLatency:" //
+                + nanosToMillis(Math.round(latencyTimeSummary.getMean())));
+        LOGGER.info("50Latency:" //
+                + nanosToMillis(latencyTimeSummary.getValue50()));
+        LOGGER.info("90Latency:" //
+                + nanosToMillis(latencyTimeSummary.getValue90()));
+        LOGGER.info("stdDeviation:" //
+                + nanosToMillis(Math.round(latencyTimeSummary.getStdDeviation())));
+        LOGGER.info("start: {}, end: {}", //
+                simpleDateFormat.format(latencyTimeSummary.getStartTimeStamp()), //
+                simpleDateFormat.format(latencyTimeSummary.getEndTimeStamp()));
+        LOGGER.info("----------------------------------------------------");
+        LOGGER.info("-----------     Estimated QPS     ------------------");
+        LOGGER.info("----------------------------------------------------");
+        long timeInSeconds = TimeUnit.SECONDS.convert(end - start, TimeUnit.MILLISECONDS);
         long qps = totalRequestCommitted / timeInSeconds;
-        LOGGER.info( "estimated QPS : " + qps );
-        LOGGER.info( "----------------------------------------------------" );
-        LOGGER.info( "response 1xx family: " + globalSummaryListener.getResponses1xx().longValue() );
-        LOGGER.info( "response 2xx family: " + globalSummaryListener.getResponses2xx().longValue() );
-        LOGGER.info( "response 3xx family: " + globalSummaryListener.getResponses3xx().longValue() );
-        LOGGER.info( "response 4xx family: " + globalSummaryListener.getResponses4xx().longValue() );
-        LOGGER.info( "response 5xx family: " + globalSummaryListener.getResponses5xx().longValue() );
-        LOGGER.info( "" );
-
+        LOGGER.info("estimated QPS : " + qps);
+        LOGGER.info("----------------------------------------------------");
+        LOGGER.info("response 1xx family: " + globalSummaryListener.getResponses1xx().longValue());
+        LOGGER.info("response 2xx family: " + globalSummaryListener.getResponses2xx().longValue());
+        LOGGER.info("response 3xx family: " + globalSummaryListener.getResponses3xx().longValue());
+        LOGGER.info("response 4xx family: " + globalSummaryListener.getResponses4xx().longValue());
+        LOGGER.info("response 5xx family: " + globalSummaryListener.getResponses5xx().longValue());
+        LOGGER.info("");
     }
 
-    static long fromNanostoMillis( long nanosValue )
-    {
-        return TimeUnit.MILLISECONDS.convert( nanosValue, TimeUnit.NANOSECONDS );
+    static long nanosToMillis(long nanosValue) {
+        return TimeUnit.NANOSECONDS.toMillis(nanosValue);
     }
-
 }
