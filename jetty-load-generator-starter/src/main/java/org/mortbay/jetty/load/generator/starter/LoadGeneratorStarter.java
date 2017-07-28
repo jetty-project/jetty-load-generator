@@ -19,65 +19,76 @@
 package org.mortbay.jetty.load.generator.starter;
 
 import java.text.SimpleDateFormat;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.beust.jcommander.JCommander;
-import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.Resource;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 import org.mortbay.jetty.load.generator.listeners.report.GlobalSummaryListener;
 
-public class LoadGeneratorStarter extends AbstractLoadGeneratorStarter {
+public class LoadGeneratorStarter {
     private static final Logger LOGGER = Log.getLogger(LoadGeneratorStarter.class);
 
-    public LoadGeneratorStarter(LoadGeneratorStarterArgs runnerArgs) {
-        super(runnerArgs);
-    }
-
     public static void main(String[] args) throws Exception {
-        LoadGeneratorStarterArgs runnerArgs = new LoadGeneratorStarterArgs();
-
-        try {
-            JCommander jCommander = new JCommander(runnerArgs, args);
-            if (runnerArgs.isHelp()) {
-                jCommander.usage();
-                return;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            new JCommander(runnerArgs).usage();
+        LoadGeneratorStarterArgs starterArgs = parse(args);
+        if (starterArgs == null) {
             return;
         }
-
-        try {
-            GlobalSummaryListener globalSummaryListener = new GlobalSummaryListener();
-            LoadGeneratorStarter runner = new LoadGeneratorStarter(runnerArgs) {
-                @Override
-                protected Resource.Listener[] getResourceListeners() {
-                    return new Resource.Listener[]{globalSummaryListener};
-                }
-
-                @Override
-                protected Request.Listener[] getRequestListeners() {
-                    return new Request.Listener[]{globalSummaryListener};
-                }
-            };
-
-            runner.run();
-
-            if (runnerArgs.isDisplayStats()) {
-                runner.displayGlobalSummaryListener(globalSummaryListener);
-            }
-
-        } catch (Exception e) {
-            LOGGER.info("error happened", e);
-            new JCommander(runnerArgs).usage();
+        LoadGenerator.Builder builder = prepare(starterArgs);
+        GlobalSummaryListener globalSummaryListener = new GlobalSummaryListener();
+        builder = builder.resourceListener(globalSummaryListener).requestListener(globalSummaryListener);
+        run(builder);
+        if (starterArgs.isDisplayStats()) {
+            displayGlobalSummaryListener(globalSummaryListener);
         }
     }
 
-    public void displayGlobalSummaryListener(GlobalSummaryListener globalSummaryListener) {
+    public static LoadGeneratorStarterArgs parse(String[] args) {
+        LoadGeneratorStarterArgs starterArgs = new LoadGeneratorStarterArgs();
+        JCommander jCommander = new JCommander(starterArgs, args);
+        if (starterArgs.isHelp()) {
+            jCommander.usage();
+            return null;
+        }
+        return starterArgs;
+    }
+
+    public static LoadGenerator.Builder prepare(LoadGeneratorStarterArgs starterArgs) throws Exception {
+        LoadGenerator.Builder builder = new LoadGenerator.Builder();
+        return builder.threads(starterArgs.getThreads())
+                .warmupIterationsPerThread(starterArgs.getWarmupIterations())
+                .iterationsPerThread(starterArgs.getIterations())
+                .usersPerThread(starterArgs.getUsers())
+                .channelsPerUser(starterArgs.getChannelsPerUser())
+                .resource(starterArgs.getResource(builder))
+                .resourceRate(starterArgs.getResourceRate())
+                .httpClientTransportBuilder(starterArgs.getHttpClientTransportBuilder())
+                .sslContextFactory(new SslContextFactory())
+                .scheme(starterArgs.getScheme())
+                .host(starterArgs.getHost())
+                .port(starterArgs.getPort())
+                .maxRequestsQueued(starterArgs.getMaxRequestsQueued());
+    }
+
+    public static void run(LoadGenerator.Builder builder) {
+        LoadGenerator loadGenerator = builder.build();
+        LOGGER.info("load generator config: {}", loadGenerator.getConfig());
+        LOGGER.info("load generation begin");
+        CompletableFuture<Void> cf = loadGenerator.begin();
+        cf.whenComplete((x, f) -> {
+            if (f == null) {
+                LOGGER.info("load generation complete");
+            } else {
+                LOGGER.info("load generation failure", f);
+            }
+        }).join();
+    }
+
+    private static void displayGlobalSummaryListener(GlobalSummaryListener globalSummaryListener) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss z");
         CollectorInformations latencyTimeSummary =
                 new CollectorInformations(globalSummaryListener.getLatencyTimeHistogram() //
@@ -123,7 +134,7 @@ public class LoadGeneratorStarter extends AbstractLoadGeneratorStarter {
         LOGGER.info("");
     }
 
-    static long nanosToMillis(long nanosValue) {
+    private static long nanosToMillis(long nanosValue) {
         return TimeUnit.NANOSECONDS.toMillis(nanosValue);
     }
 }

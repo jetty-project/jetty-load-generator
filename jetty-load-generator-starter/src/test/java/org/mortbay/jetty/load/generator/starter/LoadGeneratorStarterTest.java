@@ -19,10 +19,9 @@ package org.mortbay.jetty.load.generator.starter;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,7 +30,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.beust.jcommander.JCommander;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -49,6 +49,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
 
 public class LoadGeneratorStarterTest {
@@ -70,7 +71,7 @@ public class LoadGeneratorStarterTest {
         ServletContextHandler statsContext = new ServletContextHandler(statisticsHandler, "/");
         statsContext.addServlet(new ServletHolder(new StatisticsServlet()), "/stats");
         testServlet = new TestServlet();
-        testServlet.server = server;
+        testServlet.connector = connector;
         statsContext.addServlet(new ServletHolder(testServlet), "/");
         server.start();
     }
@@ -84,26 +85,27 @@ public class LoadGeneratorStarterTest {
 
     @Test
     public void simpleTest() throws Exception {
-        List<String> args = new ArrayList<>();
-        args.add("--warmup-iterations");
-        args.add("10");
-        args.add("-h");
-        args.add("localhost");
-        args.add("--port");
-        args.add(Integer.toString(connector.getLocalPort()));
-        args.add("--running-time");
-        args.add("10");
-        args.add("--running-time-unit");
-        args.add("s");
-        args.add("--resource-rate");
-        args.add("3");
-        args.add("--transport");
-        args.add("http");
-        args.add("--users");
-        args.add("3");
-        args.add("--resource-groovy-path");
-        args.add("src/test/resources/tree_resources.groovy");
-        LoadGeneratorStarter.main(args.toArray(new String[args.size()]));
+        String[] args = new String[]{
+                "--warmup-iterations",
+                "10",
+                "-h",
+                "localhost",
+                "--port",
+                Integer.toString(connector.getLocalPort()),
+                "--running-time",
+                "10",
+                "--running-time-unit",
+                "s",
+                "--resource-rate",
+                "3",
+                "--transport",
+                "http",
+                "--users",
+                "3",
+                "--resource-groovy-path",
+                "src/test/resources/tree_resources.groovy"
+        };
+        LoadGeneratorStarter.main(args);
         int getNumber = testServlet.getNumber.get();
         LOGGER.debug("received get: {}", getNumber);
         Assert.assertTrue("getNumber return: " + getNumber, getNumber > 10);
@@ -111,31 +113,32 @@ public class LoadGeneratorStarterTest {
 
     @Test
     public void failFast() throws Exception {
-        List<String> args = new ArrayList<>();
-        args.add("--warmup-iterations");
-        args.add("10");
-        args.add("-h");
-        args.add("localhost");
-        args.add("--port");
-        args.add(Integer.toString(connector.getLocalPort()));
-        args.add("--running-time");
-        args.add("10");
-        args.add("--running-time-unit");
-        args.add("s");
-        args.add("--resource-rate");
-        args.add("3");
-        args.add("--transport");
-        args.add("http");
-        args.add("--users");
-        args.add("1");
-        args.add("--resource-groovy-path");
-        args.add("src/test/resources/single_resource.groovy");
+        String[] args = new String[]{
+                "--warmup-iterations",
+                "10",
+                "-h",
+                "localhost",
+                "--port",
+                Integer.toString(connector.getLocalPort()),
+                "--running-time",
+                "10",
+                "--running-time-unit",
+                "s",
+                "--resource-rate",
+                "3",
+                "--transport",
+                "http",
+                "--users",
+                "1",
+                "--resource-groovy-path",
+                "src/test/resources/single_fail_resource.groovy"
+        };
+        LoadGeneratorStarterArgs starterArgs = LoadGeneratorStarter.parse(args);
+        LoadGenerator.Builder builder = LoadGeneratorStarter.prepare(starterArgs);
 
-        LoadGeneratorStarterArgs runnerArgs = new LoadGeneratorStarterArgs();
-        new JCommander(runnerArgs, args.toArray(new String[args.size()]));
-
-        AtomicInteger onFailure = new AtomicInteger(0), onCommit = new AtomicInteger(0);
-        Request.Listener.Adapter adapter = new Request.Listener.Adapter() {
+        AtomicInteger onFailure = new AtomicInteger(0);
+        AtomicInteger onCommit = new AtomicInteger(0);
+        Request.Listener.Adapter requestListener = new Request.Listener.Adapter() {
             @Override
             public void onFailure(Request request, Throwable failure) {
                 LOGGER.info("fail: {}", onFailure.incrementAndGet());
@@ -146,29 +149,29 @@ public class LoadGeneratorStarterTest {
                 LOGGER.info("onCommit: {}", onCommit.incrementAndGet());
             }
         };
+        builder.requestListener(requestListener);
 
-        LoadGeneratorStarter runner = new LoadGeneratorStarter(runnerArgs);
-        runner.setRequestListeners(new Request.Listener[]{adapter});
-        boolean exception = false;
         try {
-            runner.run();
-        } catch (Exception e) {
-            exception = true;
+            LoadGeneratorStarter.run(builder);
+            Assert.fail();
+        } catch (Exception x) {
+            // Expected.
         }
-        LOGGER.info("onFailure: {}, onCommit: {}", onFailure, onCommit);
-        Assert.assertTrue("not in exception", exception);
+
         int getNumber = testServlet.getNumber.get();
-        LOGGER.debug("received get: {}", getNumber);
-        Assert.assertTrue("getNumber return: " + getNumber, getNumber == 5);
+        Assert.assertEquals(5, getNumber);
         Assert.assertTrue(onFailure.get() < 10);
     }
 
     @Test
-    public void json_serial_deserial_from_groovy() throws Exception {
+    public void fromGroovyToJSON() throws Exception {
         try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
-            Resource resource = (Resource)AbstractLoadGeneratorStarter.evaluateGroovy(reader, Collections.emptyMap());
-            String path = AbstractLoadGeneratorStarter.writeAsJsonTmp(resource);
-            Resource fromJson = AbstractLoadGeneratorStarter.evaluateJSON(Paths.get(path));
+            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Collections.emptyMap());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+            Path tmpPath = Files.createTempFile("profile", ".tmp");
+            objectMapper.writeValue(tmpPath.toFile(), resource);
+            Resource fromJson = LoadGeneratorStarterArgs.evaluateJSON(tmpPath);
             Assert.assertEquals(resource.descendantCount(), fromJson.descendantCount());
         }
     }
@@ -176,7 +179,7 @@ public class LoadGeneratorStarterTest {
     private static class TestServlet extends HttpServlet {
         private AtomicInteger getNumber = new AtomicInteger(0);
         private AtomicInteger postNumber = new AtomicInteger(0);
-        private Server server;
+        private ServerConnector connector;
 
         @Override
         protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -187,7 +190,7 @@ public class LoadGeneratorStarterTest {
                     if (fail != null) {
                         if (getNumber.get() >= Integer.parseInt(fail)) {
                             try {
-                                server.stop();
+                                connector.stop();
                             } catch (Exception e) {
                                 throw new RuntimeException(e.getMessage(), e);
                             }

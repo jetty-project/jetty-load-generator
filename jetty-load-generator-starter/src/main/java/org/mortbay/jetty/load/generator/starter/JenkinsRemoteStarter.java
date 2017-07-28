@@ -29,10 +29,6 @@ import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.beust.jcommander.JCommander;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
 import org.mortbay.jetty.load.generator.listeners.QpsListenerDisplay;
@@ -42,8 +38,8 @@ import org.mortbay.jetty.load.generator.listeners.RequestQueuedListenerDisplay;
  * Class to start remote process for Jenkins
  */
 public class JenkinsRemoteStarter {
-    private static final Logger LOGGER = Log.getLogger(JenkinsRemoteStarter.class);
     private static List<Resource.NodeListener> nodeListeners;
+    private static List<LoadGenerator.Listener> loadGeneratorListeners;
 
     public static List<Resource.NodeListener> getNodeListeners() {
         return nodeListeners;
@@ -52,8 +48,6 @@ public class JenkinsRemoteStarter {
     public static void setNodeListeners(List<Resource.NodeListener> nodeListeners) {
         JenkinsRemoteStarter.nodeListeners = nodeListeners;
     }
-
-    public static List<LoadGenerator.Listener> loadGeneratorListeners;
 
     public static List<LoadGenerator.Listener> getLoadGeneratorListeners() {
         return loadGeneratorListeners;
@@ -121,59 +115,18 @@ public class JenkinsRemoteStarter {
 
     public static void launch(List<String> argsList) throws Exception {
         final String[] args = argsList.toArray(new String[argsList.size()]);
-
-        LoadGeneratorStarterArgs runnerArgs = new LoadGeneratorStarterArgs();
-
-        try {
-            JCommander jCommander = new JCommander(runnerArgs, args);
-            if (runnerArgs.isHelp()) {
-                jCommander.usage();
-                System.exit(0);
-            }
-        } catch (Exception e) {
-            new JCommander(runnerArgs).usage();
+        LoadGeneratorStarterArgs starterArgs = LoadGeneratorStarter.parse(args);
+        LoadGenerator.Builder builder = LoadGeneratorStarter.prepare(starterArgs);
+        if (nodeListeners != null) {
+            nodeListeners.forEach(builder::resourceListener);
         }
-
-        try {
-            LoadGeneratorStarter runner = new LoadGeneratorStarter(runnerArgs) {
-
-                QpsListenerDisplay qpsListenerDisplay =
-                        new QpsListenerDisplay(10, 30, TimeUnit.SECONDS);
-
-                private RequestQueuedListenerDisplay requestQueuedListenerDisplay = //
-                        // FIXME those values need to be configurable!! //
-                        new RequestQueuedListenerDisplay(10, 30, TimeUnit.SECONDS);
-
-                @Override
-                protected Resource.Listener[] getResourceListeners() {
-                    return nodeListeners.toArray(new Resource.Listener[nodeListeners.size()]);
-                }
-
-                @Override
-                protected LoadGenerator.Listener[] getLoadGeneratorListeners() {
-                    loadGeneratorListeners.add(qpsListenerDisplay);
-                    loadGeneratorListeners.add(requestQueuedListenerDisplay);
-                    return loadGeneratorListeners.toArray(new LoadGenerator.Listener[loadGeneratorListeners.size()]);
-                }
-
-                @Override
-                protected Request.Listener[] getRequestListeners() {
-                    return new Request.Listener[]{qpsListenerDisplay, requestQueuedListenerDisplay};
-                }
-            };
-
-            LOGGER.info("start LoadGenerator to " + runnerArgs.getHost() //
-                    + ", runningTime: " + runnerArgs.getRunningTime() //
-                    + ", runningTimeUnit: " + runnerArgs.getRunningTimeUnit() //
-                    + ", runIterations: " + runnerArgs.getIterations());
-            runner.run();
-
-            LOGGER.info("LoadGenerator stopped");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            new JCommander(runnerArgs).usage();
-            System.exit(1);
+        if (loadGeneratorListeners != null) {
+            loadGeneratorListeners.forEach(builder::listener);
         }
+        QpsListenerDisplay qpsListenerDisplay = new QpsListenerDisplay(10, 30, TimeUnit.SECONDS);
+        RequestQueuedListenerDisplay requestQueuedListenerDisplay = new RequestQueuedListenerDisplay(10, 30, TimeUnit.SECONDS);
+        builder.listener(qpsListenerDisplay).listener(requestQueuedListenerDisplay)
+                .requestListener(qpsListenerDisplay).requestListener(requestQueuedListenerDisplay);
+        LoadGeneratorStarter.run(builder);
     }
 }

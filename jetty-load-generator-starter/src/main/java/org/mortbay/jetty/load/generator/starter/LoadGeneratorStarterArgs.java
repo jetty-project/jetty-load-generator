@@ -18,9 +18,27 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import groovy.lang.Binding;
+import groovy.lang.GroovyShell;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.eclipse.jetty.xml.XmlConfiguration;
+import org.mortbay.jetty.load.generator.HTTP1ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HTTP2ClientTransportBuilder;
+import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.Resource;
 
 public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--threads", "-t"}, description = "LoadGenerator threads")
@@ -271,6 +289,65 @@ public class LoadGeneratorStarterArgs {
 
     public void setChannelsPerUser(int channelsPerUser) {
         this.channelsPerUser = channelsPerUser;
+    }
+
+    public Resource getResource(LoadGenerator.Builder builder) throws Exception {
+        String jsonPath = getResourceJSONPath();
+        if (jsonPath != null) {
+            Path path = Paths.get(jsonPath);
+            if (Files.exists(path)) {
+                return evaluateJSON(path);
+            }
+        }
+        String xmlPath = getResourceXMLPath();
+        if (xmlPath != null) {
+            Path path = Paths.get(xmlPath);
+            try (InputStream inputStream = Files.newInputStream(path)) {
+                return (Resource)new XmlConfiguration(inputStream).configure();
+            }
+        }
+        String groovyPath = getResourceGroovyPath();
+        if (groovyPath != null) {
+            Path path = Paths.get(groovyPath);
+            try (Reader reader = Files.newBufferedReader(path)) {
+                Map<String, Object> context = new HashMap<>();
+                context.put("loadGeneratorBuilder", builder);
+                return evaluateGroovy(reader, context);
+            }
+        }
+        throw new IllegalArgumentException("resource not defined");
+    }
+
+    public static Resource evaluateJSON(Path profilePath) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        return objectMapper.readValue(profilePath.toFile(), Resource.class);
+    }
+
+    public static Resource evaluateGroovy(Reader script, Map<String, Object> context) throws Exception {
+        CompilerConfiguration config = new CompilerConfiguration(CompilerConfiguration.DEFAULT);
+        config.setDebug(true);
+        config.setVerbose(true);
+        Binding binding = new Binding(context);
+        GroovyShell interpreter = new GroovyShell(binding, config);
+        return (Resource)interpreter.evaluate(script);
+    }
+
+    public HTTPClientTransportBuilder getHttpClientTransportBuilder() {
+        Transport transport = getTransport();
+        switch (transport) {
+            case HTTP:
+            case HTTPS: {
+                return new HTTP1ClientTransportBuilder().selectors(getSelectors());
+            }
+            case H2C:
+            case H2: {
+                return new HTTP2ClientTransportBuilder().selectors(getSelectors());
+            }
+            default: {
+                throw new IllegalArgumentException("unsupported transport " + transport);
+            }
+        }
     }
 
     public enum Transport {
