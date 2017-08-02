@@ -7,6 +7,10 @@
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Jetty :: Load Generator</name>
+  <url>https://github.com/jetty-project/jetty-load-generator</url>
+  <description>
+    The Jetty HTTP and HTTP/2 Load Generator
+  </description>
 
   <properties>
     <jetty.version>9.4.6.v20170531</jetty.version>
