@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.collector;
+package org.mortbay.jetty.load.generator.collector;
 
 import java.util.ArrayList;
 import java.util.Arrays;

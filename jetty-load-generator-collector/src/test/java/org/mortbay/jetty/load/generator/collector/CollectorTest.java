@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.mortbay.jetty.load.collector;
+package org.mortbay.jetty.load.generator.collector;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,10 +50,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mortbay.jetty.load.generator.listeners.CollectorServer;
 import org.mortbay.jetty.load.generator.HTTP1ClientTransportBuilder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.listeners.CollectorServer;
 
 @RunWith( Parameterized.class )
 public class CollectorTest
