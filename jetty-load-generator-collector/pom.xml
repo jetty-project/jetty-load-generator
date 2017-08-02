@@ -14,33 +14,29 @@
   <name>Jetty :: Load Generator :: Collector</name>
 
   <properties>
-    <bundle-symbolic-name>${project.groupId}.load.generator.collector</bundle-symbolic-name>
+    <bundle-symbolic-name>${project.groupId}.collector</bundle-symbolic-name>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>org.hdrhistogram</groupId>
-      <artifactId>HdrHistogram</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.mortbay.jetty.loadgenerator</groupId>
       <artifactId>jetty-load-generator-client</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mortbay.jetty.loadgenerator</groupId>
       <artifactId>jetty-load-generator-listeners</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-client</artifactId>
     </dependency>
+
     <dependency>
-      <groupId>org.eclipse.jetty.http2</groupId>
-      <artifactId>http2-http-client-transport</artifactId>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -52,21 +48,6 @@
       <artifactId>jetty-servlet</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.toolchain</groupId>
-      <artifactId>jetty-perf-helper</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.http2</groupId>
-      <artifactId>http2-server</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
 </project>

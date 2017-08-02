@@ -14,14 +14,14 @@
   <name>Jetty :: Load Generator :: Listeners</name>
 
   <properties>
-    <bundle-symbolic-name>${project.groupId}.load.generator.listeners</bundle-symbolic-name>
-    <test.users>1</test.users>
+    <bundle-symbolic-name>${project.groupId}.listeners</bundle-symbolic-name>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.mortbay.jetty.loadgenerator</groupId>
       <artifactId>jetty-load-generator-client</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.hdrhistogram</groupId>
@@ -37,101 +37,12 @@
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-jmx</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.http2</groupId>
-      <artifactId>http2-http-client-transport</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-io</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlet</artifactId>
     </dependency>
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.toolchain</groupId>
-      <artifactId>jetty-perf-helper</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.fcgi</groupId>
-      <artifactId>fcgi-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-xml</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.http2</groupId>
-      <artifactId>http2-server</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-alpn-server</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.fcgi</groupId>
-      <artifactId>fcgi-server</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mortbay.jetty.alpn</groupId>
-      <artifactId>alpn-boot</artifactId>
-      <version>${alpn.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.groovy</groupId>
-      <artifactId>groovy</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.mortbay.jetty.alpn</groupId>
-                  <artifactId>alpn-boot</artifactId>
-                  <version>${alpn.version}</version>
-                  <type>jar</type>
-                  <overWrite>false</overWrite>
-                  <outputDirectory>${project.build.directory}/alpn</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>
