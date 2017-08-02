@@ -52,7 +52,7 @@ public class LoadGeneratorStarterArgs {
     private int iterations = 1;
 
     @Parameter(names = {"--running-time", "-rt"}, description = "LoadGenerator Running Time")
-    private long runningTime = -1;
+    private long runningTime;
 
     @Parameter(names = {"--running-time-unit", "-rtu"}, description = "LoadGenerator Running Time Unit (h/m/s/ms)")
     private String runningTimeUnit = "s";

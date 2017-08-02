@@ -65,6 +65,7 @@ public class LoadGeneratorStarter {
             return builder.threads(starterArgs.getThreads())
                     .warmupIterationsPerThread(starterArgs.getWarmupIterations())
                     .iterationsPerThread(starterArgs.getIterations())
+                    .runFor(starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit())
                     .usersPerThread(starterArgs.getUsers())
                     .channelsPerUser(starterArgs.getChannelsPerUser())
                     .resource(starterArgs.getResource(builder))

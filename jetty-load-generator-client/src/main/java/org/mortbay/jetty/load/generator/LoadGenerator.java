@@ -627,9 +627,8 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @return this Builder
          */
         public Builder runFor(long time, TimeUnit unit) {
-            this.runFor = unit.toSeconds(time);
-            if (runFor <= 0) {
-                throw new IllegalArgumentException();
+            if (time > 0) {
+                this.runFor = unit.toSeconds(time);
             }
             return this;
         }
