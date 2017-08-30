@@ -405,9 +405,18 @@ public class LoadGenerator extends ContainerLifeCycle {
                             }
                         });
 
-                        Request request = config.getRequestListeners().stream()
-                                .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
-                        request.send(new ResponseHandler(info));
+                        try
+                        {
+                            Request request = config.getRequestListeners().stream()
+                                    .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
+                            request.send(new ResponseHandler(info));
+                        } catch ( Throwable e ) {
+                            // well we do not fail the thread but only report last error
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("sending httpRequest {} failed {}", httpRequest.getPath(), e.getMessage());
+                            }
+                            callback.failed( e );
+                        }
                     }
                 } else {
                     info.setResponseTime(System.nanoTime());
