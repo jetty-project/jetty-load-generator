@@ -102,6 +102,9 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--help"}, description = "Displays usage")
     private boolean help;
 
+    @Parameter(names = {"-fae","--fail-at-end"}, description = "Only fail the load at the end")
+    private boolean failAtEnd;
+
     public String getResourceXMLPath() {
         return resourceXMLPath;
     }
@@ -292,7 +295,15 @@ public class LoadGeneratorStarterArgs {
         this.channelsPerUser = channelsPerUser;
     }
 
-    public Resource getResource(LoadGenerator.Builder builder) throws Exception {
+    public boolean isFailAtEnd() {
+        return failAtEnd;
+    }
+
+    public void setFailAtEnd( boolean failAtEnd ) {
+        this.failAtEnd = failAtEnd;
+    }
+
+    public Resource getResource( LoadGenerator.Builder builder) throws Exception {
         String jsonPath = getResourceJSONPath();
         if (jsonPath != null) {
             Path path = Paths.get(jsonPath);

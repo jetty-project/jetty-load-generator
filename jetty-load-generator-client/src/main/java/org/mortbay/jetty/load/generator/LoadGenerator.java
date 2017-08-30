@@ -233,6 +233,9 @@ public class LoadGenerator extends ContainerLifeCycle {
             if (logger.isDebugEnabled()) {
                 logger.debug(x);
             }
+            if (!config.failAtEnd) {
+                throw new RuntimeException( x );
+            }
             process.completeExceptionally(x);
             return result;
         }
@@ -411,10 +414,13 @@ public class LoadGenerator extends ContainerLifeCycle {
                                     .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
                             request.send(new ResponseHandler(info));
                         } catch ( Throwable e ) {
-                            // well we do not fail the thread but only report last error
                             if (logger.isDebugEnabled()) {
                                 logger.debug("sending httpRequest {} failed {}", httpRequest.getPath(), e.getMessage());
                             }
+                            if(!config.failAtEnd) {
+                                throw e;
+                            }
+                            // well we do not fail fast the thread but only report last error
                             callback.failed( e );
                         }
                     }
@@ -499,6 +505,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         protected final List<Request.Listener> requestListeners = new ArrayList<>();
         protected final List<Resource.Listener> resourceListeners = new ArrayList<>();
         protected int maxRequestsQueued = 128 * 1024;
+        protected boolean failAtEnd = false;
 
         public int getThreads() {
             return threads;
@@ -578,6 +585,10 @@ public class LoadGenerator extends ContainerLifeCycle {
 
         public List<Resource.Listener> getResourceListeners() {
             return resourceListeners;
+        }
+
+        public boolean isFailAtEnd() {
+            return failAtEnd;
         }
 
         @Override
@@ -776,6 +787,11 @@ public class LoadGenerator extends ContainerLifeCycle {
 
         public Builder resourceListener(Resource.Listener listener) {
             resourceListeners.add(listener);
+            return this;
+        }
+
+        public Builder failAtEnd(boolean failAtEnd) {
+            this.failAtEnd = failAtEnd;
             return this;
         }
 

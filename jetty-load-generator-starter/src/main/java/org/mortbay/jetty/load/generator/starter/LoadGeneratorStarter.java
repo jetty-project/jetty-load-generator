@@ -75,6 +75,7 @@ public class LoadGeneratorStarter {
                     .scheme(starterArgs.getScheme())
                     .host(starterArgs.getHost())
                     .port(starterArgs.getPort())
+                    .failAtEnd( starterArgs.isFailAtEnd() )
                     .maxRequestsQueued(starterArgs.getMaxRequestsQueued());
         } catch (Exception x) {
             throw new RuntimeException(x);
