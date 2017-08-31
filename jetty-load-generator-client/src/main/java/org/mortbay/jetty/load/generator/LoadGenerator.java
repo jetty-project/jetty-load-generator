@@ -207,7 +207,7 @@ public class LoadGenerator extends ContainerLifeCycle {
 
                 sendResourceTree(client, config.getResource(), warmup, c);
 
-                if (lastIteration || ranEnough || process.isCompletedExceptionally()) {
+                if (lastIteration || ranEnough || (process.isCompletedExceptionally() && !config.failAtEnd)) {
                     break;
                 }
                 if (interrupt) {
@@ -232,9 +232,6 @@ public class LoadGenerator extends ContainerLifeCycle {
         } catch (Throwable x) {
             if (logger.isDebugEnabled()) {
                 logger.debug(x);
-            }
-            if (!config.failAtEnd) {
-                throw new RuntimeException( x );
             }
             process.completeExceptionally(x);
             return result;
