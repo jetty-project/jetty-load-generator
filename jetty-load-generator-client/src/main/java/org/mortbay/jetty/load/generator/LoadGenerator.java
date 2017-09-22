@@ -227,15 +227,14 @@ public class LoadGenerator extends ContainerLifeCycle {
                     }
                 }
             }
-
-            return result;
         } catch (Throwable x) {
             if (logger.isDebugEnabled()) {
                 logger.debug(x);
             }
+            logger.info( "process failed", x );
             process.completeExceptionally(x);
-            return result;
         }
+        return result;
     }
 
     protected HttpClient newHttpClient(Config config) {
