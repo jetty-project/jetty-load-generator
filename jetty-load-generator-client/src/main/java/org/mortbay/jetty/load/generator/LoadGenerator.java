@@ -416,7 +416,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                             if(!config.failAtEnd) {
                                 throw e;
                             }
-                            logger.warn( "skip error while sending: {}", e.getMessage() );
+                            logger.info( "skip error while sending: {}", e.getMessage() );
                             // well we do not fail fast the thread but only report last error
                             callback.failed( e );
                         }
