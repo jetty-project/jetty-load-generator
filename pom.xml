@@ -13,6 +13,7 @@
   </description>
 
   <properties>
+    <!-- 9.4.7.v20170914 generate ENHANCE_YOUR_CALM_ERROR error in unit test -->
     <jetty.version>9.4.6.v20170531</jetty.version>
   </properties>
 
