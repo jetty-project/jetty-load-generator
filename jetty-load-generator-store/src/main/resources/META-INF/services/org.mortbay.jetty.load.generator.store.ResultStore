@@ -1,0 +1,2 @@
+org.mortbay.jetty.load.generator.store.CsvResultStore
+org.mortbay.jetty.load.generator.store.ElasticResultStore

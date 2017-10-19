@@ -52,6 +52,7 @@
     <module>jetty-load-generator-client</module>
     <module>jetty-load-generator-collector</module>
     <module>jetty-load-generator-listeners</module>
+    <module>jetty-load-generator-store</module>
     <module>jetty-load-generator-starter</module>
   </modules>
 
