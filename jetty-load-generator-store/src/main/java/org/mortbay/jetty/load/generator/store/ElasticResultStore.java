@@ -19,20 +19,21 @@
 package org.mortbay.jetty.load.generator.store;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.nio.entity.NStringEntity;
-import org.apache.http.util.EntityUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.AuthenticationStore;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.BasicAuthentication;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
 import java.io.StringWriter;
-import java.util.Collections;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,16 +53,42 @@ public class ElasticResultStore
 
     public static final String SCHEME_KEY = "elastic.scheme";
 
-    private RestClient restClient;
+    public static final String USER_KEY = "elastic.user";
+
+    public static final String PWD_KEY = "elastic.password";
+
+    private HttpClient httpClient;
+
+    private String host, scheme, username, password;
+
+    private int port;
+
 
     @Override
     public void initialize( Map<String, String> setupData )
     {
-        this.restClient = RestClient //
-            .builder( new HttpHost( getSetupValue( setupData, HOST_KEY, "localhost" ), //
-                                    getSetupValue( setupData, PORT_KEY, 9200 ), //
-                                    getSetupValue( setupData, SCHEME_KEY, "http" ) ) ) //
-            .build();
+        host = getSetupValue( setupData, HOST_KEY, "localhost" );
+        port = getSetupValue( setupData, PORT_KEY, 9200 );
+        scheme = getSetupValue( setupData, SCHEME_KEY, "http" );
+        username = getSetupValue( setupData, USER_KEY, null );
+        password = getSetupValue( setupData, PWD_KEY, null );
+
+        this.httpClient = new HttpClient( new SslContextFactory( true ) );
+        try
+        {
+            if ( StringUtils.isNotEmpty( username ) )
+            {
+                URI uri = new URI( scheme + "://" + host + ":" + port );
+                AuthenticationStore auth = httpClient.getAuthenticationStore();
+                auth.addAuthenticationResult( new BasicAuthentication.BasicResult( uri, username, password ) );
+            }
+            this.httpClient.start();
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( e );
+            throw new RuntimeException( "Cannot start http client: " + e.getMessage(), e );
+        }
     }
 
     @Override
@@ -74,13 +101,20 @@ public class ElasticResultStore
             StringWriter stringWriter = new StringWriter();
             new ObjectMapper().writeValue( stringWriter, extendedLoadResult );
 
-            HttpEntity entity = new NStringEntity( stringWriter.toString(), ContentType.APPLICATION_JSON );
+            ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
+                .path( "/loadresult/result/" + extendedLoadResult.getUuid() ) //
+                .content( new StringContentProvider( stringWriter.toString() ) ) //
+                .method( HttpMethod.PUT ) //
+                .send();
 
-            Response indexResponse = restClient.performRequest( HttpMethod.PUT.asString(), //
-                                                                "/loadresult/result/" + extendedLoadResult.getUuid(), //
-                                                                Collections.emptyMap(), //
-                                                                entity );
-            LOGGER.info( EntityUtils.toString( indexResponse.getEntity() ) );
+            if ( contentResponse.getStatus() != HttpStatus.CREATED_201 )
+            {
+                LOGGER.info( "Cannot record load result: {}", contentResponse.getContentAsString() );
+            }
+            else
+            {
+                LOGGER.info( "Load result recorded" );
+            }
 
             return extendedLoadResult;
         }
