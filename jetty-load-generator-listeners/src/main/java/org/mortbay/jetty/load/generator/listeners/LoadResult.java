@@ -25,15 +25,18 @@ public class LoadResult
 
     private CollectorInformations collectorInformations;
 
+    private LoadConfig loadConfig;
+
     public LoadResult()
     {
         // no op
     }
 
-    public LoadResult( ServerInfo serverInfo, CollectorInformations collectorInformations )
+    public LoadResult( ServerInfo serverInfo, CollectorInformations collectorInformations, LoadConfig loadConfig )
     {
         this.serverInfo = serverInfo;
         this.collectorInformations = collectorInformations;
+        this.loadConfig = loadConfig;
     }
 
     public ServerInfo getServerInfo()
@@ -46,9 +49,30 @@ public class LoadResult
         return collectorInformations;
     }
 
+    public void setServerInfo( ServerInfo serverInfo )
+    {
+        this.serverInfo = serverInfo;
+    }
+
+    public void setCollectorInformations( CollectorInformations collectorInformations )
+    {
+        this.collectorInformations = collectorInformations;
+    }
+
+    public LoadConfig getLoadConfig()
+    {
+        return loadConfig;
+    }
+
+    public void setLoadConfig( LoadConfig loadConfig )
+    {
+        this.loadConfig = loadConfig;
+    }
+
     @Override
     public String toString()
     {
-        return "LoadResult{" + "serverInfo=" + serverInfo + ", collectorInformations=" + collectorInformations + '}';
+        return "LoadResult{" + "serverInfo=" + serverInfo + ", collectorInformations=" + collectorInformations
+            + ", loadConfig=" + loadConfig + '}';
     }
 }

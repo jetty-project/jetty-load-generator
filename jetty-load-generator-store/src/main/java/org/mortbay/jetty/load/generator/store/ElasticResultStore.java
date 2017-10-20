@@ -19,6 +19,14 @@
 package org.mortbay.jetty.load.generator.store;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.TypeRef;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
+import com.jayway.jsonpath.spi.json.JsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.AuthenticationStore;
@@ -34,8 +42,11 @@ import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
 import java.io.StringWriter;
 import java.net.URI;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class ElasticResultStore
@@ -62,6 +73,36 @@ public class ElasticResultStore
     private String host, scheme, username, password;
 
     private int port;
+
+    static
+    {
+
+        Configuration.setDefaults( new Configuration.Defaults()
+        {
+
+            private final JsonProvider jsonProvider = new JacksonJsonProvider();
+
+            private final MappingProvider mappingProvider = new JacksonMappingProvider();
+
+            @Override
+            public JsonProvider jsonProvider()
+            {
+                return jsonProvider;
+            }
+
+            @Override
+            public MappingProvider mappingProvider()
+            {
+                return mappingProvider;
+            }
+
+            @Override
+            public Set<Option> options()
+            {
+                return EnumSet.noneOf( Option.class );
+            }
+        } );
+    }
 
 
     @Override
@@ -128,7 +169,55 @@ public class ElasticResultStore
     @Override
     public void remove( ExtendedLoadResult loadResult )
     {
+        try
+        {
+            ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
+                .path( "/loadresult/result/" + loadResult.getUuid() ) //
+                .method( HttpMethod.DELETE ) //
+                .send();
+            if ( contentResponse.getStatus() != HttpStatus.OK_200 )
+            {
+                LOGGER.info( "Cannot delete load result: {}", contentResponse.getContentAsString() );
+            }
+            else
+            {
+                LOGGER.info( "Load result deleted" );
+            }
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( e.getMessage(), e );
+            throw new RuntimeException( e.getMessage(), e );
+        }
+    }
 
+    @Override
+    public ExtendedLoadResult get( String loadResultId )
+    {
+        try
+        {
+            ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
+                .path( "/loadresult/result/_search/" + loadResultId ) //
+                .method( HttpMethod.GET ) //
+                .send();
+            if ( contentResponse.getStatus() != HttpStatus.OK_200 )
+            {
+                LOGGER.info( "Cannot get load result: {}", contentResponse.getContentAsString() );
+                return null;
+            }
+
+            List<ExtendedLoadResult> loadResults = map( contentResponse );
+
+            LOGGER.debug( "result {}", loadResults );
+            return loadResults == null || loadResults.isEmpty() ? null : loadResults.get( 0 );
+
+
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( e.getMessage(), e );
+            throw new RuntimeException( e.getMessage(), e );
+        }
     }
 
     @Override
@@ -140,7 +229,38 @@ public class ElasticResultStore
     @Override
     public List<ExtendedLoadResult> findAll()
     {
-        return null;
+        try
+        {
+            ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
+                .path( "/loadresult/result/_search" ) //
+                .method( HttpMethod.GET ) //
+                .send();
+            if ( contentResponse.getStatus() != HttpStatus.OK_200 )
+            {
+                LOGGER.info( "Cannot get load result: {}", contentResponse.getContentAsString() );
+                return Collections.emptyList();
+            }
+
+            List<ExtendedLoadResult> loadResults = map( contentResponse );
+
+            LOGGER.debug( "result {}", loadResults );
+            return loadResults;
+
+
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( e.getMessage(), e );
+            throw new RuntimeException( e.getMessage(), e );
+        }
+    }
+
+    private List<ExtendedLoadResult> map( ContentResponse contentResponse )
+    {
+        return JsonPath.parse( contentResponse.getContentAsString() ) //
+            .read( "$.hits.hits[*]._source", new TypeRef<List<ExtendedLoadResult>>()
+            {
+            } );
     }
 
     @Override

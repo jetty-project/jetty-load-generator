@@ -190,7 +190,7 @@ public class CsvResultStore
         collectorInformations.setStdDeviation( Double.valueOf( values[12] ) );
 
         ExtendedLoadResult extendedLoadResult =
-            new ExtendedLoadResult( values[0], new LoadResult( serverInfo, collectorInformations ) );
+            new ExtendedLoadResult( values[0], new LoadResult( serverInfo, collectorInformations, null ) );
 
         extendedLoadResult.setComment( values[13] );
         return extendedLoadResult;
@@ -207,6 +207,12 @@ public class CsvResultStore
     {
         // TODO filter on result
         return findAll();
+    }
+
+    @Override
+    public ExtendedLoadResult get( String loadResultId )
+    {
+        return null;
     }
 
     @Override

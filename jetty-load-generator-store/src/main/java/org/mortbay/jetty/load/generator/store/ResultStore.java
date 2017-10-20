@@ -18,9 +18,12 @@
 
 package org.mortbay.jetty.load.generator.store;
 
+import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
 import java.io.Serializable;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +40,8 @@ public interface ResultStore
     void initialize( Map<String, String> setupData );
 
     ExtendedLoadResult save( LoadResult loadResult );
+
+    ExtendedLoadResult get( String loadResultId );
 
     void remove( ExtendedLoadResult loadResult );
 
@@ -119,55 +124,6 @@ public interface ResultStore
         }
     }
 
-
-    class ExtendedLoadResult
-        extends LoadResult
-        implements Serializable
-    {
-
-        private String uuid;
-
-        private String comment;
-
-        public ExtendedLoadResult()
-        {
-            // no op
-        }
-
-        public ExtendedLoadResult( String uuid )
-        {
-            this.uuid = uuid;
-        }
-
-        public ExtendedLoadResult( String uuid, LoadResult loadResult )
-        {
-            super( loadResult.getServerInfo(), loadResult.getCollectorInformations() );
-            this.uuid = uuid;
-        }
-
-        public String getUuid()
-        {
-            return uuid;
-        }
-
-        public String getComment()
-        {
-            return comment;
-        }
-
-        public void setComment( String comment )
-        {
-            this.comment = comment;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "ExtendedLoadResult{" + "uuid='" + uuid + '\'' + ", comment='" + comment + '\'' + '}'
-                + super.toString();
-        }
-    }
-
     static List<ResultStore> getActives( Map<String, String> setupData )
     {
         return StreamSupport.stream( ServiceLoader.load( ResultStore.class ).spliterator(), false ) //
@@ -184,6 +140,96 @@ public interface ResultStore
 
         // warning if more than one with same id?
         return resultStores.isEmpty() ? null : resultStores.get( 0 );
+    }
+
+
+    class ExtendedLoadResult
+        extends LoadResult
+        implements Serializable
+    {
+
+        private String uuid;
+
+        private String comment;
+
+        /**
+         * timestamp using format
+         */
+        private String timestamp =
+            ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm.ssZ" ) );
+
+
+        public ExtendedLoadResult()
+        {
+            // no op
+
+        }
+
+        public ExtendedLoadResult( String uuid )
+        {
+            this.uuid = uuid;
+        }
+
+        public ExtendedLoadResult( String uuid, LoadResult loadResult )
+        {
+            super( loadResult.getServerInfo(), loadResult.getCollectorInformations(), loadResult.getLoadConfig() );
+            this.uuid = uuid;
+        }
+
+        public String getComment()
+        {
+            return comment;
+        }
+
+        public void setComment( String comment )
+        {
+            this.comment = comment;
+        }
+
+        public ExtendedLoadResult comment( String comment )
+        {
+            this.comment = comment;
+            return this;
+        }
+
+        public void setUuid( String uuid )
+        {
+            this.uuid = uuid;
+        }
+
+        public String getUuid()
+        {
+            return uuid;
+        }
+
+        public ExtendedLoadResult uuid( String uuid )
+        {
+            this.uuid = uuid;
+            return this;
+        }
+
+        public String getTimestamp()
+        {
+            return timestamp;
+        }
+
+        public void setTimestamp( String timestamp )
+        {
+            this.timestamp = timestamp;
+        }
+
+        public ExtendedLoadResult timestamp( String timestamp )
+        {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        @Override
+        public String toString()
+        {
+            return "ExtendedLoadResult{" + "uuid='" + uuid + '\'' + ", comment='" + comment + '\'' + ", timestamp='"
+                + timestamp + '\'' + '}' + super.toString();
+        }
     }
 
 }
