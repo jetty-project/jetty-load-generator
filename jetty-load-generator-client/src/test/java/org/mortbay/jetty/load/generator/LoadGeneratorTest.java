@@ -18,6 +18,23 @@
 
 package org.mortbay.jetty.load.generator;
 
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
+import org.eclipse.jetty.jmx.MBeanContainer;
+import org.eclipse.jetty.server.ConnectionFactory;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,23 +48,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import javax.management.ObjectName;
-
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
-import org.eclipse.jetty.jmx.MBeanContainer;
-import org.eclipse.jetty.server.ConnectionFactory;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class LoadGeneratorTest {
@@ -70,7 +70,9 @@ public class LoadGeneratorTest {
     }
 
     private void prepare(Handler handler) throws Exception {
-        server = new Server();
+        QueuedThreadPool qtp = new QueuedThreadPool(100,100, 90000);
+        qtp.start();
+        server = new Server(qtp);
         connector = new ServerConnector(server, connectionFactory);
         server.addConnector(connector);
         server.setHandler(handler);

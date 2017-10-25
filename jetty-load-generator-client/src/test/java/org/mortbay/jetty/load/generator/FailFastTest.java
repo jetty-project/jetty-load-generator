@@ -30,7 +30,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.StatisticsServlet;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -58,9 +58,7 @@ public class FailFastTest
         throws Exception
     {
         StatisticsHandler statisticsHandler = new StatisticsHandler();
-        QueuedThreadPool serverThreads = new QueuedThreadPool();
-        serverThreads.setName( "server" );
-        server = new Server( serverThreads );
+        server = new Server( new ExecutorThreadPool( 5120) );
         connector = new ServerConnector( server, new HttpConnectionFactory( new HttpConfiguration() ) );
         server.addConnector( connector );
         server.setHandler( statisticsHandler );

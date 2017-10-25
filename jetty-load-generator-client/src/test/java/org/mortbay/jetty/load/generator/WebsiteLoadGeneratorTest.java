@@ -28,7 +28,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
 import org.junit.After;
@@ -82,9 +82,7 @@ public abstract class WebsiteLoadGeneratorTest {
     }
 
     protected void prepareServer(ConnectionFactory connectionFactory, Handler handler) throws Exception {
-        QueuedThreadPool serverThreads = new QueuedThreadPool(5120);
-        serverThreads.setName("server");
-        server = new Server(serverThreads);
+        server = new Server(new ExecutorThreadPool( 5120));
         connector = new ServerConnector(server, connectionFactory);
         server.addConnector(connector);
 
