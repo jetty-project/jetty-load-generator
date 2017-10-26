@@ -102,10 +102,9 @@ public class CsvResultStore
     }
 
     @Override
-    public ExtendedLoadResult save( LoadResult loadResult )
+    public void save( ExtendedLoadResult extendedLoadResult )
     {
         lock.lock();
-        ExtendedLoadResult extendedLoadResult = new ExtendedLoadResult( UUID.randomUUID().toString(), loadResult );
         try
         {
             writeStrings( toCsv( extendedLoadResult ) );
@@ -120,7 +119,6 @@ public class CsvResultStore
         {
             lock.unlock();
         }
-        return extendedLoadResult;
     }
 
     private void writeStrings( String[] values )

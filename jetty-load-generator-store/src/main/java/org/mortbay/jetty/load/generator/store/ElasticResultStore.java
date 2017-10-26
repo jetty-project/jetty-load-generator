@@ -42,6 +42,7 @@ import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
 import java.io.StringWriter;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -133,12 +134,10 @@ public class ElasticResultStore
     }
 
     @Override
-    public ExtendedLoadResult save( LoadResult loadResult )
+    public void save( ExtendedLoadResult extendedLoadResult )
     {
         try
         {
-            ExtendedLoadResult extendedLoadResult = new ExtendedLoadResult( UUID.randomUUID().toString(), loadResult );
-
             StringWriter stringWriter = new StringWriter();
             new ObjectMapper().writeValue( stringWriter, extendedLoadResult );
 
@@ -156,8 +155,6 @@ public class ElasticResultStore
             {
                 LOGGER.info( "Load result recorded" );
             }
-
-            return extendedLoadResult;
         }
         catch ( Exception e )
         {
@@ -255,12 +252,26 @@ public class ElasticResultStore
         }
     }
 
-    private List<ExtendedLoadResult> map( ContentResponse contentResponse )
+    public static List<ExtendedLoadResult> map( ContentResponse contentResponse )
     {
-        return JsonPath.parse( contentResponse.getContentAsString() ) //
-            .read( "$.hits.hits[*]._source", new TypeRef<List<ExtendedLoadResult>>()
-            {
-            } );
+        return map( Collections.singletonList( contentResponse ) );
+    }
+
+    public static List<ExtendedLoadResult> map( List<ContentResponse> contentResponses )
+    {
+        List<ExtendedLoadResult> results = new ArrayList<>();
+        contentResponses.stream().forEach(
+            contentResponse -> results.addAll( JsonPath.parse( contentResponse.getContentAsString() ) //
+                                                   .read( "$.hits.hits[*]._source",
+                                                          new TypeRef<List<ExtendedLoadResult>>()
+                                                          {
+                                                          } ) ) );
+        return results;
+    }
+
+    public HttpClient getHttpClient()
+    {
+        return httpClient;
     }
 
     @Override

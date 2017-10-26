@@ -18,7 +18,6 @@
 
 package org.mortbay.jetty.load.generator.store;
 
-import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
 import java.io.Serializable;
@@ -39,7 +38,7 @@ public interface ResultStore
      */
     void initialize( Map<String, String> setupData );
 
-    ExtendedLoadResult save( LoadResult loadResult );
+    void save( ExtendedLoadResult loadResult );
 
     ExtendedLoadResult get( String loadResultId );
 
