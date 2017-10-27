@@ -38,8 +38,8 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.ArrayList;
@@ -48,7 +48,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 public class ElasticResultStore
     extends AbstractResultStore
@@ -249,6 +248,20 @@ public class ElasticResultStore
         {
             LOGGER.warn( e.getMessage(), e );
             throw new RuntimeException( e.getMessage(), e );
+        }
+    }
+
+    @Override
+    public void close()
+        throws IOException
+    {
+        try
+        {
+            this.httpClient.stop();
+        }
+        catch ( Exception e )
+        {
+            throw new IOException( e.getMessage(), e );
         }
     }
 

@@ -82,7 +82,7 @@ public abstract class WebsiteLoadGeneratorTest {
     }
 
     protected void prepareServer(ConnectionFactory connectionFactory, Handler handler) throws Exception {
-        server = new Server(new ExecutorThreadPool( 5120));
+        server = new Server();
         connector = new ServerConnector(server, connectionFactory);
         server.addConnector(connector);
 

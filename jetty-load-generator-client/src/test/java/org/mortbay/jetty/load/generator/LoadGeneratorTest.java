@@ -27,6 +27,8 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.junit.After;
 import org.junit.Assert;
@@ -51,6 +53,8 @@ import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 public class LoadGeneratorTest {
+    private static final Logger LOG = Log.getLogger( LoadGeneratorTest.class);
+
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object[]> parameters() {
         List<Object[]> result = new ArrayList<>();
@@ -64,19 +68,29 @@ public class LoadGeneratorTest {
     private Server server;
     private ServerConnector connector;
 
+//    public LoadGeneratorTest() {
+//        this.connectionFactory = new HTTP2CServerConnectionFactory(new HttpConfiguration());
+//        this.clientTransportBuilder = new HTTP2ClientTransportBuilder();
+//    }
+
     public LoadGeneratorTest(ConnectionFactory connectionFactory, HTTPClientTransportBuilder clientTransportBuilder) {
         this.connectionFactory = connectionFactory;
+        // using a new HTTP2CServerConnectionFactory fix the issue with 9.4.7+
+        // instanceof HTTP2CServerConnectionFactory?new HTTP2CServerConnectionFactory(new HttpConfiguration()): connectionFactory;
         this.clientTransportBuilder = clientTransportBuilder;
+        LOG.info( "connectionFactory: {}, clientTransportBuilder: {}", connectionFactory, clientTransportBuilder);
     }
 
     private void prepare(Handler handler) throws Exception {
-        QueuedThreadPool qtp = new QueuedThreadPool(100,100, 90000);
-        qtp.start();
-        server = new Server(qtp);
+        //QueuedThreadPool qtp = new QueuedThreadPool(20,20, 90000);
+        // using a new qtp and explicitly start it fix the issue with 9.4.7+
+        //qtp.start();
+        server = new Server();
         connector = new ServerConnector(server, connectionFactory);
         server.addConnector(connector);
         server.setHandler(handler);
         server.start();
+        server.dumpStdErr();
     }
 
     @After

@@ -20,6 +20,7 @@ package org.mortbay.jetty.load.generator.store;
 
 import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
+import java.io.Closeable;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public interface ResultStore
+    extends Closeable
 {
 
     /**

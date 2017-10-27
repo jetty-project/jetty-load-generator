@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -249,4 +248,10 @@ public class CsvResultStore
         }
     }
 
+    @Override
+    public void close()
+        throws IOException
+    {
+        // no op
+    }
 }
