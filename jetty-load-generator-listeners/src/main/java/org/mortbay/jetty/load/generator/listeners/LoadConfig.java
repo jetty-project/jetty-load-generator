@@ -23,27 +23,37 @@ import org.mortbay.jetty.load.generator.LoadGenerator;
 public class LoadConfig
 {
 
-    protected int threads;
+    private int threads;
 
-    protected int warmupIterationsPerThread;
+    private int warmupIterationsPerThread;
 
-    protected int iterationsPerThread;
+    private int iterationsPerThread;
 
-    protected long runFor;
+    private long runFor;
 
-    protected int usersPerThread;
+    private int usersPerThread;
 
-    protected int channelsPerUser;
+    private int channelsPerUser;
 
-    protected int resourceRate;
+    private int resourceRate;
 
-    protected String scheme;
+    private String scheme;
 
-    protected String host;
+    private String host;
 
-    protected int port;
+    private int port;
 
-    protected int maxRequestsQueued;
+    private int maxRequestsQueued;
+
+    /**
+     * loader or probe or something else
+     */
+    private Type type;
+
+
+    public enum Type {
+        LOADER,PROBE;
+    }
 
     public LoadConfig()
     {
@@ -192,6 +202,22 @@ public class LoadConfig
         this.maxRequestsQueued = maxRequestsQueued;
     }
 
+    public Type getType()
+    {
+        return type;
+    }
+
+    public void setType( Type type )
+    {
+        this.type = type;
+    }
+
+    public LoadConfig type( Type type )
+    {
+        this.type = type;
+        return this;
+    }
+
     @Override
     public String toString()
     {
@@ -199,6 +225,6 @@ public class LoadConfig
             + ", iterationsPerThread=" + iterationsPerThread + ", runFor=" + runFor + ", usersPerThread="
             + usersPerThread + ", channelsPerUser=" + channelsPerUser + ", resourceRate=" + resourceRate + ", scheme='"
             + scheme + '\'' + ", host='" + host + '\'' + ", port=" + port + ", maxRequestsQueued=" + maxRequestsQueued
-            + '}';
+            + ", type='" + type + '\'' + '}';
     }
 }

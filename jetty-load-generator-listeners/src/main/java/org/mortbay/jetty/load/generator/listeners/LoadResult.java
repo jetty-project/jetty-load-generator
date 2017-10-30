@@ -20,6 +20,8 @@ package org.mortbay.jetty.load.generator.listeners;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LoadResult
 {
@@ -28,7 +30,7 @@ public class LoadResult
 
     private CollectorInformations collectorInformations;
 
-    private LoadConfig loadConfig;
+    private List<LoadConfig> loadConfigs = new ArrayList<>();
 
     private String uuid;
 
@@ -37,8 +39,7 @@ public class LoadResult
     /**
      * timestamp using format
      */
-    private String timestamp =
-        ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm.ssZ" ) );
+    private String timestamp = ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm.ssZ" ) );
 
     public LoadResult()
     {
@@ -49,7 +50,7 @@ public class LoadResult
     {
         this.serverInfo = serverInfo;
         this.collectorInformations = collectorInformations;
-        this.loadConfig = loadConfig;
+        this.loadConfigs.add( loadConfig );
     }
 
     public ServerInfo getServerInfo()
@@ -72,14 +73,19 @@ public class LoadResult
         this.collectorInformations = collectorInformations;
     }
 
-    public LoadConfig getLoadConfig()
+    public List<LoadConfig> getLoadConfigs()
     {
-        return loadConfig;
+        return loadConfigs;
     }
 
-    public void setLoadConfig( LoadConfig loadConfig )
+    public void setLoadConfigs( List<LoadConfig> loadConfigs )
     {
-        this.loadConfig = loadConfig;
+        this.loadConfigs = loadConfigs;
+    }
+
+    public void addLoadConfig( LoadConfig loadConfig )
+    {
+        this.loadConfigs.add( loadConfig );
     }
 
     public String getUuid()
@@ -134,7 +140,7 @@ public class LoadResult
     public String toString()
     {
         return "LoadResult{" + "serverInfo=" + serverInfo + ", collectorInformations=" + collectorInformations
-            + ", loadConfig=" + loadConfig + ", uuid='" + uuid + '\'' + ", comment='" + comment + '\'' + ", timestamp='"
-            + timestamp + '\'' + '}';
+            + ", loadConfigs=" + loadConfigs + ", uuid='" + uuid + '\'' + ", comment='" + comment + '\''
+            + ", timestamp='" + timestamp + '\'' + '}';
     }
 }
