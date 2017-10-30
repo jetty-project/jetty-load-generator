@@ -60,12 +60,12 @@ public class LoadResult
 
     public ServerInfo getServerInfo()
     {
-        return serverInfo;
+        return serverInfo == null ? new ServerInfo() : serverInfo;
     }
 
     public CollectorInformations getCollectorInformations()
     {
-        return collectorInformations;
+        return collectorInformations == null ? new CollectorInformations() : collectorInformations;
     }
 
     public void setServerInfo( ServerInfo serverInfo )

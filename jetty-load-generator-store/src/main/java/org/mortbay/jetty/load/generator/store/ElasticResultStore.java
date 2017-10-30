@@ -249,7 +249,7 @@ public class ElasticResultStore
                 .newRequest( host, port ) //
                 .scheme( scheme ) //
                 .method( HttpMethod.GET ) //
-                .path( "/loadresult/result/_search" ) //
+                .path( "/loadresult/result/_search?sort=timestamp" ) //
                 .content( new StringContentProvider( stringWriter.toString() ) ) //
                 .send();
             List<LoadResult> loadResults = map( contentResponse );
