@@ -18,6 +18,9 @@
 
 package org.mortbay.jetty.load.generator.listeners;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class LoadResult
 {
 
@@ -26,6 +29,16 @@ public class LoadResult
     private CollectorInformations collectorInformations;
 
     private LoadConfig loadConfig;
+
+    private String uuid;
+
+    private String comment;
+
+    /**
+     * timestamp using format
+     */
+    private String timestamp =
+        ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm.ssZ" ) );
 
     public LoadResult()
     {
@@ -69,10 +82,59 @@ public class LoadResult
         this.loadConfig = loadConfig;
     }
 
+    public String getUuid()
+    {
+        return uuid;
+    }
+
+    public void setUuid( String uuid )
+    {
+        this.uuid = uuid;
+    }
+
+    public LoadResult uuid( String uuid )
+    {
+        this.uuid = uuid;
+        return this;
+    }
+
+    public String getComment()
+    {
+        return comment;
+    }
+
+    public void setComment( String comment )
+    {
+        this.comment = comment;
+    }
+
+    public LoadResult comment( String comment )
+    {
+        this.comment = comment;
+        return this;
+    }
+
+    public String getTimestamp()
+    {
+        return timestamp;
+    }
+
+    public void setTimestamp( String timestamp )
+    {
+        this.timestamp = timestamp;
+    }
+
+    public LoadResult timestamp( String timestamp )
+    {
+        this.timestamp = timestamp;
+        return this;
+    }
+
     @Override
     public String toString()
     {
         return "LoadResult{" + "serverInfo=" + serverInfo + ", collectorInformations=" + collectorInformations
-            + ", loadConfig=" + loadConfig + '}';
+            + ", loadConfig=" + loadConfig + ", uuid='" + uuid + '\'' + ", comment='" + comment + '\'' + ", timestamp='"
+            + timestamp + '\'' + '}';
     }
 }

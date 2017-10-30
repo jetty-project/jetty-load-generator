@@ -38,6 +38,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -45,6 +46,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -133,15 +135,15 @@ public class ElasticResultStore
     }
 
     @Override
-    public void save( ExtendedLoadResult extendedLoadResult )
+    public void save( LoadResult loadResult )
     {
         try
         {
             StringWriter stringWriter = new StringWriter();
-            new ObjectMapper().writeValue( stringWriter, extendedLoadResult );
+            new ObjectMapper().writeValue( stringWriter, loadResult );
 
             ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
-                .path( "/loadresult/result/" + extendedLoadResult.getUuid() ) //
+                .path( "/loadresult/result/" + loadResult.getUuid() ) //
                 .content( new StringContentProvider( stringWriter.toString() ) ) //
                 .method( HttpMethod.PUT ) //
                 .send();
@@ -163,7 +165,7 @@ public class ElasticResultStore
     }
 
     @Override
-    public void remove( ExtendedLoadResult loadResult )
+    public void remove( LoadResult loadResult )
     {
         try
         {
@@ -188,11 +190,12 @@ public class ElasticResultStore
     }
 
     @Override
-    public ExtendedLoadResult get( String loadResultId )
+    public LoadResult get( String loadResultId )
     {
         try
         {
-            ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
+            ContentResponse contentResponse = httpClient.newRequest( host, port ) //
+                .scheme( scheme ) //
                 .path( "/loadresult/result/_search/" + loadResultId ) //
                 .method( HttpMethod.GET ) //
                 .send();
@@ -202,7 +205,7 @@ public class ElasticResultStore
                 return null;
             }
 
-            List<ExtendedLoadResult> loadResults = map( contentResponse );
+            List<LoadResult> loadResults = map( contentResponse );
 
             LOGGER.debug( "result {}", loadResults );
             return loadResults == null || loadResults.isEmpty() ? null : loadResults.get( 0 );
@@ -217,13 +220,53 @@ public class ElasticResultStore
     }
 
     @Override
-    public List<ExtendedLoadResult> find( QueryFiler queryFiler )
+    public List<LoadResult> get( List<String> loadResultIds )
+    {
+        try
+        {
+            //     we need this type of Json
+            //        {
+            //            "query": {
+            //            "ids" : {
+            //                "values" : ["192267e6-7f74-4806-867a-c13ef777d6eb", "80a2dc5b-4a92-48ba-8f5b-f2de1588318a"]
+            //            }
+            //        }
+            //        }
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> values = new HashMap<>();
+            values.put( "values", loadResultIds );
+            Map<String, Object> ids = new HashMap<>();
+            ids.put( "ids", values );
+            Map<String, Object> query = new HashMap<>();
+            query.put( "query", ids );
+            StringWriter stringWriter = new StringWriter();
+            objectMapper.writeValue( stringWriter, query );
+
+            ContentResponse contentResponse = getHttpClient() //
+                .newRequest( host, port ) //
+                .scheme( scheme ) //
+                .method( HttpMethod.GET ) //
+                .path( "/loadresult/result/_search" ) //
+                .content( new StringContentProvider( stringWriter.toString() ) ) //
+                .send();
+            List<LoadResult> loadResults = ElasticResultStore.map( contentResponse );
+            return loadResults;
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( e.getMessage(), e );
+            throw new RuntimeException( e.getMessage(), e );
+        }
+    }
+
+    @Override
+    public List<LoadResult> find( QueryFiler queryFiler )
     {
         return null;
     }
 
     @Override
-    public List<ExtendedLoadResult> findAll()
+    public List<LoadResult> findAll()
     {
         try
         {
@@ -237,7 +280,7 @@ public class ElasticResultStore
                 return Collections.emptyList();
             }
 
-            List<ExtendedLoadResult> loadResults = map( contentResponse );
+            List<LoadResult> loadResults = map( contentResponse );
 
             LOGGER.debug( "result {}", loadResults );
             return loadResults;
@@ -265,24 +308,23 @@ public class ElasticResultStore
         }
     }
 
-    public static List<ExtendedLoadResult> map( ContentResponse contentResponse )
+    public static List<LoadResult> map( ContentResponse contentResponse )
     {
         return map( Collections.singletonList( contentResponse ) );
     }
 
-    public static List<ExtendedLoadResult> map( List<ContentResponse> contentResponses )
+    public static List<LoadResult> map( List<ContentResponse> contentResponses )
     {
-        List<ExtendedLoadResult> results = new ArrayList<>();
+        List<LoadResult> results = new ArrayList<>();
         contentResponses.stream().forEach(
             contentResponse -> results.addAll( JsonPath.parse( contentResponse.getContentAsString() ) //
-                                                   .read( "$.hits.hits[*]._source",
-                                                          new TypeRef<List<ExtendedLoadResult>>()
-                                                          {
-                                                          } ) ) );
+                                                   .read( "$.hits.hits[*]._source", new TypeRef<List<LoadResult>>()
+                                                   {
+                                                   } ) ) );
         return results;
     }
 
-    public HttpClient getHttpClient()
+    private HttpClient getHttpClient()
     {
         return httpClient;
     }

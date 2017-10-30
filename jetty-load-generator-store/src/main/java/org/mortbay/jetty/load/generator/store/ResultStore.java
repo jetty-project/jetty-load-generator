@@ -40,15 +40,17 @@ public interface ResultStore
      */
     void initialize( Map<String, String> setupData );
 
-    void save( ExtendedLoadResult loadResult );
+    void save( LoadResult loadResult );
 
-    ExtendedLoadResult get( String loadResultId );
+    LoadResult get( String loadResultId );
 
-    void remove( ExtendedLoadResult loadResult );
+    List<LoadResult> get( List<String> loadResultId );
 
-    List<ExtendedLoadResult> find( QueryFiler queryFiler );
+    void remove( LoadResult loadResult );
 
-    List<ExtendedLoadResult> findAll();
+    List<LoadResult> find( QueryFiler queryFiler );
+
+    List<LoadResult> findAll();
 
     String getProviderId();
 
@@ -142,95 +144,4 @@ public interface ResultStore
         // warning if more than one with same id?
         return resultStores.isEmpty() ? null : resultStores.get( 0 );
     }
-
-
-    class ExtendedLoadResult
-        extends LoadResult
-        implements Serializable
-    {
-
-        private String uuid;
-
-        private String comment;
-
-        /**
-         * timestamp using format
-         */
-        private String timestamp =
-            ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm.ssZ" ) );
-
-
-        public ExtendedLoadResult()
-        {
-            // no op
-
-        }
-
-        public ExtendedLoadResult( String uuid )
-        {
-            this.uuid = uuid;
-        }
-
-        public ExtendedLoadResult( String uuid, LoadResult loadResult )
-        {
-            super( loadResult.getServerInfo(), loadResult.getCollectorInformations(), loadResult.getLoadConfig() );
-            this.uuid = uuid;
-        }
-
-        public String getComment()
-        {
-            return comment;
-        }
-
-        public void setComment( String comment )
-        {
-            this.comment = comment;
-        }
-
-        public ExtendedLoadResult comment( String comment )
-        {
-            this.comment = comment;
-            return this;
-        }
-
-        public void setUuid( String uuid )
-        {
-            this.uuid = uuid;
-        }
-
-        public String getUuid()
-        {
-            return uuid;
-        }
-
-        public ExtendedLoadResult uuid( String uuid )
-        {
-            this.uuid = uuid;
-            return this;
-        }
-
-        public String getTimestamp()
-        {
-            return timestamp;
-        }
-
-        public void setTimestamp( String timestamp )
-        {
-            this.timestamp = timestamp;
-        }
-
-        public ExtendedLoadResult timestamp( String timestamp )
-        {
-            this.timestamp = timestamp;
-            return this;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "ExtendedLoadResult{" + "uuid='" + uuid + '\'' + ", comment='" + comment + '\'' + ", timestamp='"
-                + timestamp + '\'' + '}' + super.toString();
-        }
-    }
-
 }

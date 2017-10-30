@@ -101,16 +101,16 @@ public class CsvResultStore
     }
 
     @Override
-    public void save( ExtendedLoadResult extendedLoadResult )
+    public void save( LoadResult loadResult )
     {
         lock.lock();
         try
         {
-            writeStrings( toCsv( extendedLoadResult ) );
+            writeStrings( toCsv( loadResult ) );
         }
         catch ( IOException e )
         {
-            String msg = "Cannot write entry:" + extendedLoadResult;
+            String msg = "Cannot write entry:" + loadResult;
             LOGGER.log( Level.SEVERE, msg, e );
             throw new RuntimeException( e.getMessage(), e );
         }
@@ -139,7 +139,7 @@ public class CsvResultStore
     }
 
 
-    protected String[] toCsv( ExtendedLoadResult loadResult )
+    protected String[] toCsv( LoadResult loadResult )
     {
         ServerInfo serverInfo = loadResult.getServerInfo();
         CollectorInformations collectorInformations = loadResult.getCollectorInformations();
@@ -167,7 +167,7 @@ public class CsvResultStore
     }
 
 
-    protected ExtendedLoadResult fromCsv( String[] values )
+    protected LoadResult fromCsv( String[] values )
     {
 
         ServerInfo serverInfo = new ServerInfo();
@@ -186,39 +186,44 @@ public class CsvResultStore
         collectorInformations.setValue90( Long.valueOf( values[11] ) );
         collectorInformations.setStdDeviation( Double.valueOf( values[12] ) );
 
-        ExtendedLoadResult extendedLoadResult =
-            new ExtendedLoadResult( values[0], new LoadResult( serverInfo, collectorInformations, null ) );
+        LoadResult loadResult =
+            new LoadResult( serverInfo, collectorInformations, null );
 
-        extendedLoadResult.setComment( values[13] );
-        return extendedLoadResult;
+        return loadResult.comment( values[13] ).uuid( values[0] );
     }
 
     @Override
-    public void remove( ExtendedLoadResult loadResult )
+    public void remove( LoadResult loadResult )
     {
         // not supported
     }
 
     @Override
-    public List<ExtendedLoadResult> find( QueryFiler queryFiler )
+    public List<LoadResult> find( QueryFiler queryFiler )
     {
         // TODO filter on result
         return findAll();
     }
 
     @Override
-    public ExtendedLoadResult get( String loadResultId )
+    public LoadResult get( String loadResultId )
     {
         return null;
     }
 
     @Override
-    public List<ExtendedLoadResult> findAll()
+    public List<LoadResult> get( List<String> loadResultId )
+    {
+        return null;
+    }
+
+    @Override
+    public List<LoadResult> findAll()
     {
         return findWithFilters( null );
     }
 
-    public List<ExtendedLoadResult> findWithFilters( List<Predicate<String[]>> predicates )
+    public List<LoadResult> findWithFilters( List<Predicate<String[]>> predicates )
     {
         lock.lock();
         try (CSVReader reader = new CSVReader( new FileReader( "yourfile.csv" ) ))
