@@ -37,6 +37,11 @@ public class LoadResult
     private String comment;
 
     /**
+     * so we can search prefix-*
+     */
+    private String uuidPrefix;
+
+    /**
      * timestamp using format
      */
     private String timestamp = ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm.ssZ" ) );
@@ -133,6 +138,22 @@ public class LoadResult
     public LoadResult timestamp( String timestamp )
     {
         this.timestamp = timestamp;
+        return this;
+    }
+
+    public String getUuidPrefix()
+    {
+        return uuidPrefix;
+    }
+
+    public void setUuidPrefix( String uuidPrefix )
+    {
+        this.uuidPrefix = uuidPrefix;
+    }
+
+    public LoadResult uuidPrefix( String uuidPrefix )
+    {
+        this.uuidPrefix = uuidPrefix;
         return this;
     }
 
