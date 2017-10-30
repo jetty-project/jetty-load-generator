@@ -18,6 +18,7 @@
 
 package org.mortbay.jetty.load.generator.store;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -82,9 +83,11 @@ public class ElasticResultStore
         Configuration.setDefaults( new Configuration.Defaults()
         {
 
-            private final JsonProvider jsonProvider = new JacksonJsonProvider();
+            private final JsonProvider jsonProvider = new JacksonJsonProvider(
+                new ObjectMapper().configure( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false ) );
 
-            private final MappingProvider mappingProvider = new JacksonMappingProvider();
+            private final MappingProvider mappingProvider = new JacksonMappingProvider(
+                new ObjectMapper().configure( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false ) );
 
             @Override
             public JsonProvider jsonProvider()
@@ -249,7 +252,7 @@ public class ElasticResultStore
                 .path( "/loadresult/result/_search" ) //
                 .content( new StringContentProvider( stringWriter.toString() ) ) //
                 .send();
-            List<LoadResult> loadResults = ElasticResultStore.map( contentResponse );
+            List<LoadResult> loadResults = map( contentResponse );
             return loadResults;
         }
         catch ( Exception e )
