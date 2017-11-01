@@ -76,7 +76,8 @@ public class LoadGeneratorStarter {
                     .host(starterArgs.getHost())
                     .port(starterArgs.getPort())
                     .failAtEnd( starterArgs.isFailAtEnd() )
-                    .maxRequestsQueued(starterArgs.getMaxRequestsQueued());
+                    .maxRequestsQueued(starterArgs.getMaxRequestsQueued())
+                    .connectBlocking(starterArgs.isConnectBlocking());
         } catch (Exception x) {
             throw new RuntimeException(x);
         }

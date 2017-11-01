@@ -238,13 +238,14 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     protected HttpClient newHttpClient(Config config) {
-        HttpClient result = new HttpClient(config.getHttpClientTransportBuilder().build(), config.getSslContextFactory());
-        result.setExecutor(config.getExecutor());
-        result.setScheduler(config.getScheduler());
-        result.setMaxConnectionsPerDestination(config.getChannelsPerUser());
-        result.setMaxRequestsQueuedPerDestination(config.getMaxRequestsQueued());
-        result.setSocketAddressResolver(config.getSocketAddressResolver());
-        return result;
+        HttpClient httpClient = new HttpClient(config.getHttpClientTransportBuilder().build(), config.getSslContextFactory());
+        httpClient.setExecutor(config.getExecutor());
+        httpClient.setScheduler(config.getScheduler());
+        httpClient.setMaxConnectionsPerDestination(config.getChannelsPerUser());
+        httpClient.setMaxRequestsQueuedPerDestination(config.getMaxRequestsQueued());
+        httpClient.setSocketAddressResolver(config.getSocketAddressResolver());
+        httpClient.setConnectBlocking(config.isConnectBlocking());
+        return httpClient;
     }
 
     private void stopHttpClient(HttpClient client) {
@@ -503,6 +504,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         protected final List<Resource.Listener> resourceListeners = new ArrayList<>();
         protected int maxRequestsQueued = 128 * 1024;
         protected boolean failAtEnd = false;
+        protected boolean connectBlocking = false;
 
         public int getThreads() {
             return threads;
@@ -586,6 +588,10 @@ public class LoadGenerator extends ContainerLifeCycle {
 
         public boolean isFailAtEnd() {
             return failAtEnd;
+        }
+
+        public boolean isConnectBlocking() {
+            return connectBlocking;
         }
 
         @Override
@@ -789,6 +795,11 @@ public class LoadGenerator extends ContainerLifeCycle {
 
         public Builder failAtEnd(boolean failAtEnd) {
             this.failAtEnd = failAtEnd;
+            return this;
+        }
+
+        public Builder connectBlocking(boolean connectBlocking) {
+            this.connectBlocking = connectBlocking;
             return this;
         }
 

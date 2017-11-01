@@ -105,6 +105,9 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"-fae","--fail-at-end"}, description = "Only fail the load at the end")
     private boolean failAtEnd;
 
+    @Parameter(names = {"-cb","--connect-blocking"}, description = "Connect async or not")
+    private boolean connectBlocking = false;
+
     public String getResourceXMLPath() {
         return resourceXMLPath;
     }
@@ -144,6 +147,8 @@ public class LoadGeneratorStarterArgs {
     public void setResourceRate(int resourceRate) {
         this.resourceRate = resourceRate;
     }
+
+
 
     public Transport getTransport() {
         switch (this.transport) {
@@ -301,6 +306,14 @@ public class LoadGeneratorStarterArgs {
 
     public void setFailAtEnd( boolean failAtEnd ) {
         this.failAtEnd = failAtEnd;
+    }
+
+    public boolean isConnectBlocking() {
+        return connectBlocking;
+    }
+
+    public void setConnectBlocking( boolean connectBlocking ) {
+        this.connectBlocking = connectBlocking;
     }
 
     public Resource getResource( LoadGenerator.Builder builder) throws Exception {
