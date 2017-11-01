@@ -74,9 +74,10 @@ public class LoadGeneratorTest {
 //    }
 
     public LoadGeneratorTest(ConnectionFactory connectionFactory, HTTPClientTransportBuilder clientTransportBuilder) {
-        this.connectionFactory = connectionFactory;
         // using a new HTTP2CServerConnectionFactory fix the issue with 9.4.7+
-        // instanceof HTTP2CServerConnectionFactory?new HTTP2CServerConnectionFactory(new HttpConfiguration()): connectionFactory;
+        //this.connectionFactory = connectionFactory;
+        this.connectionFactory = connectionFactory instanceof HTTP2CServerConnectionFactory? //
+            new HTTP2CServerConnectionFactory(new HttpConfiguration()): connectionFactory;
         this.clientTransportBuilder = clientTransportBuilder;
         LOG.info( "connectionFactory: {}, clientTransportBuilder: {}", connectionFactory, clientTransportBuilder);
     }
