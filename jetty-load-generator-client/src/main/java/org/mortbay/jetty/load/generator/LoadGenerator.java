@@ -238,13 +238,18 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     protected HttpClient newHttpClient(Config config) {
-        HttpClient httpClient = new HttpClient(config.getHttpClientTransportBuilder().build(), config.getSslContextFactory());
+        HttpClient httpClient = new HttpClient(config.getHttpClientTransportBuilder().build(), //
+                                               config.getSslContextFactory());
         httpClient.setExecutor(config.getExecutor());
         httpClient.setScheduler(config.getScheduler());
         httpClient.setMaxConnectionsPerDestination(config.getChannelsPerUser());
         httpClient.setMaxRequestsQueuedPerDestination(config.getMaxRequestsQueued());
         httpClient.setSocketAddressResolver(config.getSocketAddressResolver());
         httpClient.setConnectBlocking(config.isConnectBlocking());
+        logger.info( "httpClient= maxConnectionsPerDestination: {}, maxRequestsQueuedPerDestination: {}, connectBlocking: {}",
+                     httpClient.getMaxConnectionsPerDestination(), //
+                     httpClient.getMaxRequestsQueuedPerDestination(), //
+                     httpClient.isConnectBlocking() );
         return httpClient;
     }
 
