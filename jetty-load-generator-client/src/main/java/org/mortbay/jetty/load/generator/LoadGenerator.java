@@ -254,6 +254,7 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     private void stopHttpClient(HttpClient client) {
+        logger.info( "stop httpClient: {}", client );
         try {
             if (client != null) {
                 client.stop();
