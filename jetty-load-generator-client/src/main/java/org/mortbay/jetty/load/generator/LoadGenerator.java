@@ -169,6 +169,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                     if (logger.isDebugEnabled()) {
                         logger.debug("sender thread {} failed", threadName);
                     }
+                    logger.info( "sender thread " + threadName + " failed", x );
                     process.completeExceptionally(x);
                 }
             };
