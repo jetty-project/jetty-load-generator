@@ -91,7 +91,7 @@ public class LoadGeneratorTest {
         server.addConnector(connector);
         server.setHandler(handler);
         server.start();
-        server.dumpStdErr();
+        //server.dumpStdErr();
     }
 
     @After

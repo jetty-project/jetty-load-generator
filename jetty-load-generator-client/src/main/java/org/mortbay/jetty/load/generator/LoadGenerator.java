@@ -206,7 +206,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                 boolean ranEnough = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
                 Callback c = lastIteration || ranEnough ? processCallback : callback;
 
-                sendResourceTree(client, config.getResource(), warmup, c);
+                sendResourceTree(client, config.getResource(), warmup, c, config.failAtEnd);
 
                 if (lastIteration || ranEnough || (process.isCompletedExceptionally() && !config.failAtEnd)) {
                     break;
@@ -247,10 +247,13 @@ public class LoadGenerator extends ContainerLifeCycle {
         httpClient.setMaxRequestsQueuedPerDestination(config.getMaxRequestsQueued());
         httpClient.setSocketAddressResolver(config.getSocketAddressResolver());
         httpClient.setConnectBlocking(config.isConnectBlocking());
-        logger.info( "httpClient= maxConnectionsPerDestination: {}, maxRequestsQueuedPerDestination: {}, connectBlocking: {}",
-                     httpClient.getMaxConnectionsPerDestination(), //
-                     httpClient.getMaxRequestsQueuedPerDestination(), //
-                     httpClient.isConnectBlocking() );
+        if (logger.isDebugEnabled()) {
+            logger.debug(
+                "httpClient= maxConnectionsPerDestination: {}, maxRequestsQueuedPerDestination: {}, connectBlocking: {}",
+                httpClient.getMaxConnectionsPerDestination(), //
+                httpClient.getMaxRequestsQueuedPerDestination(), //
+                httpClient.isConnectBlocking() );
+        }
         return httpClient;
     }
 
@@ -279,7 +282,8 @@ public class LoadGenerator extends ContainerLifeCycle {
         return request;
     }
 
-    private void sendResourceTree(HttpClient client, Resource resource, boolean warmup, Callback callback) {
+    private void sendResourceTree(HttpClient client, Resource resource, boolean warmup, Callback callback,
+                                  boolean failAtEnd) {
         int nodes = resource.descendantCount();
         Resource.Info info = resource.newInfo();
         CountingCallback treeCallback = new CountingCallback(new Callback() {
@@ -300,10 +304,12 @@ public class LoadGenerator extends ContainerLifeCycle {
                 if (logger.isDebugEnabled()) {
                     logger.debug("failed tree for {}", resource);
                 }
-                callback.failed(x);
+                if(!failAtEnd) {
+                    callback.failed( x );
+                }
             }
         }, nodes);
-        Sender sender = new Sender(client, warmup, treeCallback);
+        Sender sender = new Sender(client, warmup, treeCallback, failAtEnd);
         sender.offer(Collections.singletonList(info));
         sender.send();
     }
@@ -343,11 +349,13 @@ public class LoadGenerator extends ContainerLifeCycle {
         private final boolean warmup;
         private final CountingCallback callback;
         private boolean active;
+        private final boolean failAtEnd;
 
-        private Sender(HttpClient client, boolean warmup, CountingCallback callback) {
+        private Sender(HttpClient client, boolean warmup, CountingCallback callback, boolean failAtEnd) {
             this.client = client;
             this.warmup = warmup;
             this.callback = callback;
+            this.failAtEnd = failAtEnd;
         }
 
         private void offer(List<Resource.Info> resources) {
@@ -426,7 +434,9 @@ public class LoadGenerator extends ContainerLifeCycle {
                             }
                             logger.info( "skip error while sending: {}", e.getMessage() );
                             // well we do not fail fast the thread but only report last error
-                            callback.failed( e );
+                            if (!failAtEnd) {
+                                callback.failed( e );
+                            }
                         }
                     }
                 } else {
@@ -479,7 +489,10 @@ public class LoadGenerator extends ContainerLifeCycle {
                     }
                     callback.succeeded();
                 } else {
-                    callback.failed(result.getFailure());
+                    if(!failAtEnd) {
+                        logger.info( "fail to send tree" );
+                        callback.failed( result.getFailure() );
+                    }
                 }
                 sendChildren(resource);
             }

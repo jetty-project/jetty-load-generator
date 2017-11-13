@@ -122,7 +122,8 @@ public class FailFastTest
         Assert.assertTrue( exception );
         LOGGER.info( "onFailure: {}, onCommit: {}", onFailure, onCommit);
         int onFailureCall = onFailure.get();
-        Assert.assertTrue("onFailureCall is " + onFailureCall, onFailureCall < 5);
+        // the value is really dependant on machine... 
+        Assert.assertTrue("onFailureCall is " + onFailureCall, onFailureCall < 10);
     }
 
     static class TestHandler
@@ -136,8 +137,8 @@ public class FailFastTest
         protected void service( HttpServletRequest request, HttpServletResponse response )
             throws ServletException, IOException
         {
-            String fail = request.getParameter( "fail" );
-            if ( getNumber.get() >= Integer.parseInt( fail ) )
+            if ( getNumber.addAndGet( 1 ) >
+                Integer.parseInt( request.getParameter( "fail" ) ) )
             {
                 try
                 {
@@ -150,7 +151,6 @@ public class FailFastTest
             }
             response.getOutputStream().write( "Jetty rocks!!".getBytes() );
             response.flushBuffer();
-            getNumber.addAndGet( 1 );
         }
     }
 
