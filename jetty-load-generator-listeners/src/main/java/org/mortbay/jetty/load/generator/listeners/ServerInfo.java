@@ -30,6 +30,8 @@ public class ServerInfo
 
     private long totalMemory;
 
+    private String gitHash;
+
     public String getJettyVersion()
     {
         return jettyVersion;
@@ -60,11 +62,21 @@ public class ServerInfo
         this.totalMemory = totalMemory;
     }
 
+    public String getGitHash()
+    {
+        return gitHash;
+    }
+
+    public void setGitHash( String gitHash )
+    {
+        this.gitHash = gitHash;
+    }
+
     @Override
     public String toString()
     {
         return "ServerInfo{" + "jettyVersion='" + jettyVersion + '\'' + ", availableProcessors=" + availableProcessors
-            + ", totalMemory=" + totalMemory + '}';
+            + ", totalMemory=" + totalMemory + ", gitHash='" + gitHash + '\'' + '}';
     }
 
     public static ServerInfo retrieveServerInfo( String scheme, String host, int port, String path )

@@ -122,7 +122,7 @@ public class FailFastTest
         Assert.assertTrue( exception );
         LOGGER.info( "onFailure: {}, onCommit: {}", onFailure, onCommit);
         int onFailureCall = onFailure.get();
-        // the value is really dependant on machine... 
+        // the value is really dependant on machine...
         Assert.assertTrue("onFailureCall is " + onFailureCall, onFailureCall < 10);
     }
 
