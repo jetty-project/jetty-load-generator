@@ -768,7 +768,8 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         /**
-         * @param executor the shared executor
+         * @param executor the shared executor between all httpclient instances
+         *                 if <code>null</code> each http client will use his own
          * @return this Builder
          */
         public Builder executor(Executor executor) {
