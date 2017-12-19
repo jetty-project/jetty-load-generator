@@ -16,7 +16,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!--jetty.version>9.4.8-SNAPSHOT</jetty.version-->
     <!--jetty.version>9.4.6.v20170531</jetty.version-->
-    <jetty.version>9.4.7.v20170914</jetty.version>
+    <jetty.version>9.4.8.v20171121</jetty.version>
   </properties>
 
   <licenses>

@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -83,7 +84,7 @@ public class LoadGenerator extends ContainerLifeCycle {
 
     @Override
     protected void doStart() throws Exception {
-        executorService = config.getExecutor() == null ? Executors.newCachedThreadPool() : config.getExecutor();
+        executorService = Executors.newCachedThreadPool();
         interrupt = false;
         super.doStart();
         fireBeginEvent(this);
@@ -516,7 +517,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         protected HTTPClientTransportBuilder httpClientTransportBuilder;
         protected SslContextFactory sslContextFactory;
         protected Scheduler scheduler;
-        protected ExecutorService executor;
+        protected Executor executor;
         protected SocketAddressResolver socketAddressResolver = new SocketAddressResolver.Sync();
         protected Resource resource = new Resource("/");
         protected final List<Listener> listeners = new ArrayList<>();
@@ -578,7 +579,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             return scheduler;
         }
 
-        public ExecutorService getExecutor() {
+        public Executor getExecutor() {
             return executor;
         }
 
