@@ -771,7 +771,7 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @param executor the shared executor
          * @return this Builder
          */
-        public Builder executor(ExecutorService executor) {
+        public Builder executor(Executor executor) {
             this.executor = Objects.requireNonNull(executor);
             return this;
         }
