@@ -21,9 +21,6 @@ package org.mortbay.jetty.load.generator.store;
 import org.mortbay.jetty.load.generator.listeners.LoadResult;
 
 import java.io.Closeable;
-import java.io.Serializable;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -36,27 +33,63 @@ public interface ResultStore
 {
 
     /**
-     * @param setupData veru generic way of passing some data
+     * @param setupData very generic way of passing some data/parameters to initialize the component
      */
     void initialize( Map<String, String> setupData );
 
+    /**
+     * save a {@link LoadResult} value
+     * @param loadResult the value to save
+     */
     void save( LoadResult loadResult );
 
+    /**
+     *
+     * @param loadResultId the {@link LoadResult} unique to retrieve
+     * @return the {@link LoadResult} corresponding to the id
+     */
     LoadResult get( String loadResultId );
 
-    List<LoadResult> get( List<String> loadResultId );
+    /**
+     *
+     * @param loadResultIds the {@link List} od unique id to retrieve
+     * @return the {@link List} of {@link LoadResult}
+     */
+    List<LoadResult> get( List<String> loadResultIds );
 
+    /**
+     *
+     * @param loadResult the instance to remove from the store
+     */
     void remove( LoadResult loadResult );
 
-    List<LoadResult> find( QueryFiler queryFiler );
+    /**
+     *
+     * @param queryFilter the {@link QueryFilter} to search {@link LoadResult}
+     * @return the {@link List} of {@link LoadResult} corresponding to the filter
+     */
+    List<LoadResult> find( QueryFilter queryFilter );
 
+    /**
+     * <b>might be very expensive and some implementations not implemented it</b>
+     * @return all {@link LoadResult}
+     */
     List<LoadResult> findAll();
 
+    /**
+     *
+     * @return an unique id corresponding to the {@link ResultStore} implementation
+     */
     String getProviderId();
 
+    /**
+     *
+     * @param setupData
+     * @return <code>true</code> if the {@link ResultStore} implementation is active
+     */
     boolean isActive( Map<String, String> setupData );
 
-    class QueryFiler
+    class QueryFilter
     {
         private String jettyVersion, uuid;
 
@@ -72,7 +105,7 @@ public interface ResultStore
             this.jettyVersion = jettyVersion;
         }
 
-        public QueryFiler jettyVersion( String jettyVersion )
+        public QueryFilter jettyVersion( String jettyVersion )
         {
             this.jettyVersion = jettyVersion;
             return this;
@@ -88,7 +121,7 @@ public interface ResultStore
             this.startDate = startDate;
         }
 
-        public QueryFiler startDate( Date startDate )
+        public QueryFilter startDate( Date startDate )
         {
             this.startDate = startDate;
             return this;
@@ -104,7 +137,7 @@ public interface ResultStore
             this.endDate = endDate;
         }
 
-        public QueryFiler endDate( Date endDate )
+        public QueryFilter endDate( Date endDate )
         {
             this.endDate = endDate;
             return this;
@@ -120,7 +153,7 @@ public interface ResultStore
             this.uuid = uuid;
         }
 
-        public QueryFiler uuid( String uuid )
+        public QueryFilter uuid( String uuid )
         {
             this.uuid = uuid;
             return this;

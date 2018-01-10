@@ -263,7 +263,7 @@ public class ElasticResultStore
     }
 
     @Override
-    public List<LoadResult> find( QueryFiler queryFiler )
+    public List<LoadResult> find( QueryFilter queryFilter )
     {
         return null;
     }

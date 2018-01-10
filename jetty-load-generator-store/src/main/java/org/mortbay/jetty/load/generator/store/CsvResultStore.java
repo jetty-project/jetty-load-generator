@@ -199,7 +199,7 @@ public class CsvResultStore
     }
 
     @Override
-    public List<LoadResult> find( QueryFiler queryFiler )
+    public List<LoadResult> find( QueryFilter queryFilter )
     {
         // TODO filter on result
         return findAll();
