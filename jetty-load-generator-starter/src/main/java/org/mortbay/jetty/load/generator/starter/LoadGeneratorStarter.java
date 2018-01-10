@@ -21,6 +21,7 @@ package org.mortbay.jetty.load.generator.starter;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import com.beust.jcommander.JCommander;
 import org.eclipse.jetty.util.log.Log;
@@ -48,7 +49,11 @@ public class LoadGeneratorStarter {
     }
 
     public static LoadGeneratorStarterArgs parse(String[] args) {
-        LoadGeneratorStarterArgs starterArgs = new LoadGeneratorStarterArgs();
+        return parse(args, LoadGeneratorStarterArgs::new);
+    }
+
+    public static <T extends LoadGeneratorStarterArgs> T parse(String[] args, Supplier<T> argsSupplier) {
+        T starterArgs = argsSupplier.get();
         JCommander jCommander = new JCommander(starterArgs);
         jCommander.setAcceptUnknownOptions(true);
         jCommander.parse(args);
