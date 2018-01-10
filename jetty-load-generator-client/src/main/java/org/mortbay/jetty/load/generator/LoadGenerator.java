@@ -45,7 +45,6 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BytesContentProvider;
-import org.mortbay.jetty.load.generator.util.PlatformTimer;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.CountingCallback;
 import org.eclipse.jetty.util.SocketAddressResolver;
@@ -61,7 +60,6 @@ import org.eclipse.jetty.util.thread.Scheduler;
 public class LoadGenerator extends ContainerLifeCycle {
     private static final Logger logger = Log.getLogger(LoadGenerator.class);
 
-    private final PlatformTimer timer = PlatformTimer.detect();
     private final Config config;
     private final CyclicBarrier barrier;
     private ExecutorService executorService;
@@ -170,7 +168,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                     if (logger.isDebugEnabled()) {
                         logger.debug("sender thread {} failed", threadName);
                     }
-                    logger.info( "sender thread " + threadName + " failed", x );
+                    logger.info("sender thread " + threadName + " failed", x);
                     process.completeExceptionally(x);
                 }
             };
@@ -192,40 +190,50 @@ public class LoadGenerator extends ContainerLifeCycle {
             long begin = System.nanoTime();
             long next = begin + period;
             int clientIndex = 0;
+
+            send:
             while (true) {
-                HttpClient client = clients[clientIndex];
-
-                boolean warmup = false;
-                boolean lastIteration = false;
-                if (warmupIterations > 0) {
-                    warmup = --warmupIterations >= 0;
-                } else if (iterations > 0) {
-                    lastIteration = --iterations == 0;
-                }
-                // Sends the resource one more time after the time expired,
-                // but guarantees that the callback is notified correctly.
-                boolean ranEnough = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
-                Callback c = lastIteration || ranEnough ? processCallback : callback;
-
-                sendResourceTree(client, config.getResource(), warmup, c, config.failAtEnd);
-
-                if (lastIteration || ranEnough || (process.isCompletedExceptionally() && !config.failAtEnd)) {
-                    break;
-                }
-                if (interrupt) {
-                    callback.failed(new InterruptedException());
-                    break;
-                }
-
-                if (++clientIndex == clients.length) {
-                    clientIndex = 0;
-                }
-
+                int batch = 1;
                 if (period > 0) {
-                    long pause = TimeUnit.NANOSECONDS.toMicros(next - System.nanoTime());
-                    next += period;
+                    long pause = next - System.nanoTime();
                     if (pause > 0) {
-                        timer.sleep(pause);
+                        // The sleep may take longer than pause.
+                        TimeUnit.NANOSECONDS.sleep(pause);
+                        long elapsed = System.nanoTime() - next;
+                        // Calculate how many requests were not sent while sleeping.
+                        batch += (int)(elapsed / period);
+                    }
+                }
+
+                while (batch > 0) {
+                    HttpClient client = clients[clientIndex];
+
+                    boolean warmup = false;
+                    boolean lastIteration = false;
+                    if (warmupIterations > 0) {
+                        warmup = --warmupIterations >= 0;
+                    } else if (iterations > 0) {
+                        lastIteration = --iterations == 0;
+                    }
+                    // Sends the resource one more time after the time expired,
+                    // but guarantees that the callback is notified correctly.
+                    boolean ranEnough = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
+                    Callback c = lastIteration || ranEnough ? processCallback : callback;
+
+                    sendResourceTree(client, config.getResource(), warmup, c, config.failAtEnd);
+                    --batch;
+                    next += period;
+
+                    if (lastIteration || ranEnough || (process.isCompletedExceptionally() && !config.failAtEnd)) {
+                        break send;
+                    }
+                    if (interrupt) {
+                        callback.failed(new InterruptedException());
+                        break send;
+                    }
+
+                    if (++clientIndex == clients.length) {
+                        clientIndex = 0;
                     }
                 }
             }
@@ -233,7 +241,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             if (logger.isDebugEnabled()) {
                 logger.debug(x);
             }
-            logger.info( "process failed", x );
+            logger.info("process failed", x);
             process.completeExceptionally(x);
         }
         return result;
@@ -241,7 +249,7 @@ public class LoadGenerator extends ContainerLifeCycle {
 
     protected HttpClient newHttpClient(Config config) {
         HttpClient httpClient = new HttpClient(config.getHttpClientTransportBuilder().build(), //
-                                               config.getSslContextFactory());
+                config.getSslContextFactory());
         httpClient.setExecutor(config.getExecutor());
         httpClient.setScheduler(config.getScheduler());
         httpClient.setMaxConnectionsPerDestination(config.getChannelsPerUser());
@@ -250,16 +258,16 @@ public class LoadGenerator extends ContainerLifeCycle {
         httpClient.setConnectBlocking(config.isConnectBlocking());
         if (logger.isDebugEnabled()) {
             logger.debug(
-                "httpClient= maxConnectionsPerDestination: {}, maxRequestsQueuedPerDestination: {}, connectBlocking: {}",
-                httpClient.getMaxConnectionsPerDestination(), //
-                httpClient.getMaxRequestsQueuedPerDestination(), //
-                httpClient.isConnectBlocking() );
+                    "httpClient= maxConnectionsPerDestination: {}, maxRequestsQueuedPerDestination: {}, connectBlocking: {}",
+                    httpClient.getMaxConnectionsPerDestination(), //
+                    httpClient.getMaxRequestsQueuedPerDestination(), //
+                    httpClient.isConnectBlocking());
         }
         return httpClient;
     }
 
     private void stopHttpClient(HttpClient client) {
-        logger.info( "stop httpClient: {}", client );
+        logger.info("stop httpClient: {}", client);
         try {
             if (client != null) {
                 client.stop();
@@ -305,8 +313,8 @@ public class LoadGenerator extends ContainerLifeCycle {
                 if (logger.isDebugEnabled()) {
                     logger.debug("failed tree for {}", resource);
                 }
-                if(!failAtEnd) {
-                    callback.failed( x );
+                if (!failAtEnd) {
+                    callback.failed(x);
                 }
             }
         }, nodes);
@@ -421,22 +429,21 @@ public class LoadGenerator extends ContainerLifeCycle {
                             }
                         });
 
-                        try
-                        {
+                        try {
                             Request request = config.getRequestListeners().stream()
                                     .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
                             request.send(new ResponseHandler(info));
-                        } catch ( Throwable e ) {
+                        } catch (Throwable e) {
                             if (logger.isDebugEnabled()) {
                                 logger.debug("sending httpRequest {} failed {}", httpRequest.getPath(), e.getMessage());
                             }
-                            if(!config.failAtEnd) {
+                            if (!config.failAtEnd) {
                                 throw e;
                             }
-                            logger.info( "skip error while sending: {}", e.getMessage() );
+                            logger.info("skip error while sending: {}", e.getMessage());
                             // well we do not fail fast the thread but only report last error
                             if (!failAtEnd) {
-                                callback.failed( e );
+                                callback.failed(e);
                             }
                         }
                     }
@@ -490,9 +497,9 @@ public class LoadGenerator extends ContainerLifeCycle {
                     }
                     callback.succeeded();
                 } else {
-                    if(!failAtEnd) {
-                        logger.info( "fail to send tree" );
-                        callback.failed( result.getFailure() );
+                    if (!failAtEnd) {
+                        logger.info("fail to send tree");
+                        callback.failed(result.getFailure());
                     }
                 }
                 sendChildren(resource);
