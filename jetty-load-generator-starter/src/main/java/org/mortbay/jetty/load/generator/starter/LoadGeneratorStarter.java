@@ -80,7 +80,6 @@ public class LoadGeneratorStarter {
                     .scheme(starterArgs.getScheme())
                     .host(starterArgs.getHost())
                     .port(starterArgs.getPort())
-                    .failAtEnd( starterArgs.isFailAtEnd() )
                     .maxRequestsQueued(starterArgs.getMaxRequestsQueued())
                     .connectBlocking(starterArgs.isConnectBlocking());
         } catch (Exception x) {
