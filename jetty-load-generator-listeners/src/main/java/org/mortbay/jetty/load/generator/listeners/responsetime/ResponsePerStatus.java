@@ -17,9 +17,9 @@
 
 package org.mortbay.jetty.load.generator.listeners.responsetime;
 
-import org.mortbay.jetty.load.generator.Resource;
-
 import java.util.concurrent.atomic.LongAdder;
+
+import org.mortbay.jetty.load.generator.Resource;
 
 /**
  *

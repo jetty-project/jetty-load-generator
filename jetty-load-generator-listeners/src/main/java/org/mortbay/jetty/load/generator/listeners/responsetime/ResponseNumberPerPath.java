@@ -17,12 +17,12 @@
 
 package org.mortbay.jetty.load.generator.listeners.responsetime;
 
-import org.mortbay.jetty.load.generator.Resource;
-
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.mortbay.jetty.load.generator.Resource;
 
 /**
  *

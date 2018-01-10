@@ -18,10 +18,10 @@
 
 package org.mortbay.jetty.load.generator.listeners.report;
 
-import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
 
 /**
  *

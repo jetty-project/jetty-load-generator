@@ -18,21 +18,19 @@
 
 package org.mortbay.jetty.load.generator.listeners;
 
-import org.HdrHistogram.Histogram;
-import org.HdrHistogram.Recorder;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import org.HdrHistogram.Histogram;
+import org.HdrHistogram.Recorder;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 
 /**
  * This listener will record time between start of send and onCommit event

@@ -18,13 +18,6 @@
 
 package org.mortbay.jetty.load.generator.store;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
-import org.apache.commons.lang3.StringUtils;
-import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
-import org.mortbay.jetty.load.generator.listeners.LoadResult;
-import org.mortbay.jetty.load.generator.listeners.ServerInfo;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -38,6 +31,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
+import org.apache.commons.lang3.StringUtils;
+import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
+import org.mortbay.jetty.load.generator.listeners.LoadResult;
+import org.mortbay.jetty.load.generator.listeners.ServerInfo;
 
 public class CsvResultStore
     extends AbstractResultStore

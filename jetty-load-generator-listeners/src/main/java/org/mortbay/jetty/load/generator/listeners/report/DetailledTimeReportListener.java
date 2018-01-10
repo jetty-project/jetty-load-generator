@@ -18,9 +18,9 @@
 
 package org.mortbay.jetty.load.generator.listeners.report;
 
-import org.mortbay.jetty.load.generator.Resource;
-
 import java.io.Serializable;
+
+import org.mortbay.jetty.load.generator.Resource;
 
 /**
  * Use this one to collect all values

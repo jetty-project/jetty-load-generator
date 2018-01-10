@@ -18,15 +18,15 @@
 
 package org.mortbay.jetty.load.generator.listeners;
 
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.LoadGenerator;
 
 /**
  *

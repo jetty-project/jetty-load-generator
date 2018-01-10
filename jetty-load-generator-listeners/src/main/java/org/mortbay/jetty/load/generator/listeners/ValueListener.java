@@ -17,9 +17,9 @@
 //
 package org.mortbay.jetty.load.generator.listeners;
 
-import org.mortbay.jetty.load.generator.LoadGenerator;
-
 import java.io.Serializable;
+
+import org.mortbay.jetty.load.generator.LoadGenerator;
 
 /**
  *

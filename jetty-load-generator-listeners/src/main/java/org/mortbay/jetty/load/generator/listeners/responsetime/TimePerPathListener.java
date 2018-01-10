@@ -18,18 +18,18 @@
 
 package org.mortbay.jetty.load.generator.listeners.responsetime;
 
-import org.HdrHistogram.AtomicHistogram;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
-import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.Resource;
-import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.HdrHistogram.AtomicHistogram;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.mortbay.jetty.load.generator.LoadGenerator;
+import org.mortbay.jetty.load.generator.Resource;
+import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
+import org.mortbay.jetty.load.generator.listeners.HistogramConstants;
 
 /**
  * <p>Use {@link AtomicHistogram} to tracker response/latency time per path</p>
