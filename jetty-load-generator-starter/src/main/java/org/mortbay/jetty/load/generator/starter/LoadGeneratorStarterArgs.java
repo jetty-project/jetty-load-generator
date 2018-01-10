@@ -57,8 +57,8 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--running-time-unit", "-rtu"}, description = "LoadGenerator Running Time Unit (h/m/s/ms)")
     private String runningTimeUnit = "s";
 
-    @Parameter(names = {"--users", "-u"}, description = "Users per thread")
-    private int users = 1;
+    @Parameter(names = {"--users-per-thread", "-upt"}, description = "Users per thread")
+    private int usersPerThread = 1;
 
     @Parameter(names = {"--channels-per-user", "-cpu"}, description = "Channels/Connections per user")
     private int channelsPerUser = 128;
@@ -129,12 +129,12 @@ public class LoadGeneratorStarterArgs {
         this.port = port;
     }
 
-    public int getUsers() {
-        return users;
+    public int getUsersPerThread() {
+        return usersPerThread;
     }
 
-    public void setUsers(int users) {
-        this.users = users;
+    public void setUsersPerThread(int usersPerThread) {
+        this.usersPerThread = usersPerThread;
     }
 
     public int getResourceRate() {
