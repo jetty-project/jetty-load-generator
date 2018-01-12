@@ -88,7 +88,10 @@ public class LoadGeneratorStarter {
     }
 
     public static void run(LoadGenerator.Builder builder) {
-        LoadGenerator loadGenerator = builder.build();
+        run(builder.build());
+    }
+
+    public static void run(LoadGenerator loadGenerator) {
         LOGGER.info("load generator config: {}", loadGenerator.getConfig());
         LOGGER.info("load generation begin");
         CompletableFuture<Void> cf = loadGenerator.begin();

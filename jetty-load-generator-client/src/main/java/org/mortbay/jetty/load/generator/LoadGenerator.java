@@ -48,6 +48,7 @@ import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.CountingCallback;
 import org.eclipse.jetty.util.SocketAddressResolver;
+import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.ManagedOperation;
 import org.eclipse.jetty.util.component.ContainerLifeCycle;
@@ -56,7 +57,7 @@ import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
-@ManagedObject("Jetty LoadGenerator")
+@ManagedObject("LoadGenerator")
 public class LoadGenerator extends ContainerLifeCycle {
     private static final Logger logger = Log.getLogger(LoadGenerator.class);
 
@@ -68,6 +69,7 @@ public class LoadGenerator extends ContainerLifeCycle {
     private LoadGenerator(Config config) {
         this.config = config;
         this.barrier = new CyclicBarrier(config.threads);
+        addBean(config);
     }
 
     private void go() {
@@ -150,8 +152,9 @@ public class LoadGenerator extends ContainerLifeCycle {
                 Arrays.stream(clients).forEach(this::stopHttpClient);
             }, executorService);
             for (int i = 0; i < clients.length; ++i) {
-                clients[i] = newHttpClient(getConfig());
-                clients[i].start();
+                HttpClient client = clients[i] = newHttpClient(getConfig());
+                client.start();
+                addBean(client, false);
             }
 
             Callback processCallback = new Callback() {
@@ -267,10 +270,10 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     private void stopHttpClient(HttpClient client) {
-        logger.info("stop httpClient: {}", client);
         try {
             if (client != null) {
                 client.stop();
+                removeBean(client);
             }
         } catch (Throwable x) {
             logger.ignore(x);
@@ -488,6 +491,7 @@ public class LoadGenerator extends ContainerLifeCycle {
     /**
      * Read-only configuration for the load generator.
      */
+    @ManagedObject("LoadGenerator Configuration")
     public static class Config {
         protected int threads = 1;
         protected int warmupIterationsPerThread = 0;
@@ -511,42 +515,52 @@ public class LoadGenerator extends ContainerLifeCycle {
         protected int maxRequestsQueued = 128 * 1024;
         protected boolean connectBlocking = false;
 
+        @ManagedAttribute("Number of sender threads")
         public int getThreads() {
             return threads;
         }
 
+        @ManagedAttribute("Number of warmup iterations per sender thread")
         public int getWarmupIterationsPerThread() {
             return warmupIterationsPerThread;
         }
 
+        @ManagedAttribute("Number of iterations per sender thread")
         public int getIterationsPerThread() {
             return iterationsPerThread;
         }
 
+        @ManagedAttribute("Time in seconds for how long to run")
         public long getRunFor() {
             return runFor;
         }
 
+        @ManagedAttribute("Number of users per sender thread")
         public int getUsersPerThread() {
             return usersPerThread;
         }
 
+        @ManagedAttribute("Number of concurrent request channels per user")
         public int getChannelsPerUser() {
             return channelsPerUser;
         }
 
+        @ManagedAttribute("Rate at which resources are sent")
         public int getResourceRate() {
             return resourceRate;
         }
 
+        @ManagedAttribute("Scheme for the request URI")
         public String getScheme() {
             return scheme;
         }
 
+        @ManagedAttribute("Host for the request URI")
         public String getHost() {
             return host;
         }
 
+        @ManagedAttribute("Port for the request URI")
         public int getPort() {
             return port;
         }
@@ -575,6 +589,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             return resource;
         }
 
+        @ManagedAttribute("Maximum number of queued requests")
         public int getMaxRequestsQueued() {
             return maxRequestsQueued;
         }
@@ -591,6 +606,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             return resourceListeners;
         }
 
+        @ManagedAttribute("Whether the connect operation is blocking")
         public boolean isConnectBlocking() {
             return connectBlocking;
         }
