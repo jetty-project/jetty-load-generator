@@ -72,14 +72,15 @@ public class LoadGenerator extends ContainerLifeCycle {
         addBean(config);
     }
 
-    private void go() {
+    private CompletableFuture<Void> proceed() {
+        CompletableFuture<Void> result = new CompletableFuture<>();
         try {
             start();
-        } catch (RuntimeException x) {
-            throw x;
-        } catch (Exception x) {
-            throw new RuntimeException(x);
+            result.complete(null);
+        } catch (Throwable x) {
+            result.completeExceptionally(x);
         }
+        return result;
     }
 
     @Override
@@ -90,14 +91,15 @@ public class LoadGenerator extends ContainerLifeCycle {
         fireBeginEvent(this);
     }
 
-    private void halt() {
+    private CompletableFuture<Void> halt() {
+        CompletableFuture<Void> result = new CompletableFuture<>();
         try {
             stop();
-        } catch (RuntimeException x) {
-            throw x;
-        } catch (Exception x) {
-            throw new RuntimeException(x);
+            result.complete(null);
+        } catch (Throwable x) {
+            result.completeExceptionally(x);
         }
+        return result;
     }
 
     @Override
@@ -116,15 +118,13 @@ public class LoadGenerator extends ContainerLifeCycle {
         if (logger.isDebugEnabled()) {
             logger.debug("generating load, {}", config);
         }
-
-        go();
-
-        CompletableFuture[] futures = new CompletableFuture[config.getThreads()];
-        for (int i = 0; i < futures.length; ++i) {
-            futures[i] = CompletableFuture.supplyAsync(this::process, executorService).thenCompose(Function.identity());
-        }
-
-        return CompletableFuture.allOf(futures).whenCompleteAsync((r, x) -> halt(), executorService);
+        return proceed().thenCompose(x -> {
+            CompletableFuture[] futures = new CompletableFuture[config.getThreads()];
+            for (int i = 0; i < futures.length; ++i) {
+                futures[i] = CompletableFuture.supplyAsync(this::process, executorService).thenCompose(Function.identity());
+            }
+            return CompletableFuture.allOf(futures);
+        }).thenComposeAsync(x -> halt(), executorService);
     }
 
     @ManagedOperation(value = "Interrupts this LoadGenerator", impact = "ACTION")
