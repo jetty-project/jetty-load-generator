@@ -44,8 +44,7 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.SocketAddressResolver;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,14 +53,9 @@ import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class LoadGeneratorTest {
-    private static final Logger LOG = Log.getLogger( LoadGeneratorTest.class);
-
     @Parameterized.Parameters(name = "{0}")
-    public static Iterable<Object[]> parameters() {
-        List<Object[]> result = new ArrayList<>();
-        result.add(new Object[]{new HttpConnectionFactory(), new HTTP1ClientTransportBuilder()});
-        result.add(new Object[]{new HTTP2CServerConnectionFactory(new HttpConfiguration()), new HTTP2ClientTransportBuilder()});
-        return result;
+    public static Object[] parameters() {
+        return TransportType.values();
     }
 
     private final ConnectionFactory connectionFactory;
@@ -69,30 +63,27 @@ public class LoadGeneratorTest {
     private Server server;
     private ServerConnector connector;
 
-//    public LoadGeneratorTest() {
-//        this.connectionFactory = new HTTP2CServerConnectionFactory(new HttpConfiguration());
-//        this.clientTransportBuilder = new HTTP2ClientTransportBuilder();
-//    }
-
-    public LoadGeneratorTest(ConnectionFactory connectionFactory, HTTPClientTransportBuilder clientTransportBuilder) {
-        // using a new HTTP2CServerConnectionFactory fix the issue with 9.4.7+
-        //this.connectionFactory = connectionFactory;
-        this.connectionFactory = connectionFactory instanceof HTTP2CServerConnectionFactory? //
-            new HTTP2CServerConnectionFactory(new HttpConfiguration()): connectionFactory;
-        this.clientTransportBuilder = clientTransportBuilder;
-        LOG.info( "connectionFactory: {}, clientTransportBuilder: {}", connectionFactory, clientTransportBuilder);
+    public LoadGeneratorTest(TransportType transportType) {
+        switch (transportType) {
+            case H1C:
+                connectionFactory = new HttpConnectionFactory();
+                clientTransportBuilder = new HTTP1ClientTransportBuilder();
+                break;
+            case H2C:
+                connectionFactory = new HTTP2CServerConnectionFactory(new HttpConfiguration());
+                clientTransportBuilder = new HTTP2ClientTransportBuilder();
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 
     private void prepare(Handler handler) throws Exception {
-        //QueuedThreadPool qtp = new QueuedThreadPool(20,20, 90000);
-        // using a new qtp and explicitly start it fix the issue with 9.4.7+
-        //qtp.start();
         server = new Server();
         connector = new ServerConnector(server, connectionFactory);
         server.addConnector(connector);
         server.setHandler(handler);
         server.start();
-        //server.dumpStdErr();
     }
 
     @After
@@ -181,7 +172,7 @@ public class LoadGeneratorTest {
         prepare(new TestHandler());
 
         Queue<String> resources = new ConcurrentLinkedDeque<>();
-        List<Resource.Info> infos = new ArrayList<>(  );
+        List<Resource.Info> infos = new ArrayList<>();
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .port(connector.getLocalPort())
                 .httpClientTransportBuilder(clientTransportBuilder)
@@ -192,14 +183,14 @@ public class LoadGeneratorTest {
                         .responseLength(16 * 1024))
                 .resourceListener((Resource.NodeListener)info -> {
                     resources.offer(info.getResource().getPath());
-                    infos.add( info );
+                    infos.add(info);
                 })
                 .resourceListener((Resource.TreeListener)info -> resources.offer(info.getResource().getPath()))
                 .build();
         loadGenerator.begin().get(5, TimeUnit.SECONDS);
 
         Assert.assertEquals("/,/1,/11,/", resources.stream().collect(Collectors.joining(",")));
-        Assert.assertTrue( infos.stream().allMatch( info -> info.getStatus() == 200 ) );
+        Assert.assertTrue(infos.stream().allMatch(info -> info.getStatus() == 200));
     }
 
     @Test
@@ -325,5 +316,44 @@ public class LoadGeneratorTest {
                 throw new CompletionException(cause);
             }
         }).get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testRateIsRespected() throws Exception {
+        // Use a large resource rate to test that
+        // sleep compensation works correctly.
+        int rate = 2000;
+        if (connectionFactory instanceof HTTP2CServerConnectionFactory) {
+            ((HTTP2CServerConnectionFactory)connectionFactory).setMaxConcurrentStreams(rate);
+        }
+        prepare(new TestHandler());
+
+        int iterations = 5 * rate;
+        AtomicLong requests = new AtomicLong();
+        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .iterationsPerThread(iterations)
+                .resourceRate(rate)
+                .socketAddressResolver(new SocketAddressResolver.Sync())
+                .requestListener(new Request.Listener.Adapter() {
+                    @Override
+                    public void onBegin(Request request) {
+                        requests.incrementAndGet();
+                    }
+                })
+                .build();
+
+        long start = System.nanoTime();
+        loadGenerator.begin().get(10 * rate, TimeUnit.MILLISECONDS);
+        long elapsed = System.nanoTime() - start;
+        long expected = TimeUnit.SECONDS.toNanos(iterations / rate);
+
+        Assert.assertTrue(Math.abs(elapsed - expected) < expected / 10);
+        Assert.assertEquals(iterations, requests.intValue());
+    }
+
+    private enum TransportType {
+        H1C, H2C
     }
 }

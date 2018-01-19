@@ -190,21 +190,19 @@ public class LoadGenerator extends ContainerLifeCycle {
             int iterations = runFor > 0 ? 0 : config.getIterationsPerThread();
 
             long begin = System.nanoTime();
-            long next = begin + period;
+            long total = 0;
             int clientIndex = 0;
 
             send:
             while (true) {
-                int batch = 1;
+                long batch = 1;
                 if (period > 0) {
-                    long pause = next - System.nanoTime();
-                    if (pause > 0) {
-                        // The sleep may take longer than pause.
-                        TimeUnit.NANOSECONDS.sleep(pause);
-                        long elapsed = System.nanoTime() - next;
-                        // Calculate how many requests were not sent while sleeping.
-                        batch += (int)(elapsed / period);
-                    }
+                    // We need to compensate for oversleeping.
+                    TimeUnit.NANOSECONDS.sleep(period);
+                    long elapsed = System.nanoTime() - begin;
+                    long expected = elapsed * rate / TimeUnit.SECONDS.toNanos(1);
+                    batch = expected - total;
+                    total = expected;
                 }
 
                 while (batch > 0) {
@@ -224,7 +222,6 @@ public class LoadGenerator extends ContainerLifeCycle {
 
                     sendResourceTree(client, config.getResource(), warmup, c);
                     --batch;
-                    next += period;
 
                     if (lastIteration || ranEnough || process.isCompletedExceptionally()) {
                         break send;
@@ -243,7 +240,6 @@ public class LoadGenerator extends ContainerLifeCycle {
             if (logger.isDebugEnabled()) {
                 logger.debug(x);
             }
-            logger.info("process failed", x);
             process.completeExceptionally(x);
         }
         return result;
@@ -763,8 +759,8 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         /**
-         * @param executor the shared executor between all httpclient instances
-         *                 if <code>null</code> each http client will use his own
+         * @param executor the shared executor between all HttpClient instances
+         *                 if {@code null} each HttpClient will use its own
          * @return this Builder
          */
         public Builder executor(Executor executor) {
