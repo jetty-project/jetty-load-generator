@@ -22,6 +22,7 @@ import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -303,15 +304,18 @@ public class LoadGeneratorTest {
 
         ObjectName pattern = new ObjectName(LoadGenerator.class.getPackage().getName() + ":*");
         Set<ObjectName> objectNames = mbeanContainer.getMBeanServer().queryNames(pattern, null);
-        Assert.assertEquals(1, objectNames.size());
-        ObjectName objectName = objectNames.iterator().next();
+        Assert.assertTrue(objectNames.size() > 0);
+        Optional<ObjectName> objectNameOpt = objectNames.stream()
+                .filter(o -> o.getKeyProperty("type").equalsIgnoreCase(LoadGenerator.class.getSimpleName()))
+                .findAny();
+        Assert.assertTrue(objectNameOpt.isPresent());
+        ObjectName objectName = objectNameOpt.get();
 
         CompletableFuture<Void> cf = loadGenerator.begin();
 
         Thread.sleep(1000);
 
         mbeanContainer.getMBeanServer().invoke(objectName, "interrupt", null, null);
-        mbeanContainer.beanRemoved(null, loadGenerator);
 
         cf.handle((r, x) -> {
             Throwable cause = x.getCause();
