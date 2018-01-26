@@ -246,21 +246,15 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     protected HttpClient newHttpClient(Config config) {
-        HttpClient httpClient = new HttpClient(config.getHttpClientTransportBuilder().build(), //
-                config.getSslContextFactory());
+        HttpClient httpClient = new HttpClient(config.getHttpClientTransportBuilder().build(), config.getSslContextFactory());
         httpClient.setExecutor(config.getExecutor());
         httpClient.setScheduler(config.getScheduler());
         httpClient.setMaxConnectionsPerDestination(config.getChannelsPerUser());
         httpClient.setMaxRequestsQueuedPerDestination(config.getMaxRequestsQueued());
         httpClient.setSocketAddressResolver(config.getSocketAddressResolver());
         httpClient.setConnectBlocking(config.isConnectBlocking());
-        if (logger.isDebugEnabled()) {
-            logger.debug(
-                    "httpClient= maxConnectionsPerDestination: {}, maxRequestsQueuedPerDestination: {}, connectBlocking: {}",
-                    httpClient.getMaxConnectionsPerDestination(), //
-                    httpClient.getMaxRequestsQueuedPerDestination(), //
-                    httpClient.isConnectBlocking());
-        }
+        httpClient.setConnectTimeout(config.getConnectTimeout());
+        httpClient.setIdleTimeout(config.getIdleTimeout());
         return httpClient;
     }
 
@@ -508,7 +502,9 @@ public class LoadGenerator extends ContainerLifeCycle {
         protected final List<Request.Listener> requestListeners = new ArrayList<>();
         protected final List<Resource.Listener> resourceListeners = new ArrayList<>();
         protected int maxRequestsQueued = 128 * 1024;
-        protected boolean connectBlocking = false;
+        protected boolean connectBlocking = true;
+        protected long connectTimeout = 5000;
+        protected long idleTimeout = 15000;
 
         @ManagedAttribute("Number of sender threads")
         public int getThreads() {
@@ -604,6 +600,16 @@ public class LoadGenerator extends ContainerLifeCycle {
         @ManagedAttribute("Whether the connect operation is blocking")
         public boolean isConnectBlocking() {
             return connectBlocking;
+        }
+
+        @ManagedAttribute("Connect timeout in milliseconds")
+        public long getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        @ManagedAttribute("Idle timeout in milliseconds")
+        public long getIdleTimeout() {
+            return idleTimeout;
         }
 
         @Override
@@ -808,6 +814,16 @@ public class LoadGenerator extends ContainerLifeCycle {
 
         public Builder connectBlocking(boolean connectBlocking) {
             this.connectBlocking = connectBlocking;
+            return this;
+        }
+
+        public Builder connectTimeout(long connectTimeout) {
+            this.connectTimeout = connectTimeout;
+            return this;
+        }
+
+        public Builder idleTimeout(long idleTimeout) {
+            this.idleTimeout = idleTimeout;
             return this;
         }
 

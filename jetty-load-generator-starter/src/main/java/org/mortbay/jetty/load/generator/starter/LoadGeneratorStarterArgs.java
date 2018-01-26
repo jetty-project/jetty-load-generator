@@ -93,6 +93,15 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--max-requests-queued", "-mrq"}, description = "Max Requests Queued")
     private int maxRequestsQueued = 1024;
 
+    @Parameter(names = {"--connect-blocking", "-cb"}, description = "Whether TCP connect is blocking")
+    private boolean connectBlocking = true;
+
+    @Parameter(names = {"--connect-timeout", "-ct"}, description = "Connect timeout in milliseconds")
+    private long connectTimeout = 5000;
+
+    @Parameter(names = {"--idle-timeout", "-it"}, description = "Idle timeout in milliseconds")
+    private long idleTimeout = 15000;
+
     @Parameter(names = {"--stats-file", "-sf"}, description = "Statistics output file")
     private String statsFile;
 
@@ -101,9 +110,6 @@ public class LoadGeneratorStarterArgs {
 
     @Parameter(names = {"--help"}, description = "Displays usage")
     private boolean help;
-
-    @Parameter(names = {"-cb","--connect-blocking"}, description = "Connect async or not")
-    private boolean connectBlocking = false;
 
     public String getResourceXMLPath() {
         return resourceXMLPath;
@@ -299,11 +305,27 @@ public class LoadGeneratorStarterArgs {
         return connectBlocking;
     }
 
-    public void setConnectBlocking( boolean connectBlocking ) {
+    public void setConnectBlocking(boolean connectBlocking) {
         this.connectBlocking = connectBlocking;
     }
 
-    public Resource getResource( LoadGenerator.Builder builder) throws Exception {
+    public long getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(long connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public long getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    public void setIdleTimeout(long idleTimeout) {
+        this.idleTimeout = idleTimeout;
+    }
+
+    public Resource getResource(LoadGenerator.Builder builder) throws Exception {
         String jsonPath = getResourceJSONPath();
         if (jsonPath != null) {
             Path path = Paths.get(jsonPath);
@@ -328,13 +350,13 @@ public class LoadGeneratorStarterArgs {
         throw new IllegalArgumentException("resource not defined");
     }
 
-    public static Resource evaluateJSON(Path profilePath) throws IOException {
+    static Resource evaluateJSON(Path profilePath) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         return objectMapper.readValue(profilePath.toFile(), Resource.class);
     }
 
-    public static Resource evaluateGroovy(Reader script, Map<String, Object> context) {
+    static Resource evaluateGroovy(Reader script, Map<String, Object> context) {
         CompilerConfiguration config = new CompilerConfiguration(CompilerConfiguration.DEFAULT);
         config.setDebug(true);
         config.setVerbose(true);

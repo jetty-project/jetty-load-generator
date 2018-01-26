@@ -81,7 +81,9 @@ public class LoadGeneratorStarter {
                     .host(starterArgs.getHost())
                     .port(starterArgs.getPort())
                     .maxRequestsQueued(starterArgs.getMaxRequestsQueued())
-                    .connectBlocking(starterArgs.isConnectBlocking());
+                    .connectBlocking(starterArgs.isConnectBlocking())
+                    .connectTimeout(starterArgs.getConnectTimeout())
+                    .idleTimeout(starterArgs.getIdleTimeout());
         } catch (Exception x) {
             throw new RuntimeException(x);
         }
