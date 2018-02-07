@@ -75,6 +75,7 @@ public class LoadGeneratorStarter {
                     .channelsPerUser(starterArgs.getChannelsPerUser())
                     .resource(starterArgs.getResource(builder))
                     .resourceRate(starterArgs.getResourceRate())
+                    .rateRampUpPeriod(starterArgs.getRateRampUpPeriod())
                     .httpClientTransportBuilder(starterArgs.getHttpClientTransportBuilder())
                     .sslContextFactory(new SslContextFactory())
                     .scheme(starterArgs.getScheme())

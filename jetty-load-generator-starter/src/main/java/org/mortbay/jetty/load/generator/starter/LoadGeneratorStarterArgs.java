@@ -75,6 +75,9 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--resource-rate", "-rr"}, description = "Resource rate / second")
     private int resourceRate = 1;
 
+    @Parameter(names = {"--rate-ramp-up", "-rru"}, description = "Rate ramp up period in seconds")
+    private long rateRampUpPeriod = 0;
+
     @Parameter(names = {"--scheme", "-s"}, description = "Target scheme (http/https)")
     private String scheme = "http";
 
@@ -149,6 +152,14 @@ public class LoadGeneratorStarterArgs {
 
     public void setResourceRate(int resourceRate) {
         this.resourceRate = resourceRate;
+    }
+
+    public long getRateRampUpPeriod() {
+        return rateRampUpPeriod;
+    }
+
+    public void setRateRampUpPeriod(long rateRampUpPeriod) {
+        this.rateRampUpPeriod = rateRampUpPeriod;
     }
 
     public Transport getTransport() {

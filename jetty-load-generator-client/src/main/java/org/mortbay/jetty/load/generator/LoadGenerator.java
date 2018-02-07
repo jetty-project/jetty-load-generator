@@ -184,6 +184,7 @@ public class LoadGenerator extends ContainerLifeCycle {
 
             int rate = config.getResourceRate();
             long period = rate > 0 ? TimeUnit.SECONDS.toNanos(config.getThreads()) / rate : 0;
+            long rateRampUpPeriod = TimeUnit.SECONDS.toNanos(config.getRateRampUpPeriod());
 
             long runFor = config.getRunFor();
             int warmupIterations = config.getWarmupIterationsPerThread();
@@ -191,16 +192,24 @@ public class LoadGenerator extends ContainerLifeCycle {
 
             long begin = System.nanoTime();
             long total = 0;
+            long unsent = 0;
             int clientIndex = 0;
 
             send:
             while (true) {
                 long batch = 1;
                 if (period > 0) {
-                    // We need to compensate for oversleeping.
                     TimeUnit.NANOSECONDS.sleep(period);
+                    // We need to compensate for oversleeping.
                     long elapsed = System.nanoTime() - begin;
-                    long expected = elapsed * rate / TimeUnit.SECONDS.toNanos(1);
+                    long expected = Math.round((double)elapsed / period);
+                    if (rateRampUpPeriod > 0 && elapsed < rateRampUpPeriod) {
+                        long send = Math.round(0.5D * elapsed * elapsed / rateRampUpPeriod / period);
+                        unsent = expected - send;
+                        expected = send;
+                    } else {
+                        expected -= unsent;
+                    }
                     batch = expected - total;
                     total = expected;
                 }
@@ -489,6 +498,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         protected int usersPerThread = 1;
         protected int channelsPerUser = 1024;
         protected int resourceRate = 1;
+        protected long rateRampUpPeriod = 0;
         protected String scheme = "http";
         protected String host = "localhost";
         protected int port = 8080;
@@ -536,9 +546,14 @@ public class LoadGenerator extends ContainerLifeCycle {
             return channelsPerUser;
         }
 
-        @ManagedAttribute("Rate at which resources are sent")
+        @ManagedAttribute("Send rate in resource trees per second")
         public int getResourceRate() {
             return resourceRate;
+        }
+
+        @ManagedAttribute("Rate ramp up period in seconds")
+        public long getRateRampUpPeriod() {
+            return rateRampUpPeriod;
         }
 
         @ManagedAttribute("Scheme for the request URI")
@@ -704,6 +719,15 @@ public class LoadGenerator extends ContainerLifeCycle {
          */
         public Builder resourceRate(int resourceRate) {
             this.resourceRate = resourceRate;
+            return this;
+        }
+
+        /**
+         * @param rateRampUpPeriod the rate ramp up period in seconds, or zero for no ramp up
+         * @return this Builder
+         */
+        public Builder rateRampUpPeriod(long rateRampUpPeriod) {
+            this.rateRampUpPeriod = rateRampUpPeriod;
             return this;
         }
 

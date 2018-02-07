@@ -353,6 +353,36 @@ public class LoadGeneratorTest {
         Assert.assertEquals(iterations, requests.intValue());
     }
 
+    @Test
+    public void testRateRampUp() throws Exception {
+        prepare(new TestHandler());
+
+        int rate = 10;
+        long ramp = 5;
+        AtomicLong requests = new AtomicLong();
+        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .resourceRate(rate)
+                .rateRampUpPeriod(ramp)
+                .requestListener(new Request.Listener.Adapter() {
+                    @Override
+                    public void onBegin(Request request) {
+                        requests.incrementAndGet();
+                    }
+                })
+                .runFor(ramp, TimeUnit.SECONDS)
+                .build();
+
+        loadGenerator.begin().get();
+
+        // The number of unsent requests during ramp up is
+        // half of the requests that would have been sent.
+        long expected = rate * ramp / 2;
+        Assert.assertTrue(expected - 1 <= requests.get());
+        Assert.assertTrue(requests.get() <= expected + 1);
+    }
+
     private enum TransportType {
         H1C, H2C
     }
