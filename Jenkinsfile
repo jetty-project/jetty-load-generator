@@ -1,6 +1,6 @@
 node {
   // System Dependent Locations
-  def mvntool = tool name: 'maven3', type: 'hudson.tasks.Maven$MavenInstallation'
+  def mvntool = tool name: 'maven3.5', type: 'hudson.tasks.Maven$MavenInstallation'
   def jdktool = tool name: 'jdk8', type: 'hudson.model.JDK'
 
   // Environment
