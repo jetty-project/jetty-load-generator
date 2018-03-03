@@ -22,9 +22,12 @@ node {
     withEnv(mvnEnv) {
       timeout(60) {
         // Run test phase / ignore test failures
-        sh "mvn -B install -Dmaven.test.failure.ignore=true"
-        // Report failures in the jenkins UI
-        step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+        withMaven(
+                maven: 'maven3.5',
+                jdk: "jdk8",
+                mavenLocalRepo: "${env.JENKINS_HOME}/${env.EXECUTOR_NUMBER}") {
+          sh "mvn -V -B clean install -Dmaven.test.failure.ignore=true"
+        }        
       }
       if(isUnstable())
       {
