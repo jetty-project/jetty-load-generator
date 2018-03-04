@@ -163,7 +163,7 @@ public class ElasticResultStore
         catch ( Exception e )
         {
             LOGGER.warn( e.getMessage(), e );
-            throw new RuntimeException( e.getMessage(), e );
+            //throw new RuntimeException( e.getMessage(), e );
         }
     }
 
