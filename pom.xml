@@ -37,13 +37,13 @@
   <distributionManagement>
     <repository>
       <id>oss.sonatype.org</id>
-      <name>CometD Maven2 Repository</name>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+      <name>Jetty Staging Repository</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
     <snapshotRepository>
       <id>oss.sonatype.org</id>
-      <name>CometD Maven2 Snapshot Repository</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <name>Jetty Snapshot Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/jetty-snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
 
