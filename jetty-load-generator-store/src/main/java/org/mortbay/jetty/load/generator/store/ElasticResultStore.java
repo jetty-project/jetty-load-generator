@@ -162,7 +162,7 @@ public class ElasticResultStore
         }
         catch ( Exception e )
         {
-            LOGGER.warn( e.getMessage(), e );
+            LOGGER.warn( "Cannot save result:" + e.getMessage(), e );
             //throw new RuntimeException( e.getMessage(), e );
         }
     }
