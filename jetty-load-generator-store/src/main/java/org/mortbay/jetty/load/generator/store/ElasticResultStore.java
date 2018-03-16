@@ -129,6 +129,7 @@ public class ElasticResultStore
                 auth.addAuthenticationResult( new BasicAuthentication.BasicResult( uri, username, password ) );
             }
             this.httpClient.start();
+            LOGGER.info( "elastic http client initialize to {}:{}", host, port );
         }
         catch ( Exception e )
         {
