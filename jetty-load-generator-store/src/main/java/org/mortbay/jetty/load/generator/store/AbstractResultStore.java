@@ -18,6 +18,8 @@
 
 package org.mortbay.jetty.load.generator.store;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Map;
 
 public abstract class AbstractResultStore
@@ -38,13 +40,13 @@ public abstract class AbstractResultStore
     protected String getSetupValue( Map<String, String> setupData, String key, String defaultValue )
     {
         String value = setupData.get( key );
-        return value != null ? value : System.getProperty( key, defaultValue );
+        return !StringUtils.isEmpty( value ) ? value : System.getProperty( key, defaultValue );
     }
 
     protected Integer getSetupValue( Map<String, String> setupData, String key, int defaultValue )
     {
         String value = setupData.get( key );
-        return value != null ? Integer.valueOf( value ) : Integer.getInteger( key, defaultValue );
+        return !StringUtils.isEmpty( value ) ? Integer.valueOf( value ) : Integer.getInteger( key, defaultValue );
     }
 
 }
