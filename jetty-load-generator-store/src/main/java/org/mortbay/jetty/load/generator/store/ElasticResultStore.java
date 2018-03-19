@@ -150,7 +150,7 @@ public class ElasticResultStore
                 .path( "/loadresult/result/" + loadResult.getUuid() ) //
                 .content( new StringContentProvider( stringWriter.toString() ) ) //
                 .method( HttpMethod.PUT ) //
-                .header( "Content-Type", "'application/json'" ) //
+                .header( "Content-Type", "application/json" ) //
                 .send();
 
             if ( contentResponse.getStatus() != HttpStatus.CREATED_201 )
