@@ -145,6 +145,7 @@ public class ElasticResultStore
         {
             StringWriter stringWriter = new StringWriter();
             new ObjectMapper().writeValue( stringWriter, loadResult );
+            LOGGER.info( "save loadResult with UUID {}", loadResult.getUuid() );
 
             ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
                 .path( "/loadresult/result/" + loadResult.getUuid() ) //
