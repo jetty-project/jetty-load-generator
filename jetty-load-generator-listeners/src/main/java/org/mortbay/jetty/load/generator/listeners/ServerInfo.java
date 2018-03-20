@@ -32,6 +32,8 @@ public class ServerInfo
 
     private String gitHash;
 
+    private String javaVersion;
+
     public String getJettyVersion()
     {
         return jettyVersion;
@@ -70,6 +72,16 @@ public class ServerInfo
     public void setGitHash( String gitHash )
     {
         this.gitHash = gitHash;
+    }
+
+    public String getJavaVersion()
+    {
+        return javaVersion;
+    }
+
+    public void setJavaVersion( String javaVersion )
+    {
+        this.javaVersion = javaVersion;
     }
 
     @Override
