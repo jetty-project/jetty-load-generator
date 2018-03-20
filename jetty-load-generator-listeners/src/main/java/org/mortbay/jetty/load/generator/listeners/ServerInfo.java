@@ -89,7 +89,8 @@ public class ServerInfo
     public String toString()
     {
         return "ServerInfo{" + "jettyVersion='" + jettyVersion + '\'' + ", availableProcessors=" + availableProcessors
-            + ", totalMemory=" + totalMemory + ", gitHash='" + gitHash + '\'' + '}';
+            + ", totalMemory=" + totalMemory + ", gitHash='" + gitHash + '\'' + ", javaVersion='" + javaVersion + '\''
+            + '}';
     }
 
     public static ServerInfo retrieveServerInfo( String scheme, String host, int port, String path )
