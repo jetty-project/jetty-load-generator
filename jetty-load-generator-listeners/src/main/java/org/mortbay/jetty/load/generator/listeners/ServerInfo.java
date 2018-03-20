@@ -18,6 +18,7 @@
 
 package org.mortbay.jetty.load.generator.listeners;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
@@ -101,7 +102,9 @@ public class ServerInfo
             httpClient.start();
             ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ).path( path ).send();
 
-            return new ObjectMapper().readValue( contentResponse.getContent(), ServerInfo.class );
+            return new ObjectMapper() //
+                .configure( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false ) //
+                .readValue( contentResponse.getContent(), ServerInfo.class );
         }
         finally
         {
