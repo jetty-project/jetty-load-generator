@@ -50,6 +50,10 @@ public class LoadConfig
      */
     private Type type;
 
+    private int resourceNumber;
+
+    private int instanceNumber;
+
 
     public enum Type {
         LOADER,PROBE;
@@ -218,6 +222,38 @@ public class LoadConfig
         return this;
     }
 
+    public int getResourceNumber()
+    {
+        return resourceNumber;
+    }
+
+    public void setResourceNumber( int resourceNumber )
+    {
+        this.resourceNumber = resourceNumber;
+    }
+
+    public LoadConfig resourceNumber( int resourceNumber )
+    {
+        this.resourceNumber = resourceNumber;
+        return this;
+    }
+
+    public int getInstanceNumber()
+    {
+        return instanceNumber;
+    }
+
+    public void setInstanceNumber( int instanceNumber )
+    {
+        this.instanceNumber = instanceNumber;
+    }
+
+    public LoadConfig instanceNumber( int instanceNumber )
+    {
+        this.instanceNumber = instanceNumber;
+        return this;
+    }
+
     @Override
     public String toString()
     {
@@ -225,6 +261,6 @@ public class LoadConfig
             + ", iterationsPerThread=" + iterationsPerThread + ", runFor=" + runFor + ", usersPerThread="
             + usersPerThread + ", channelsPerUser=" + channelsPerUser + ", resourceRate=" + resourceRate + ", scheme='"
             + scheme + '\'' + ", host='" + host + '\'' + ", port=" + port + ", maxRequestsQueued=" + maxRequestsQueued
-            + ", type='" + type + '\'' + '}';
+            + ", type=" + type + ", resourceNumber=" + resourceNumber + ", instanceNumber=" + instanceNumber + '}';
     }
 }
