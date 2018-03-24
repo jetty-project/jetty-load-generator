@@ -362,12 +362,12 @@ public class LoadGeneratorStarterArgs {
     }
 
     static Resource evaluateJSON(Path profilePath) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        return objectMapper.readValue(profilePath.toFile(), Resource.class);
+        return new ObjectMapper() //
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES) //
+            .readValue(profilePath.toFile(), Resource.class);
     }
 
-    static Resource evaluateGroovy(Reader script, Map<String, Object> context) {
+    public static Resource evaluateGroovy(Reader script, Map<String, Object> context) {
         CompilerConfiguration config = new CompilerConfiguration(CompilerConfiguration.DEFAULT);
         config.setDebug(true);
         config.setVerbose(true);
