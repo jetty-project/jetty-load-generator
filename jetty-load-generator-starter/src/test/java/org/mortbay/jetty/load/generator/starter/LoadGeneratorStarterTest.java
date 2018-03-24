@@ -176,6 +176,14 @@ public class LoadGeneratorStarterTest {
         }
     }
 
+    @Test
+    public void calculate_descendant_number() throws Exception {
+        try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
+            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Collections.emptyMap());
+            Assert.assertEquals( 17, resource.descendantCount() );
+        }
+    }
+
     private static class TestServlet extends HttpServlet {
         private AtomicInteger getNumber = new AtomicInteger(0);
         private AtomicInteger postNumber = new AtomicInteger(0);
