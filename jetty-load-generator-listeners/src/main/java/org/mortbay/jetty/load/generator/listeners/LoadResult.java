@@ -34,6 +34,8 @@ public class LoadResult
 
     private String uuid;
 
+    private String externalId;
+
     private String comment;
 
     /**
@@ -157,11 +159,28 @@ public class LoadResult
         return this;
     }
 
+    public String getExternalId()
+    {
+        return externalId;
+    }
+
+    public void setExternalId( String externalId )
+    {
+        this.externalId = externalId;
+    }
+
+    public LoadResult externalId( String externalId )
+    {
+        this.externalId = externalId;
+        return this;
+    }
+
     @Override
     public String toString()
     {
         return "LoadResult{" + "serverInfo=" + serverInfo + ", collectorInformations=" + collectorInformations
-            + ", loadConfigs=" + loadConfigs + ", uuid='" + uuid + '\'' + ", comment='" + comment + '\''
-            + ", timestamp='" + timestamp + '\'' + '}';
+            + ", loadConfigs=" + loadConfigs + ", uuid='" + uuid + '\'' + ", externalId='" + externalId + '\''
+            + ", comment='" + comment + '\'' + ", uuidPrefix='" + uuidPrefix + '\'' + ", timestamp='" + timestamp + '\''
+            + '}';
     }
 }
