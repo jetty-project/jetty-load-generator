@@ -175,7 +175,8 @@ public class ElasticResultStore
     {
         try
         {
-            ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
+            ContentResponse contentResponse = httpClient.newRequest( host, port ) //
+                .scheme( scheme ) //
                 .path( "/loadresult/result/" + loadResult.getUuid() ) //
                 .method( HttpMethod.DELETE ) //
                 .send();
@@ -276,8 +277,9 @@ public class ElasticResultStore
     {
         try
         {
-            ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
-                .path( "/loadresult/result/_search" ) //
+            ContentResponse contentResponse = httpClient.newRequest( host, port ) //
+                .scheme( scheme ) //
+                .path( "/loadresult/result/_search?pretty" ) //
                 .method( HttpMethod.GET ) //
                 .send();
             if ( contentResponse.getStatus() != HttpStatus.OK_200 )
