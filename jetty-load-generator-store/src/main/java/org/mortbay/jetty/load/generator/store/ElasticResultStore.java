@@ -226,6 +226,56 @@ public class ElasticResultStore
         }
     }
 
+    public List<LoadResult> searchResultsByExternalId(String anExternalId) {
+        try
+        {
+
+
+            Map<String, Object> json = new HashMap<>();
+
+            Map<String, Object> externalId = new HashMap<>();
+            externalId.put( "externalId", anExternalId );
+            Map<String, Object> term = new HashMap<>();
+            term.put( "term", externalId );
+
+            Map<String, Object> filter = new HashMap<>();
+            filter.put( "filter", term );
+
+            Map<String, Object> constant_score = new HashMap<>();
+            constant_score.put( "constant_score", filter );
+
+            json.put( "query", constant_score );
+
+            Map<String, Object> order = new HashMap<>();
+            order.put( "order", "desc" );
+            Map<String, Object> timestamp = new HashMap<>();
+            timestamp.put( "timestamp", order );
+
+            json.put( "sort", timestamp );
+
+            StringWriter stringWriter = new StringWriter();
+            new ObjectMapper().writeValue( stringWriter, json );
+
+
+
+            ContentResponse contentResponse = getHttpClient() //
+                .newRequest( host, port ) //
+                .scheme( scheme ) //
+                .header( "Content-Type","application/json" ) //
+                .method( HttpMethod.GET ) //
+                .path( "/loadresult/result/_search?sort=timestamp" ) //
+                .content( new StringContentProvider( stringWriter.toString() ) ) //
+                .send();
+            List<LoadResult> loadResults = map( contentResponse );
+            return loadResults;
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( e.getMessage(), e );
+            throw new RuntimeException( e.getMessage(), e );
+        }
+    }
+
     @Override
     public List<LoadResult> get( List<String> loadResultIds )
     {
