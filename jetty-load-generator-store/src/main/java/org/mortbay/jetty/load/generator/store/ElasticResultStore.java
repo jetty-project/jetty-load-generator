@@ -324,7 +324,7 @@ public class ElasticResultStore
                 .newRequest( host, port ) //
                 .scheme( scheme ) //
                 .method( HttpMethod.GET ) //
-                .path( "/loadresult/result/_search?sort=timestamp" ) //
+                .path( "/loadresult/result/_search?pretty" ) //
                 .content( new StringContentProvider( searchPost ) ) //
                 .send();
             return contentResponse.getContentAsString();
