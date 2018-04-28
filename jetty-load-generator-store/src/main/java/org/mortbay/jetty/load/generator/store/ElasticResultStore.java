@@ -18,17 +18,6 @@
 
 package org.mortbay.jetty.load.generator.store;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.Configuration;
@@ -51,6 +40,17 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.mortbay.jetty.load.generator.listeners.LoadResult;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ElasticResultStore
     extends AbstractResultStore
@@ -308,6 +308,26 @@ public class ElasticResultStore
                 .send();
             List<LoadResult> loadResults = map( contentResponse );
             return loadResults;
+        }
+        catch ( Exception e )
+        {
+            LOGGER.warn( e.getMessage(), e );
+            throw new RuntimeException( e.getMessage(), e );
+        }
+    }
+
+    public String search( String searchPost )
+    {
+        try
+        {
+            ContentResponse contentResponse = getHttpClient() //
+                .newRequest( host, port ) //
+                .scheme( scheme ) //
+                .method( HttpMethod.GET ) //
+                .path( "/loadresult/result/_search?sort=timestamp" ) //
+                .content( new StringContentProvider( searchPost ) ) //
+                .send();
+            return contentResponse.getContentAsString();
         }
         catch ( Exception e )
         {
