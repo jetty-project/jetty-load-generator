@@ -303,6 +303,7 @@ public class ElasticResultStore
                 .newRequest( host, port ) //
                 .scheme( scheme ) //
                 .method( HttpMethod.GET ) //
+                .header( "Content-Type", "application/json" ) //
                 .path( "/loadresult/result/_search?sort=timestamp" ) //
                 .content( new StringContentProvider( stringWriter.toString() ) ) //
                 .send();
@@ -324,6 +325,7 @@ public class ElasticResultStore
                 .newRequest( host, port ) //
                 .scheme( scheme ) //
                 .method( HttpMethod.GET ) //
+                .header( "Content-Type", "application/json" ) //
                 .path( "/loadresult/result/_search?pretty" ) //
                 .content( new StringContentProvider( searchPost ) ) //
                 .send();

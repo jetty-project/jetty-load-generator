@@ -1,0 +1,10 @@
+{
+  "size": 0,
+  "aggs": {
+    "version": {
+      "terms": {
+        "field": "serverInfo.jettyVersion.keyword"
+      }
+    }
+  }
+}
