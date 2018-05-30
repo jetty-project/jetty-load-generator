@@ -129,7 +129,7 @@ public class ElasticResultStore
                 auth.addAuthenticationResult( new BasicAuthentication.BasicResult( uri, username, password ) );
             }
             this.httpClient.start();
-            LOGGER.info( "elastic http client initialize to {}:{}", host, port );
+            LOGGER.debug( "elastic http client initialize to {}:{}", host, port );
         }
         catch ( Exception e )
         {
@@ -145,7 +145,7 @@ public class ElasticResultStore
         {
             StringWriter stringWriter = new StringWriter();
             new ObjectMapper().writeValue( stringWriter, loadResult );
-            LOGGER.info( "save loadResult with UUID {}", loadResult.getUuid() );
+            LOGGER.debug( "save loadResult with UUID {}", loadResult.getUuid() );
 
             ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ) //
                 .path( "/loadresult/result/" + loadResult.getUuid() ) //
