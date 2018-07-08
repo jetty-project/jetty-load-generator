@@ -27,7 +27,8 @@ node('linux') {
                 jdk: "jdk8",
                 mavenLocalRepo: "${env.JENKINS_HOME}/${env.EXECUTOR_NUMBER}") {
           sh "mvn -V -B clean install -Dmaven.test.failure.ignore=true"
-        }        
+        }
+        junit testResults:'**/target/surefire-reports/TEST-*.xml'
       }
       if(isUnstable())
       {
