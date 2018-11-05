@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 
 public class ServerInfo
 {
@@ -93,15 +94,19 @@ public class ServerInfo
             + '}';
     }
 
-    public static ServerInfo retrieveServerInfo( String scheme, String host, int port, String path )
+    public static ServerInfo retrieveServerInfo( Request request )
         throws Exception
     {
-        HttpClient httpClient = new HttpClient();
+        HttpClient httpClient = new HttpClient(request.httpClientTransportBuilder.build(),null);
 
         try
         {
             httpClient.start();
-            ContentResponse contentResponse = httpClient.newRequest( host, port ).scheme( scheme ).path( path ).send();
+            ContentResponse contentResponse = httpClient //
+                .newRequest( request.host, request.port ) //
+                .scheme( request.scheme ) //
+                .path( request.path ) //
+                .send();
 
             return new ObjectMapper() //
                 .configure( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false ) //
@@ -112,6 +117,21 @@ public class ServerInfo
             httpClient.stop();
         }
 
+    }
+
+    public static class Request {
+        public String scheme,host, path;
+        public HTTPClientTransportBuilder httpClientTransportBuilder;
+        public int port;
+
+        public Request( String scheme, String host, String path, HTTPClientTransportBuilder httpClientTransportBuilder, int port )
+        {
+            this.scheme = scheme;
+            this.host = host;
+            this.path = path;
+            this.httpClientTransportBuilder = httpClientTransportBuilder;
+            this.port = port;
+        }
     }
 
 }
