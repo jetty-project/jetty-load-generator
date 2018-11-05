@@ -94,13 +94,9 @@ public class ServerInfo
             + '}';
     }
 
-    public static ServerInfo retrieveServerInfo( Request request )
+    public static ServerInfo retrieveServerInfo( Request request, HttpClient httpClient )
         throws Exception
     {
-        HttpClient httpClient = new HttpClient(request.httpClientTransportBuilder.build(),null);
-
-        try
-        {
             httpClient.start();
             ContentResponse contentResponse = httpClient //
                 .newRequest( request.host, request.port ) //
@@ -111,25 +107,19 @@ public class ServerInfo
             return new ObjectMapper() //
                 .configure( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false ) //
                 .readValue( contentResponse.getContent(), ServerInfo.class );
-        }
-        finally
-        {
-            httpClient.stop();
-        }
+
 
     }
 
     public static class Request {
         public String scheme,host, path;
-        public HTTPClientTransportBuilder httpClientTransportBuilder;
         public int port;
 
-        public Request( String scheme, String host, String path, HTTPClientTransportBuilder httpClientTransportBuilder, int port )
+        public Request( String scheme, String host, String path, int port )
         {
             this.scheme = scheme;
             this.host = host;
             this.path = path;
-            this.httpClientTransportBuilder = httpClientTransportBuilder;
             this.port = port;
         }
     }

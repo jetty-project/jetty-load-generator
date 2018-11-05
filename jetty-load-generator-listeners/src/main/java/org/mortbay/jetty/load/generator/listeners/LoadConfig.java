@@ -54,6 +54,8 @@ public class LoadConfig
 
     private int instanceNumber;
 
+    private String transport;
+
 
     public enum Type {
         LOADER,PROBE;
@@ -254,6 +256,22 @@ public class LoadConfig
         return this;
     }
 
+    public String getTransport()
+    {
+        return transport;
+    }
+
+    public void setTransport( String transport )
+    {
+        this.transport = transport;
+    }
+
+    public LoadConfig transport( String transport )
+    {
+        this.transport = transport;
+        return this;
+    }
+
     @Override
     public String toString()
     {
@@ -261,6 +279,7 @@ public class LoadConfig
             + ", iterationsPerThread=" + iterationsPerThread + ", runFor=" + runFor + ", usersPerThread="
             + usersPerThread + ", channelsPerUser=" + channelsPerUser + ", resourceRate=" + resourceRate + ", scheme='"
             + scheme + '\'' + ", host='" + host + '\'' + ", port=" + port + ", maxRequestsQueued=" + maxRequestsQueued
-            + ", type=" + type + ", resourceNumber=" + resourceNumber + ", instanceNumber=" + instanceNumber + '}';
+            + ", type=" + type + ", resourceNumber=" + resourceNumber + ", instanceNumber=" + instanceNumber
+            + ", transport='" + transport + '\'' + '}';
     }
 }

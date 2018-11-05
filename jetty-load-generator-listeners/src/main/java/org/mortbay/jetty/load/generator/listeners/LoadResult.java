@@ -48,6 +48,8 @@ public class LoadResult
      */
     private String timestamp = ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm.ssZ" ) );
 
+    private String transport = "http";
+
     public LoadResult()
     {
         // no op
@@ -175,12 +177,28 @@ public class LoadResult
         return this;
     }
 
+    public String getTransport()
+    {
+        return transport;
+    }
+
+    public void setTransport( String transport )
+    {
+        this.transport = transport;
+    }
+
+    public LoadResult transport( String transport )
+    {
+        this.transport = transport;
+        return this;
+    }
+
     @Override
     public String toString()
     {
         return "LoadResult{" + "serverInfo=" + serverInfo + ", collectorInformations=" + collectorInformations
             + ", loadConfigs=" + loadConfigs + ", uuid='" + uuid + '\'' + ", externalId='" + externalId + '\''
             + ", comment='" + comment + '\'' + ", uuidPrefix='" + uuidPrefix + '\'' + ", timestamp='" + timestamp + '\''
-            + '}';
+            + ", transport='" + transport + '\'' + '}';
     }
 }
