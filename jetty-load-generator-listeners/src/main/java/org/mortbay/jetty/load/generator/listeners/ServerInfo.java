@@ -97,7 +97,6 @@ public class ServerInfo
     public static ServerInfo retrieveServerInfo( Request request, HttpClient httpClient )
         throws Exception
     {
-            httpClient.start();
             ContentResponse contentResponse = httpClient //
                 .newRequest( request.host, request.port ) //
                 .scheme( request.scheme ) //
