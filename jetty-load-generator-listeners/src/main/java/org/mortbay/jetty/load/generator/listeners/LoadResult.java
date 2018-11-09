@@ -50,6 +50,8 @@ public class LoadResult
 
     private String transport = "http";
 
+    private String jettyVersion;
+
     public LoadResult()
     {
         // no op
@@ -58,6 +60,7 @@ public class LoadResult
     public LoadResult( ServerInfo serverInfo, CollectorInformations collectorInformations, LoadConfig loadConfig )
     {
         this.serverInfo = serverInfo;
+        this.jettyVersion = serverInfo!=null?serverInfo.getJettyVersion():null;
         this.collectorInformations = collectorInformations;
         this.loadConfigs.add( loadConfig );
     }
@@ -75,6 +78,10 @@ public class LoadResult
     public void setServerInfo( ServerInfo serverInfo )
     {
         this.serverInfo = serverInfo;
+        if(serverInfo!=null)
+        {
+            this.jettyVersion = serverInfo.getJettyVersion();
+        }
     }
 
     public void setCollectorInformations( CollectorInformations collectorInformations )
@@ -199,6 +206,6 @@ public class LoadResult
         return "LoadResult{" + "serverInfo=" + serverInfo + ", collectorInformations=" + collectorInformations
             + ", loadConfigs=" + loadConfigs + ", uuid='" + uuid + '\'' + ", externalId='" + externalId + '\''
             + ", comment='" + comment + '\'' + ", uuidPrefix='" + uuidPrefix + '\'' + ", timestamp='" + timestamp + '\''
-            + ", transport='" + transport + '\'' + '}';
+            + ", transport='" + transport + '\'' + ", jettyVersion='" + jettyVersion + '\'' + '}';
     }
 }
