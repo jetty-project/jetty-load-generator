@@ -157,7 +157,6 @@
         <configuration>
           <source>8</source>
           <target>8</target>
-          <release>8</release>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
           <compilerArgument>-Xlint:all,-serial,-unchecked</compilerArgument>
@@ -267,6 +266,25 @@
   </developers>
 
   <profiles>
+    <profile>
+      <id>9+</id>
+      <activation>
+        <jdk>[1.9,)</jdk>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <release>8</release>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
     <profile>
       <id>reporting</id>
       <reporting>
