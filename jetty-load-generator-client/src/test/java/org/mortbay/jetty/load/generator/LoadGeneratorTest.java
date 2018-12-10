@@ -306,7 +306,8 @@ public class LoadGeneratorTest {
 
         Thread.sleep(1000);
 
-        mbeanContainer.getMBeanServer().invoke(objectName, "interrupt", null, null);
+        // need empty array otherwise jdk11 throw NPE
+        mbeanContainer.getMBeanServer().invoke(objectName, "interrupt", null, new String[]{});
 
         cf.handle((r, x) -> {
             Throwable cause = x.getCause();
