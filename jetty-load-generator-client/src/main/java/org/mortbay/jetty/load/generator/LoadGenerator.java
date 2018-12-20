@@ -251,6 +251,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             }
             process.completeExceptionally(x);
         }
+        logger.info( "sending resources finished" );
         return result;
     }
 
