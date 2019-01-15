@@ -10,7 +10,11 @@ pipeline {
           options { timeout( time: 120, unit: 'MINUTES' ) }
           steps {
             mavenBuild( "jdk8", "clean install" )
-            mavenBuild( "jdk8", "deploy" )
+            script {
+              if (env.BRANCH_NAME == 'master') {
+                mavenBuild( "jdk8", "deploy" )
+              }
+            }
           }
         }
         stage( "Build / Test - JDK11" ) {
