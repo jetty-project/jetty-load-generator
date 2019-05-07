@@ -77,7 +77,7 @@ public class LoadGeneratorStarter {
                     .resourceRate(starterArgs.getResourceRate())
                     .rateRampUpPeriod(starterArgs.getRateRampUpPeriod())
                     .httpClientTransportBuilder(starterArgs.getHttpClientTransportBuilder())
-                    .sslContextFactory(new SslContextFactory())
+                    .sslContextFactory(new SslContextFactory.Client(true))
                     .scheme(starterArgs.getScheme())
                     .host(starterArgs.getHost())
                     .port(starterArgs.getPort())
