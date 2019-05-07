@@ -18,6 +18,8 @@
 
 package org.mortbay.jetty.load.generator.listeners;
 
+import org.eclipse.jetty.util.StringUtil;
+
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -52,6 +54,8 @@ public class LoadResult
 
     private String jettyVersion;
 
+    private String jettyBranch;
+
     public LoadResult()
     {
         // no op
@@ -61,10 +65,23 @@ public class LoadResult
     {
         this.serverInfo = serverInfo;
         this.jettyVersion = serverInfo!=null?serverInfo.getJettyVersion():null;
+        this.jettyBranch = getJettyBranch( this.jettyVersion );
         this.collectorInformations = collectorInformations;
         this.loadConfigs.add( loadConfig );
     }
 
+    private static String getJettyBranch(String jettyVersion){
+        // we only store SNAPSHOT as we want evolution of the dev branch 9.4.x or 10.0.x
+        if( StringUtil.isBlank(jettyVersion)){
+            return null;
+        }
+        if(jettyVersion.endsWith( "-SNAPSHOT" )){
+            // 9.4.16-SNAPSHOT or 10.0.0-SNAPSHOT
+            return jettyVersion.trim().substring( 0, jettyVersion.lastIndexOf( '.' )) + ".x";
+        }
+        return null;
+    }
+    
     public ServerInfo getServerInfo()
     {
         return serverInfo == null ? serverInfo = new ServerInfo() : serverInfo;
@@ -206,6 +223,7 @@ public class LoadResult
         return "LoadResult{" + "serverInfo=" + serverInfo + ", collectorInformations=" + collectorInformations
             + ", loadConfigs=" + loadConfigs + ", uuid='" + uuid + '\'' + ", externalId='" + externalId + '\''
             + ", comment='" + comment + '\'' + ", uuidPrefix='" + uuidPrefix + '\'' + ", timestamp='" + timestamp + '\''
-            + ", transport='" + transport + '\'' + ", jettyVersion='" + jettyVersion + '\'' + '}';
+            + ", transport='" + transport + '\'' + ", jettyVersion='" + jettyVersion + '\'' + ", jettyBranch='"
+            + jettyBranch + '\'' + '}';
     }
 }
