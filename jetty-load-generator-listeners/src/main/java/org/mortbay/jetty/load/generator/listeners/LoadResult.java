@@ -81,7 +81,7 @@ public class LoadResult
         }
         return null;
     }
-    
+
     public ServerInfo getServerInfo()
     {
         return serverInfo == null ? serverInfo = new ServerInfo() : serverInfo;
