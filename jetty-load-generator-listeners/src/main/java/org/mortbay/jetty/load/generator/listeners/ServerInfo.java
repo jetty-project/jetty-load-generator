@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.util.log.Log;
 import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 
 public class ServerInfo
@@ -51,17 +53,17 @@ public class ServerInfo
         return totalMemory;
     }
 
-    public void setJettyVersion( String jettyVersion )
+    public void setJettyVersion(String jettyVersion)
     {
         this.jettyVersion = jettyVersion;
     }
 
-    public void setAvailableProcessors( int availableProcessors )
+    public void setAvailableProcessors(int availableProcessors)
     {
         this.availableProcessors = availableProcessors;
     }
 
-    public void setTotalMemory( long totalMemory )
+    public void setTotalMemory(long totalMemory)
     {
         this.totalMemory = totalMemory;
     }
@@ -71,7 +73,7 @@ public class ServerInfo
         return gitHash;
     }
 
-    public void setGitHash( String gitHash )
+    public void setGitHash(String gitHash)
     {
         this.gitHash = gitHash;
     }
@@ -81,7 +83,7 @@ public class ServerInfo
         return javaVersion;
     }
 
-    public void setJavaVersion( String javaVersion )
+    public void setJavaVersion(String javaVersion)
     {
         this.javaVersion = javaVersion;
     }
@@ -89,32 +91,37 @@ public class ServerInfo
     @Override
     public String toString()
     {
-        return "ServerInfo{" + "jettyVersion='" + jettyVersion + '\'' + ", availableProcessors=" + availableProcessors
-            + ", totalMemory=" + totalMemory + ", gitHash='" + gitHash + '\'' + ", javaVersion='" + javaVersion + '\''
-            + '}';
+        return "ServerInfo{" + "jettyVersion='" + jettyVersion + '\'' + ", availableProcessors=" + availableProcessors +
+                ", totalMemory=" + totalMemory + ", gitHash='" + gitHash + '\'' + ", javaVersion='" + javaVersion + '\'' +
+                '}';
     }
 
-    public static ServerInfo retrieveServerInfo( Request request, HttpClient httpClient )
+    public static ServerInfo retrieveServerInfo(Request request, HttpClient httpClient)
         throws Exception
     {
             ContentResponse contentResponse = httpClient //
-                .newRequest( request.host, request.port ) //
-                .scheme( request.scheme ) //
-                .path( request.path ) //
+                .newRequest(request.host, request.port) //
+                .scheme(request.scheme) //
+                .path(request.path) //
                 .send();
-
+            if (contentResponse.getStatus() != HttpStatus.OK_200)
+            {
+                Log.getLogger(ServerInfo.class).info("fail to retrieve server info " +
+                        contentResponse.getStatus() + ", content: " + contentResponse.getContentAsString());
+            }
             return new ObjectMapper() //
-                .configure( DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false ) //
-                .readValue( contentResponse.getContent(), ServerInfo.class );
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) //
+                .readValue(contentResponse.getContent(), ServerInfo.class);
 
 
     }
 
-    public static class Request {
+    public static class Request
+    {
         public String scheme,host, path;
         public int port;
 
-        public Request( String scheme, String host, String path, int port )
+        public Request(String scheme, String host, String path, int port)
         {
             this.scheme = scheme;
             this.host = host;

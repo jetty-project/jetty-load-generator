@@ -48,7 +48,7 @@ public class LoadResult
     /**
      * timestamp using format
      */
-    private String timestamp = ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm.ssZ" ) );
+    private String timestamp = ZonedDateTime.now().format( DateTimeFormatter.ofPattern( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ) );
 
     private String transport = "http";
 
