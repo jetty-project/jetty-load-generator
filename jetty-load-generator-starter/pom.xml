@@ -20,6 +20,16 @@
       <groupId>org.mortbay.jetty.loadgenerator</groupId>
       <artifactId>jetty-load-generator-client</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-alpn-java-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-alpn-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.mortbay.jetty.loadgenerator</groupId>
