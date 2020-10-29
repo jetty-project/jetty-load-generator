@@ -14,7 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jetty.version>9.4.19.v20190610</jetty.version>
+    <jetty.version>9.4.33.v20201020</jetty.version>
   </properties>
 
   <licenses>
@@ -110,7 +110,7 @@
       <dependency>
         <groupId>org.codehaus.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>2.5.0-beta-1</version>
+        <version>3.0.6</version>
       </dependency>
 
       <dependency>
