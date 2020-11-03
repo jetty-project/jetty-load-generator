@@ -5,7 +5,6 @@
 
 # maven
 target/
-*/src/main/java/META-INF/
 *.versionsBackup
 *.releaseBackup
 bin/
@@ -19,6 +18,7 @@ bin/
 *.backup
 *.debug
 *.dump
+.attach_pid*
 
 # vim 
 .*.sw[a-p]
@@ -45,6 +45,7 @@ bin/
 *.orig
 
 # test generated content
-*/src/test/*/WEB-INF/lib/test*.jar
+.flattened-pom.xml
 
-dependency-reduced-pom.xml
+# Jenkins dust
+.work/
