@@ -20,7 +20,12 @@ import org.eclipse.jetty.client.HttpClientTransport;
  */
 public interface HTTPClientTransportBuilder {
     /**
+     * @return the transport type, such as "http/1.1" or "http/2"
+     */
+    public String getType();
+
+    /**
      * @return a new HttpClientTransport instance
      */
-    HttpClientTransport build();
+    public HttpClientTransport build();
 }

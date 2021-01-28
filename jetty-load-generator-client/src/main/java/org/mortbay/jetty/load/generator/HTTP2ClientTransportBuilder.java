@@ -65,6 +65,11 @@ public class HTTP2ClientTransportBuilder implements HTTPClientTransportBuilder {
     }
 
     @Override
+    public String getType() {
+        return "http/2";
+    }
+
+    @Override
     public HttpClientTransport build() {
         HTTP2Client http2Client = new HTTP2Client();
         // Chrome uses 15 MiB session and 6 MiB stream windows.

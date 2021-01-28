@@ -56,7 +56,7 @@ public class LoadGeneratorStarter {
         }
         run(generator);
         if (starterArgs.isDisplayStats()) {
-            displayReport(listener);
+            displayReport(generator.getConfig(), listener);
         }
     }
 
@@ -145,7 +145,7 @@ public class LoadGeneratorStarter {
         }).join();
     }
 
-    private static void displayReport(ReportListener listener) {
+    private static void displayReport(LoadGenerator.Config config, ReportListener listener) {
         Histogram responseTimes = listener.getResponseTimeHistogram();
         HistogramSnapshot snapshot = new HistogramSnapshot(responseTimes, 16, "response times", "ms", TimeUnit.NANOSECONDS::toMillis);
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
@@ -153,6 +153,7 @@ public class LoadGeneratorStarter {
         LOGGER.info("----------------------------------------------------");
         LOGGER.info("-------------  Load Generator Report  --------------");
         LOGGER.info("----------------------------------------------------");
+        LOGGER.info("{}://{}:{} over {}", config.getScheme(), config.getHost(), config.getPort(), config.getHttpClientTransportBuilder().getType());
         long startTime = responseTimes.getStartTimeStamp();
         LOGGER.info("begin  : {}", simpleDateFormat.format(startTime));
         long endTime = responseTimes.getEndTimeStamp();

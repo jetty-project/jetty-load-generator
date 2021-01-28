@@ -36,6 +36,11 @@ public class HTTP1ClientTransportBuilder implements HTTPClientTransportBuilder {
     }
 
     @Override
+    public String getType() {
+        return "http/1.1";
+    }
+
+    @Override
     public HttpClientTransport build() {
         return new HttpClientTransportOverHTTP(getSelectors());
     }
