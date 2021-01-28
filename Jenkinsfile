@@ -44,7 +44,7 @@ pipeline {
  * @return the Jenkinsfile step representing a maven build
  */
 def mavenBuild(jdk, cmdline) {
-  def mvnName = 'maven3.5'
+  def mvnName = 'maven3'
   script {
     try {
       withEnv(["JAVA_HOME=${ tool "$jdk" }",
