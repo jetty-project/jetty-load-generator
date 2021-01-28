@@ -19,12 +19,18 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
+import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,11 +38,28 @@ import org.junit.Test;
 public class HTTP2LoadGeneratorTest {
     private Server server;
     private ServerConnector connector;
+    private ServerConnector tlsConnector;
 
-    private void prepare(Handler handler) throws Exception {
+    private void startServer(Handler handler) throws Exception {
         server = new Server();
-        connector = new ServerConnector(server, new HTTP2CServerConnectionFactory(new HttpConfiguration()));
+
+        HttpConfiguration httpConfig = new HttpConfiguration();
+        connector = new ServerConnector(server, 1, 1, new HTTP2CServerConnectionFactory(httpConfig));
         server.addConnector(connector);
+
+        HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
+        httpsConfig.addCustomizer(new SecureRequestCustomizer());
+        HTTP2ServerConnectionFactory h2 = new HTTP2ServerConnectionFactory(httpConfig);
+        ALPNServerConnectionFactory alpn = new ALPNServerConnectionFactory();
+        alpn.setDefaultProtocol(h2.getProtocol());
+        SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+        sslContextFactory.setKeyStorePath("src/test/resources/keystore.p12");
+        sslContextFactory.setKeyStoreType("pkcs12");
+        sslContextFactory.setKeyStorePassword("storepwd");
+        SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, alpn.getProtocol());
+        tlsConnector = new ServerConnector(server, 1, 1, tls, alpn, h2);
+        server.addConnector(tlsConnector);
+
         server.setHandler(handler);
         server.start();
     }
@@ -49,8 +72,30 @@ public class HTTP2LoadGeneratorTest {
     }
 
     @Test
+    public void testHTTP2() throws Exception {
+        startServer(new TestHandler());
+
+        AtomicLong responses = new AtomicLong();
+        LoadGenerator loadGenerator = LoadGenerator.builder()
+                .scheme("https")
+                .port(tlsConnector.getLocalPort())
+                .sslContextFactory(new SslContextFactory.Client(true))
+                .httpClientTransportBuilder(new HTTP2ClientTransportBuilder())
+                .resource(new Resource("/", new Resource("/1"), new Resource("/2")).responseLength(128 * 1024))
+                .resourceListener((Resource.NodeListener)info -> {
+                    if (info.getStatus() == HttpStatus.OK_200) {
+                        responses.incrementAndGet();
+                    }
+                })
+                .build();
+        loadGenerator.begin().get(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals(3, responses.get());
+    }
+
+    @Test
     public void testPush() throws Exception {
-        prepare(new TestHandler() {
+        startServer(new TestHandler() {
             @Override
             public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
                 if ("/".equals(target)) {

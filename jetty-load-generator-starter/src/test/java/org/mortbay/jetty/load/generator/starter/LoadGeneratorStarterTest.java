@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Locale;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -75,12 +74,6 @@ public class LoadGeneratorStarterTest {
         if (server != null) {
             server.stop();
         }
-    }
-
-    @Test
-    public void testServer() throws Exception {
-        System.err.println("port = " + connector.getLocalPort());
-        new CountDownLatch(1).await();
     }
 
     @Test
