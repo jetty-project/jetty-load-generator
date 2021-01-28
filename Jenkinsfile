@@ -45,18 +45,20 @@ pipeline {
  */
 def mavenBuild(jdk, cmdline) {
   def mvnName = 'maven3.5'
-  def localRepo = '${env.JENKINS_HOME}/${env.EXECUTOR_NUMBER}'
-  def settingsName = 'oss-settings.xml'
-  def mavenOpts = '-Xms2g -Xmx2g -Djava.awt.headless=true'
-
-  withMaven(
-          maven: mvnName,
-          jdk: "$jdk",
-          globalMavenSettingsConfig: settingsName,
-          mavenOpts: mavenOpts,
-          mavenLocalRepo: localRepo) {
-    // Some common Maven command line + provided command line
-    sh "mvn -V -B -DfailIfNoTests=false -Dmaven.test.failure.ignore=true -e $cmdline"
+  script {
+    try {
+      withEnv(["JAVA_HOME=${ tool "$jdk" }",
+               "PATH+MAVEN=${ tool "$jdk" }/bin:${tool "$mvnName"}/bin",
+               "MAVEN_OPTS=-Xms2g -Xmx4g -Djava.awt.headless=true"]) {
+        configFileProvider([configFile(fileId: 'oss-settings.xml', variable: 'GLOBAL_MVN_SETTINGS')]) {
+          sh "mvn --no-transfer-progress -s $GLOBAL_MVN_SETTINGS -V -B -e $cmdline"
+        }
+      }
+    }
+    finally
+    {
+      junit testResults: '**/target/surefire-reports/*.xml,**/target/invoker-reports/TEST*.xml', allowEmptyResults: true
+    }
   }
 }
 
