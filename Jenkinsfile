@@ -7,26 +7,19 @@ pipeline {
       parallel {
         stage("Build / Test - JDK11") {
           agent { node { label 'linux' } }
-          options { timeout(time: 120, unit: 'MINUTES') }
+          options { timeout(time: 30, unit: 'MINUTES') }
           steps {
             mavenBuild("jdk11", "clean install")
-            script {
-              if (env.BRANCH_NAME == 'main') {
-                mavenBuild("jdk11", "deploy")
-              }
-            }
-          }
-        }
-        stage("Build / Test - JDK15") {
-          agent { node { label 'linux' } }
-          options { timeout(time: 120, unit: 'MINUTES') }
-          steps {
-            mavenBuild("jdk15", "clean install")
             // Collect up the jacoco execution results.
             jacoco inclusionPattern: '**/org/mortbay/jetty/load/generator/**/*.class',
                     execPattern: '**/target/jacoco.exec',
                     classPattern: '**/target/classes',
                     sourcePattern: '**/src/main/java'
+            script {
+              if (env.BRANCH_NAME == 'main') {
+                mavenBuild("jdk11", "deploy")
+              }
+            }
           }
         }
       }
@@ -51,7 +44,7 @@ def mavenBuild(jdk, cmdline) {
                "PATH+MAVEN=${ tool "$jdk" }/bin:${tool "$mvnName"}/bin",
                "MAVEN_OPTS=-Xms2g -Xmx4g -Djava.awt.headless=true"]) {
         configFileProvider([configFile(fileId: 'oss-settings.xml', variable: 'GLOBAL_MVN_SETTINGS')]) {
-          sh "mvn --no-transfer-progress -s $GLOBAL_MVN_SETTINGS -V -B -e $cmdline"
+          sh "mvn --no-transfer-progress -s $GLOBAL_MVN_SETTINGS -B -V -e $cmdline"
         }
       }
     }
