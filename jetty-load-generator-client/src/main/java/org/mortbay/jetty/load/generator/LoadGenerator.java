@@ -1,19 +1,14 @@
 //
-//  ========================================================================
-//  Copyright (c) 1995-2019 Mort Bay Consulting Pty. Ltd.
-//  ------------------------------------------------------------------------
-//  All rights reserved. This program and the accompanying materials
-//  are made available under the terms of the Eclipse Public License v1.0
-//  and Apache License v2.0 which accompanies this distribution.
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
 //
-//      The Eclipse Public License is available at
-//      http://www.eclipse.org/legal/epl-v10.html
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
-//      The Apache License v2.0 is available at
-//      http://www.opensource.org/licenses/apache2.0.php
-//
-//  You may elect to redistribute this code under either of these licenses.
-//  ========================================================================
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
 //
 
 package org.mortbay.jetty.load.generator;
@@ -36,9 +31,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpRequest;
 import org.eclipse.jetty.client.api.Request;
@@ -52,14 +46,68 @@ import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.ManagedOperation;
 import org.eclipse.jetty.util.component.ContainerLifeCycle;
+import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
 
+/**
+ * <p>An HTTP Load Generator that sends {@link Resource resources} to the server as HTTP requests.</p>
+ * <p>Use a {@link Builder} to configure the parameters that control the load generation.</p>
+ * <p>Typical usage:</p>
+ *
+ * <pre>
+ * LoadGenerator loadGenerator = LoadGenerator.builder()
+ *     .host("localhost")                          // The server host
+ *     .port(8080)                                 // The server port
+ *     .resource(new Resource("/"))                // The resource(s) to request
+ *     .resourceRate(5)                            // The send rate in resource tree per second
+ *     .usersPerThread(10)                         // Simulate 10 different users/connections
+ *     .warmupIterationsPerThread(100)             // How many warmup iterations (not recorded)
+ *     .iterationsPerThread(200)                   // How many recorded iterations
+ *     .resourceListener(this::recordResponseTime) // The listener for resource events to record
+ *     .build();
+ *
+ * // Start the load generation.
+ * CompletableFuture&lt;?&gt; load = loadGenerator.begin();
+ *
+ * // Wait for the load generator to finish.
+ * load.get();
+ * </pre>
+ *
+ * <p>In the example above, a single resource is configured, with a total request rate of 5 requests/s,
+ * which means a nominal pause between requests of 200 ms;
+ * 10 users per thread means that at least 10 connections will be opened to the server;
+ * 200 iterations means that that the load generator will perform requests with this pattern:</p>
+ * <pre>
+ * 200 ms pause
+ * client1.send
+ * 200 ms pause
+ * client2.send
+ * ...
+ * 200 ms pause
+ * client10.send
+ * 200 ms pause
+ * client1.send
+ * ...
+ * </pre>
+ * <p>The rate is across all users; with 200 iterations and 10 users,
+ * each user sends 20 resources to the server.</p>
+ *
+ * <p>Rather than counting iterations, the load generator can run for a specified time using
+ * {@link Builder#runFor(long, TimeUnit)} instead of {@link Builder#iterationsPerThread(int)}.</p>
+ */
 @ManagedObject("LoadGenerator")
 public class LoadGenerator extends ContainerLifeCycle {
-    private static final Logger logger = Log.getLogger(LoadGenerator.class);
+    private static final Logger LOGGER = Log.getLogger(LoadGenerator.class);
+
+    /**
+     * @return a new Builder
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
 
     private final Config config;
     private final CyclicBarrier barrier;
@@ -70,9 +118,11 @@ public class LoadGenerator extends ContainerLifeCycle {
         this.config = config;
         this.barrier = new CyclicBarrier(config.threads);
         addBean(config);
+        addBean(config.getExecutor());
+        addBean(config.getScheduler());
     }
 
-    private CompletableFuture<Void> proceed() {
+    private CompletableFuture<Void> spawn() {
         CompletableFuture<Void> result = new CompletableFuture<>();
         try {
             start();
@@ -88,45 +138,66 @@ public class LoadGenerator extends ContainerLifeCycle {
         executorService = Executors.newCachedThreadPool();
         interrupt = false;
         super.doStart();
-        fireBeginEvent(this);
     }
 
-    private CompletableFuture<Void> halt() {
-        CompletableFuture<Void> result = new CompletableFuture<>();
-        try {
-            stop();
-            result.complete(null);
-        } catch (Throwable x) {
-            result.completeExceptionally(x);
-        }
-        return result;
+    private void halt() {
+        LifeCycle.stop(this);
     }
 
     @Override
     protected void doStop() throws Exception {
-        fireEndEvent(this);
         super.doStop();
         interrupt();
         executorService.shutdown();
     }
 
+    /**
+     * @return the configuration of this LoadGenerator
+     */
     public Config getConfig() {
         return config;
     }
 
+    /**
+     * <p>Begins the load generation, as configured with the Builder.</p>
+     *
+     * @return a CompletableFuture that is completed when the load generation completes.
+     */
     public CompletableFuture<Void> begin() {
-        if (logger.isDebugEnabled()) {
-            logger.debug("generating load, {}", config);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("generating load, {}", config);
         }
-        return proceed().thenCompose(x -> {
-            CompletableFuture[] futures = new CompletableFuture[config.getThreads()];
-            for (int i = 0; i < futures.length; ++i) {
-                futures[i] = CompletableFuture.supplyAsync(this::process, executorService).thenCompose(Function.identity());
-            }
-            return CompletableFuture.allOf(futures);
-        }).thenComposeAsync(x -> halt(), executorService);
+        return spawn()
+                .thenRun(() -> fireBeginEvent(this))
+                .thenCompose(x -> {
+                    // These CompletableFutures will be completed when process()
+                    // returns, i.e. when requests have been scheduled for send.
+                    CompletableFuture<?>[] requests = new CompletableFuture<?>[config.getThreads()];
+                    // These CompletableFutures will be completed when responses are completed.
+                    CompletableFuture<?>[] responses = new CompletableFuture<?>[config.getThreads()];
+                    for (int i = 0; i < requests.length; ++i) {
+                        int index = i;
+                        Supplier<CompletableFuture<Void>> sender = () -> {
+                            CompletableFuture<Void> complete = process();
+                            responses[index] = complete;
+                            return complete;
+                        };
+                        requests[index] = CompletableFuture.supplyAsync(sender, executorService);
+                    }
+                    return CompletableFuture.allOf(requests)
+                            .thenRun(() -> fireEndEvent(this))
+                            .thenCompose(v -> CompletableFuture.allOf(responses));
+                })
+                .thenRun(() -> fireCompleteEvent(this))
+                // Call halt() even if previous stages failed.
+                .whenCompleteAsync((r, x) -> halt(), executorService);
     }
 
+    /**
+     * <p>Interrupts gracefully the load generation.</p>
+     * <p>The CompletableFuture returned by {@link #begin()} is completed
+     * exceptionally with an {@link InterruptedException}.</p>
+     */
     @ManagedOperation(value = "Interrupts this LoadGenerator", impact = "ACTION")
     public void interrupt() {
         interrupt = true;
@@ -139,37 +210,36 @@ public class LoadGenerator extends ContainerLifeCycle {
             barrier.await();
 
             String threadName = Thread.currentThread().getName();
-            if (logger.isDebugEnabled()) {
-                logger.debug("sender thread {} running", threadName);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("sender thread {} running", threadName);
             }
 
             HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
             // HttpClient cannot be stopped from one of its own threads.
             result = process.whenCompleteAsync((r, x) -> {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("stopping http clients");
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("stopping http clients");
                 }
                 Arrays.stream(clients).forEach(this::stopHttpClient);
             }, executorService);
             for (int i = 0; i < clients.length; ++i) {
                 HttpClient client = clients[i] = newHttpClient(getConfig());
-                client.start();
-                addBean(client, false);
+                addManaged(client);
             }
 
             Callback processCallback = new Callback() {
                 @Override
                 public void succeeded() {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("sender thread {} completed", threadName);
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("sender thread {} completed", threadName);
                     }
                     process.complete(null);
                 }
 
                 @Override
                 public void failed(Throwable x) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("sender thread " + threadName + " failed", x);
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("sender thread " + threadName + " failed", x);
                     }
                     process.completeExceptionally(x);
                 }
@@ -246,12 +316,11 @@ public class LoadGenerator extends ContainerLifeCycle {
                 }
             }
         } catch (Throwable x) {
-            if (logger.isDebugEnabled()) {
-                logger.debug(x);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(x);
             }
             process.completeExceptionally(x);
         }
-        logger.info( "sending resources finished" );
         return result;
     }
 
@@ -275,7 +344,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                 removeBean(client);
             }
         } catch (Throwable x) {
-            logger.ignore(x);
+            LOGGER.ignore(x);
         }
     }
 
@@ -299,8 +368,8 @@ public class LoadGenerator extends ContainerLifeCycle {
         CountingCallback treeCallback = new CountingCallback(new Callback() {
             @Override
             public void succeeded() {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("completed tree for {}", resource);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("completed tree for {}", resource);
                 }
                 info.setTreeTime(System.nanoTime());
                 if (!warmup) {
@@ -311,8 +380,8 @@ public class LoadGenerator extends ContainerLifeCycle {
 
             @Override
             public void failed(Throwable x) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("failed tree for {}", resource);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("failed tree for {}", resource);
                 }
                 callback.failed(x);
             }
@@ -334,6 +403,13 @@ public class LoadGenerator extends ContainerLifeCycle {
                 .filter(l -> l instanceof EndListener)
                 .map(l -> (EndListener)l)
                 .forEach(l -> l.onEnd(generator));
+    }
+
+    private void fireCompleteEvent(LoadGenerator generator) {
+        config.getListeners().stream()
+                .filter(l -> l instanceof CompleteListener)
+                .map(l -> (CompleteListener)l)
+                .forEach(l -> l.onComplete(generator));
     }
 
     private void fireResourceNodeEvent(Resource.Info info) {
@@ -402,19 +478,19 @@ public class LoadGenerator extends ContainerLifeCycle {
                     HttpRequest httpRequest = (HttpRequest)newRequest(client, config, resource);
 
                     if (pushCache.contains(httpRequest.getURI())) {
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("skip sending pushed {}", resource);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("skip sending pushed {}", resource);
                         }
                     } else {
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("sending {}{}", warmup ? "warmup " : "", resource);
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("sending {}{}", warmup ? "warmup " : "", resource);
                         }
 
                         httpRequest.pushListener((request, pushed) -> {
                             URI pushedURI = pushed.getURI();
                             Resource child = resource.findDescendant(pushedURI);
-                            if (logger.isDebugEnabled()) {
-                                logger.debug("pushed {}", child);
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("pushed {}", child);
                             }
                             if (child != null && pushCache.add(pushedURI)) {
                                 Resource.Info pushedInfo = child.newInfo();
@@ -469,8 +545,8 @@ public class LoadGenerator extends ContainerLifeCycle {
             @Override
             public void onComplete(Result result) {
                 Resource resource = info.getResource();
-                if (logger.isDebugEnabled()) {
-                    logger.debug("completed {}: {}", resource, result);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("completed {}: {}", resource, result);
                 }
                 if (result.isSucceeded()) {
                     info.setResponseTime(System.nanoTime());
@@ -488,7 +564,9 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     /**
-     * Read-only configuration for the load generator.
+     * <p>Read-only configuration for the load generator.</p>
+     *
+     * @see Builder
      */
     @ManagedObject("LoadGenerator Configuration")
     public static class Config {
@@ -504,7 +582,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         protected String host = "localhost";
         protected int port = 8080;
         protected HTTPClientTransportBuilder httpClientTransportBuilder;
-        protected SslContextFactory sslContextFactory;
+        protected SslContextFactory.Client sslContextFactory;
         protected Scheduler scheduler;
         protected Executor executor;
         protected SocketAddressResolver socketAddressResolver = new SocketAddressResolver.Sync();
@@ -576,7 +654,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             return httpClientTransportBuilder;
         }
 
-        public SslContextFactory getSslContextFactory() {
+        public SslContextFactory.Client getSslContextFactory() {
             return sslContextFactory;
         }
 
@@ -644,6 +722,9 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
     }
 
+    /**
+     * <p>A builder for LoadGenerator.</p>
+     */
     public static class Builder extends Config {
         /**
          * @param threads the number of sender threads
@@ -691,6 +772,18 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         /**
+         * <p>Configures the number of "users" per sender thread, where a "user" is the
+         * entity that opens TCP connections to the server.</p>
+         * <p>A "user" maps to an {@code HttpClient} instance.</p>
+         * <p>This value is an indication of the minimum number of TCP connections
+         * opened by the LoadGenerator, since the precise number depends on the
+         * protocol (HTTP/1.1 vs HTTP/2) and the request rate.</p>
+         * <p>Consider using {@link #channelsPerUser(int)} to have more control on the
+         * maximum number of TCP connections opened to the server.</p>
+         * <p>Consider using a {@link #executor(Executor) shared executor} and a
+         * {@link #scheduler(Scheduler) shared scheduler} to avoid that each
+         * {@code HttpClient} instance allocates its own.</p>
+         *
          * @param usersPerThread the number of users/browsers for each sender thread
          * @return this Builder
          */
@@ -703,8 +796,15 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         /**
+         * <p>Configures the number of "channels" a user can use to send requests in parallel.</p>
+         * <p>When using the HTTP/1.1 protocol, this value can be used to simulate browsers,
+         * that only open a limited number of TCP connections (typically 6-8) to a single server.</p>
+         * <p>When using the HTTP/2 protocol, this value is the maximum number of concurrent
+         * streams sent by the LoadGenerator.</p>
+         *
          * @param channelsPerUser the number of connections/streams per user
          * @return this Builder
+         * @see #usersPerThread(int)
          */
         public Builder channelsPerUser(int channelsPerUser) {
             if (channelsPerUser < 0) {
@@ -715,6 +815,13 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         /**
+         * <p>The total request rate of the resource tree generated by the LoadGenerator.</p>
+         * <p>For a resource tree made of just one resource, this value is effectively the HTTP request rate.</p>
+         * <p>For a resource tree made of 3 sibling resources, the HTTP request rate is this value times 3 (as
+         * sibling resources are sent in parallel).</p>
+         * <p>When using more than 1 {@link #threads(int) sender thread}, the resource rate is split among
+         * sender threads (so it is best that this value is a multiple of the number of sender threads).</p>
+         *
          * @param resourceRate number of resource trees requested per second, or zero for maximum request rate
          * @return this Builder
          */
@@ -724,7 +831,10 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         /**
-         * @param rateRampUpPeriod the rate ramp up period in seconds, or zero for no ramp up
+         * <p>The resource rate ramp-up period, to avoid that high resource rates
+         * cause a load spike when the load generation begins.</p>
+         *
+         * @param rateRampUpPeriod the rate ramp-up period in seconds, or zero for no ramp-up
          * @return this Builder
          */
         public Builder rateRampUpPeriod(long rateRampUpPeriod) {
@@ -775,13 +885,14 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @param sslContextFactory the SslContextFactory to use for https requests
          * @return this Builder
          */
-        public Builder sslContextFactory(SslContextFactory sslContextFactory) {
+        public Builder sslContextFactory(SslContextFactory.Client sslContextFactory) {
             this.sslContextFactory = sslContextFactory;
             return this;
         }
 
         /**
-         * @param scheduler the shared scheduler
+         * @param scheduler the shared scheduler among all HttpClient instances
+         *                  if {@code null} each HttpClient will use its own
          * @return this Builder
          */
         public Builder scheduler(Scheduler scheduler) {
@@ -790,7 +901,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         /**
-         * @param executor the shared executor between all HttpClient instances
+         * @param executor the shared executor among all HttpClient instances
          *                 if {@code null} each HttpClient will use its own
          * @return this Builder
          */
@@ -817,41 +928,72 @@ public class LoadGenerator extends ContainerLifeCycle {
             return this;
         }
 
+        /**
+         * @param maxRequestsQueued same as {@link HttpClient#setMaxRequestsQueuedPerDestination(int)}
+         * @return this Builder
+         */
         public Builder maxRequestsQueued(int maxRequestsQueued) {
             this.maxRequestsQueued = maxRequestsQueued;
             return this;
         }
 
+        /**
+         * @param listener the {@link Listener} to add
+         * @return this Builder
+         */
         public Builder listener(Listener listener) {
             listeners.add(listener);
             return this;
         }
 
+        /**
+         * @param listener the {@link Request.Listener} to add
+         * @return this Builder
+         */
         public Builder requestListener(Request.Listener listener) {
             requestListeners.add(listener);
             return this;
         }
 
+        /**
+         * @param listener the {@link Resource.Listener} to add
+         * @return this Builder
+         */
         public Builder resourceListener(Resource.Listener listener) {
             resourceListeners.add(listener);
             return this;
         }
 
+        /**
+         * @param connectBlocking same as {@link HttpClient#setConnectBlocking(boolean)}
+         * @return this Builder
+         */
         public Builder connectBlocking(boolean connectBlocking) {
             this.connectBlocking = connectBlocking;
             return this;
         }
 
+        /**
+         * @param connectTimeout same as {@link HttpClient#setConnectTimeout(long)}
+         * @return this Builder
+         */
         public Builder connectTimeout(long connectTimeout) {
             this.connectTimeout = connectTimeout;
             return this;
         }
 
+        /**
+         * @param idleTimeout same as {@link HttpClient#setIdleTimeout(long)}
+         * @return this Builder
+         */
         public Builder idleTimeout(long idleTimeout) {
             this.idleTimeout = idleTimeout;
             return this;
         }
 
+        /**
+         * @return a new LoadGenerator instance
+         */
         public LoadGenerator build() {
             if (httpClientTransportBuilder == null) {
                 httpClientTransportBuilder = new HTTP1ClientTransportBuilder();
@@ -860,14 +1002,54 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
     }
 
+    /**
+     * <p>A generic listener for LoadGenerator events.</p>
+     */
     public interface Listener extends EventListener {
     }
 
+    /**
+     * <p>A listener for the LoadGenerator "begin" event.</p>
+     * <p>The "begin" event is emitted when the load generation begins.</p>
+     */
     public interface BeginListener extends Listener {
-        void onBegin(LoadGenerator generator);
+        /**
+         * <p>Callback method invoked when the "begin" event is emitted.</p>
+         *
+         * @param generator the load generator
+         */
+        public void onBegin(LoadGenerator generator);
     }
 
+    /**
+     * <p>A listener for the LoadGenerator "end" event.</p>
+     * <p>The "end" event is emitted when the load generation ends,
+     * that is when the last request has been sent.</p>
+     *
+     * @see CompleteListener
+     */
     public interface EndListener extends Listener {
+        /**
+         * <p>Callback method invoked when the "end" event is emitted.</p>
+         *
+         * @param generator the load generator
+         */
         void onEnd(LoadGenerator generator);
+    }
+
+    /**
+     * <p>A listener for the LoadGenerator "complete" event.</p>
+     * <p>The "complete" event is emitted when the load generation completes,
+     * that is when the last response has been received.</p>
+     *
+     * @see EndListener
+     */
+    public interface CompleteListener extends Listener {
+        /**
+         * <p>Callback method invoked when the "complete" event is emitted.</p>
+         *
+         * @param generator the load generator
+         */
+        void onComplete(LoadGenerator generator);
     }
 }

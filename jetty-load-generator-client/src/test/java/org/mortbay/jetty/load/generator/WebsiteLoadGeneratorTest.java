@@ -1,29 +1,23 @@
 //
-//  ========================================================================
-//  Copyright (c) 1995-2019 Mort Bay Consulting Pty. Ltd.
-//  ------------------------------------------------------------------------
-//  All rights reserved. This program and the accompanying materials
-//  are made available under the terms of the Eclipse Public License v1.0
-//  and Apache License v2.0 which accompanies this distribution.
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
 //
-//      The Eclipse Public License is available at
-//      http://www.eclipse.org/legal/epl-v10.html
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
-//      The Apache License v2.0 is available at
-//      http://www.opensource.org/licenses/apache2.0.php
-//
-//  You may elect to redistribute this code under either of these licenses.
-//  ========================================================================
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
 //
 
 package org.mortbay.jetty.load.generator;
 
-import java.io.IOException;
-
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.server.ConnectionFactory;
+import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.NCSARequestLog;
+import org.eclipse.jetty.server.RequestLogWriter;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
@@ -88,16 +82,12 @@ public abstract class WebsiteLoadGeneratorTest {
         // The request log ensures that the request
         // is inspected how an application would do.
         RequestLogHandler requestLogHandler = new RequestLogHandler();
-        NCSARequestLog requestLog = new NCSARequestLog() {
+        CustomRequestLog requestLog = new CustomRequestLog(new RequestLogWriter() {
             @Override
-            public void write(String log) throws IOException {
+            public void write(String log) {
                 // Do not write the log.
             }
-        };
-        requestLog.setExtended(true);
-        requestLog.setLogCookies(true);
-        requestLog.setLogLatency(true);
-        requestLog.setLogServer(true);
+        }, CustomRequestLog.NCSA_FORMAT);
         requestLogHandler.setRequestLog(requestLog);
         serverStats = new StatisticsHandler();
 
@@ -112,7 +102,7 @@ public abstract class WebsiteLoadGeneratorTest {
     }
 
     protected LoadGenerator.Builder prepareLoadGenerator(HTTPClientTransportBuilder clientTransportBuilder) {
-        return new LoadGenerator.Builder()
+        return LoadGenerator.builder()
                 .threads(1)
                 .port(connector.getLocalPort())
                 .httpClientTransportBuilder(clientTransportBuilder)

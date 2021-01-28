@@ -1,133 +1,107 @@
 //
-//  ========================================================================
-//  Copyright (c) 1995-2019 Mort Bay Consulting Pty. Ltd.
-//  ------------------------------------------------------------------------
-//  All rights reserved. This program and the accompanying materials
-//  are made available under the terms of the Eclipse Public License v1.0
-//  and Apache License v2.0 which accompanies this distribution.
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
 //
-//      The Eclipse Public License is available at
-//      http://www.eclipse.org/legal/epl-v10.html
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
-//      The Apache License v2.0 is available at
-//      http://www.opensource.org/licenses/apache2.0.php
-//
-//  You may elect to redistribute this code under either of these licenses.
-//  ========================================================================
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
 //
 
 package org.mortbay.jetty.load.generator.listeners;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.util.log.Log;
-import org.mortbay.jetty.load.generator.HTTPClientTransportBuilder;
 
-public class ServerInfo
-{
-    private String jettyVersion;
-
-    private int availableProcessors;
-
+/**
+ * <p>A value class representing server-side information.</p>
+ * <p>A server would expose a well known path such as {@code /.well-known/serverInfo}
+ * that can be invoked via:</p>
+ * <pre>
+ * ServerInfo serverInfo = ServerInfo.retrieveServerInfo(httpClient, URI.create("http://localhost:8080/.well-known/serverInfo"));
+ * </pre>
+ * The server should respond with JSON content with the following format:</p>
+ * <pre>
+ * {
+ *     "serverVersion": "jetty-9.4.x",
+ *     "processorCount": 12,
+ *     "totalMemory": 34359738368,
+ *     "gitHash": "0123456789abcdef",
+ *     "javaVersion": "11.0.10+9"
+ * }
+ * </pre>
+ */
+public class ServerInfo {
+    private String serverVersion;
+    private int processorCount;
     private long totalMemory;
-
     private String gitHash;
-
     private String javaVersion;
 
-    public String getJettyVersion()
-    {
-        return jettyVersion;
+    public String getServerVersion() {
+        return serverVersion;
     }
 
-    public int getAvailableProcessors()
-    {
-        return availableProcessors;
+    public void setServerVersion(String serverVersion) {
+        this.serverVersion = serverVersion;
     }
 
-    public long getTotalMemory()
-    {
+    public int getProcessorCount() {
+        return processorCount;
+    }
+
+    public void setProcessorCount(int processorCount) {
+        this.processorCount = processorCount;
+    }
+
+    public long getTotalMemory() {
         return totalMemory;
     }
 
-    public void setJettyVersion(String jettyVersion)
-    {
-        this.jettyVersion = jettyVersion;
-    }
-
-    public void setAvailableProcessors(int availableProcessors)
-    {
-        this.availableProcessors = availableProcessors;
-    }
-
-    public void setTotalMemory(long totalMemory)
-    {
+    public void setTotalMemory(long totalMemory) {
         this.totalMemory = totalMemory;
     }
 
-    public String getGitHash()
-    {
+    public String getGitHash() {
         return gitHash;
     }
 
-    public void setGitHash(String gitHash)
-    {
+    public void setGitHash(String gitHash) {
         this.gitHash = gitHash;
     }
 
-    public String getJavaVersion()
-    {
+    public String getJavaVersion() {
         return javaVersion;
     }
 
-    public void setJavaVersion(String javaVersion)
-    {
+    public void setJavaVersion(String javaVersion) {
         this.javaVersion = javaVersion;
     }
 
     @Override
-    public String toString()
-    {
-        return "ServerInfo{" + "jettyVersion='" + jettyVersion + '\'' + ", availableProcessors=" + availableProcessors +
-                ", totalMemory=" + totalMemory + ", gitHash='" + gitHash + '\'' + ", javaVersion='" + javaVersion + '\'' +
-                '}';
+    public String toString() {
+        return String.format("%s{jettyVersion='%s', availableProcessors=%d, totalMemory=%d, gitHash='%s', javaVersion='%s'}",
+                getClass().getSimpleName(), getServerVersion(), getProcessorCount(), getTotalMemory(), getGitHash(), getJavaVersion());
     }
 
-    public static ServerInfo retrieveServerInfo(Request request, HttpClient httpClient)
-        throws Exception
-    {
-            ContentResponse contentResponse = httpClient //
-                .newRequest(request.host, request.port) //
-                .scheme(request.scheme) //
-                .path(request.path) //
+    public static ServerInfo retrieveServerInfo(HttpClient httpClient, URI uri) throws Exception {
+        ContentResponse contentResponse = httpClient.newRequest(uri)
+                .timeout(5, TimeUnit.SECONDS)
                 .send();
-            if (contentResponse.getStatus() != HttpStatus.OK_200)
-            {
-                Log.getLogger(ServerInfo.class).info("fail to retrieve server info " +
-                        contentResponse.getStatus() + ", content: " + contentResponse.getContentAsString());
-            }
-            return new ObjectMapper() //
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false) //
-                .readValue(contentResponse.getContent(), ServerInfo.class);
-
-
-    }
-
-    public static class Request
-    {
-        public String scheme,host, path;
-        public int port;
-
-        public Request(String scheme, String host, String path, int port)
-        {
-            this.scheme = scheme;
-            this.host = host;
-            this.path = path;
-            this.port = port;
+        if (contentResponse.getStatus() != HttpStatus.OK_200) {
+            throw new IOException("could not retrieve server info: HTTP " + contentResponse.getStatus());
         }
+        return new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .readValue(contentResponse.getContent(), ServerInfo.class);
     }
-
 }

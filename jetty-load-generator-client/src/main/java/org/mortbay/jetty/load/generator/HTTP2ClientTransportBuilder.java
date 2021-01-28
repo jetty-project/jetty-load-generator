@@ -1,19 +1,14 @@
 //
-//  ========================================================================
-//  Copyright (c) 1995-2019 Mort Bay Consulting Pty. Ltd.
-//  ------------------------------------------------------------------------
-//  All rights reserved. This program and the accompanying materials
-//  are made available under the terms of the Eclipse Public License v1.0
-//  and Apache License v2.0 which accompanies this distribution.
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
 //
-//      The Eclipse Public License is available at
-//      http://www.eclipse.org/legal/epl-v10.html
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
-//      The Apache License v2.0 is available at
-//      http://www.opensource.org/licenses/apache2.0.php
-//
-//  You may elect to redistribute this code under either of these licenses.
-//  ========================================================================
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
 //
 
 package org.mortbay.jetty.load.generator;
@@ -23,13 +18,17 @@ import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
 
 /**
- * Helper builder to provide an http2 {@link HttpClientTransport}
+ * <p>Helper builder to provide an HTTP/2 {@link HttpClientTransport}.</p>
  */
 public class HTTP2ClientTransportBuilder implements HTTPClientTransportBuilder {
     private int selectors = 1;
     private int sessionRecvWindow = 16 * 1024 * 1024;
     private int streamRecvWindow = 16 * 1024 * 1024;
 
+    /**
+     * @param selectors the number of NIO selectors
+     * @return this builder instance
+     */
     public HTTP2ClientTransportBuilder selectors(int selectors) {
         this.selectors = selectors;
         return this;
@@ -39,6 +38,10 @@ public class HTTP2ClientTransportBuilder implements HTTPClientTransportBuilder {
         return selectors;
     }
 
+    /**
+     * @param sessionRecvWindow the HTTP/2 session flow control receive window
+     * @return this builder instance
+     */
     public HTTP2ClientTransportBuilder sessionRecvWindow(int sessionRecvWindow) {
         this.sessionRecvWindow = sessionRecvWindow;
         return this;
@@ -48,6 +51,10 @@ public class HTTP2ClientTransportBuilder implements HTTPClientTransportBuilder {
         return sessionRecvWindow;
     }
 
+    /**
+     * @param streamRecvWindow the HTTP/2 stream flow control receive window
+     * @return this builder instance
+     */
     public HTTP2ClientTransportBuilder streamRecvWindow(int streamRecvWindow) {
         this.streamRecvWindow = streamRecvWindow;
         return this;

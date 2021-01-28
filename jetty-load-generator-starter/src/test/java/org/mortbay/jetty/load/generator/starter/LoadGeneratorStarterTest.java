@@ -1,18 +1,15 @@
-/*
- * Copyright (C) 2016 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+//
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
+//
 
 package org.mortbay.jetty.load.generator.starter;
 
@@ -23,13 +20,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.eclipse.jetty.client.api.Request;
@@ -57,7 +52,6 @@ public class LoadGeneratorStarterTest {
 
     private Server server;
     private ServerConnector connector;
-    private StatisticsHandler statisticsHandler = new StatisticsHandler();
     private TestServlet testServlet;
 
     @Before
@@ -67,11 +61,11 @@ public class LoadGeneratorStarterTest {
         server = new Server(serverThreads);
         connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
         server.addConnector(connector);
+        StatisticsHandler statisticsHandler = new StatisticsHandler();
         server.setHandler(statisticsHandler);
         ServletContextHandler statsContext = new ServletContextHandler(statisticsHandler, "/");
         statsContext.addServlet(new ServletHolder(new StatisticsServlet()), "/stats");
-        testServlet = new TestServlet();
-        testServlet.connector = connector;
+        testServlet = new TestServlet(connector);
         statsContext.addServlet(new ServletHolder(testServlet), "/");
         server.start();
     }
@@ -84,7 +78,13 @@ public class LoadGeneratorStarterTest {
     }
 
     @Test
-    public void simpleTest() throws Exception {
+    public void testServer() throws Exception {
+        System.err.println("port = " + connector.getLocalPort());
+        new CountDownLatch(1).await();
+    }
+
+    @Test
+    public void simpleTest() {
         String[] args = new String[]{
                 "--warmup-iterations",
                 "10",
@@ -112,7 +112,7 @@ public class LoadGeneratorStarterTest {
     }
 
     @Test
-    public void failFast() throws Exception {
+    public void failFast() {
         String[] args = new String[]{
                 "--warmup-iterations",
                 "10",
@@ -134,7 +134,7 @@ public class LoadGeneratorStarterTest {
                 "src/test/resources/single_fail_resource.groovy"
         };
         LoadGeneratorStarterArgs starterArgs = LoadGeneratorStarter.parse(args);
-        LoadGenerator.Builder builder = LoadGeneratorStarter.prepare(starterArgs);
+        LoadGenerator.Builder builder = LoadGeneratorStarter.configure(starterArgs);
 
         AtomicInteger onFailure = new AtomicInteger(0);
         AtomicInteger onCommit = new AtomicInteger(0);
@@ -152,7 +152,7 @@ public class LoadGeneratorStarterTest {
         builder.requestListener(requestListener);
 
         try {
-            LoadGeneratorStarter.run(builder);
+            LoadGeneratorStarter.run(builder.build());
             Assert.fail();
         } catch (Exception x) {
             // Expected.
@@ -180,17 +180,21 @@ public class LoadGeneratorStarterTest {
     public void calculate_descendant_number() throws Exception {
         try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
             Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Collections.emptyMap());
-            Assert.assertEquals( 17, resource.descendantCount() );
+            Assert.assertEquals(17, resource.descendantCount());
         }
     }
 
     private static class TestServlet extends HttpServlet {
-        private AtomicInteger getNumber = new AtomicInteger(0);
-        private AtomicInteger postNumber = new AtomicInteger(0);
-        private ServerConnector connector;
+        private final AtomicInteger getNumber = new AtomicInteger(0);
+        private final AtomicInteger postNumber = new AtomicInteger(0);
+        private final ServerConnector connector;
+
+        private TestServlet(ServerConnector connector) {
+            this.connector = connector;
+        }
 
         @Override
-        protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
             String method = request.getMethod().toUpperCase(Locale.ENGLISH);
             switch (method) {
                 case "GET": {

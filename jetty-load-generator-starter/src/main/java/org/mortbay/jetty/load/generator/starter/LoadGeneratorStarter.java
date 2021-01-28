@@ -1,36 +1,40 @@
 //
-//  ========================================================================
-//  Copyright (c) 1995-2019 Mort Bay Consulting Pty. Ltd.
-//  ------------------------------------------------------------------------
-//  All rights reserved. This program and the accompanying materials
-//  are made available under the terms of the Eclipse Public License v1.0
-//  and Apache License v2.0 which accompanies this distribution.
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
 //
-//      The Eclipse Public License is available at
-//      http://www.eclipse.org/legal/epl-v10.html
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
-//      The Apache License v2.0 is available at
-//      http://www.opensource.org/licenses/apache2.0.php
-//
-//  You may elect to redistribute this code under either of these licenses.
-//  ========================================================================
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
 //
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-
 import com.beust.jcommander.JCommander;
+import org.HdrHistogram.Histogram;
+import org.eclipse.jetty.jmx.MBeanContainer;
+import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.mortbay.jetty.load.generator.LoadGenerator;
-import org.mortbay.jetty.load.generator.listeners.CollectorInformations;
-import org.mortbay.jetty.load.generator.listeners.report.GlobalSummaryListener;
+import org.mortbay.jetty.load.generator.listeners.ReportListener;
 
+/**
+ * <p>A convenience class to run the load generator from the command line.</p>
+ * <pre>
+ * java -jar jetty-load-generator-starter.jar --help
+ * </pre>
+ */
 public class LoadGeneratorStarter {
     private static final Logger LOGGER = Log.getLogger(LoadGeneratorStarter.class);
 
@@ -39,19 +43,42 @@ public class LoadGeneratorStarter {
         if (starterArgs == null) {
             return;
         }
-        LoadGenerator.Builder builder = prepare(starterArgs);
-        GlobalSummaryListener globalSummaryListener = new GlobalSummaryListener();
-        builder = builder.resourceListener(globalSummaryListener).requestListener(globalSummaryListener);
-        run(builder);
+        LoadGenerator.Builder builder = configure(starterArgs);
+        ReportListener listener = new ReportListener();
+        LoadGenerator generator = builder
+                .listener(listener)
+                .requestListener(listener)
+                .resourceListener(listener)
+                .build();
+        if (starterArgs.isJMX()) {
+            MBeanContainer mbeanContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
+            generator.addBean(mbeanContainer);
+        }
+        run(generator);
         if (starterArgs.isDisplayStats()) {
-            displayGlobalSummaryListener(globalSummaryListener);
+            displayReport(listener);
         }
     }
 
+    /**
+     * <p>Parses the program arguments, returning the default arguments holder.</p>
+     *
+     * @param args the program arguments to parse
+     * @return the default arguments holder
+     * @see #parse(String[], Supplier)
+     */
     public static LoadGeneratorStarterArgs parse(String[] args) {
         return parse(args, LoadGeneratorStarterArgs::new);
     }
 
+    /**
+     * <p>Parses the program arguments, returning a custom arguments holder.</p>
+     *
+     * @param args         the program arguments to parse
+     * @param argsSupplier the supplier for the custom arguments holder
+     * @param <T>          the custom argument holder type
+     * @return the custom arguments holder
+     */
     public static <T extends LoadGeneratorStarterArgs> T parse(String[] args, Supplier<T> argsSupplier) {
         T starterArgs = argsSupplier.get();
         JCommander jCommander = new JCommander(starterArgs);
@@ -64,10 +91,17 @@ public class LoadGeneratorStarter {
         return starterArgs;
     }
 
-    public static LoadGenerator.Builder prepare(LoadGeneratorStarterArgs starterArgs) {
+    /**
+     * <p>Creates a new LoadGenerator.Builder, configuring it from the given arguments holder.</p>
+     *
+     * @param starterArgs the arguments holder
+     * @return a new LoadGenerator.Builder
+     */
+    public static LoadGenerator.Builder configure(LoadGeneratorStarterArgs starterArgs) {
         try {
-            LoadGenerator.Builder builder = new LoadGenerator.Builder();
-            return builder.threads(starterArgs.getThreads())
+            LoadGenerator.Builder builder = LoadGenerator.builder();
+            return builder
+                    .threads(starterArgs.getThreads())
                     .warmupIterationsPerThread(starterArgs.getWarmupIterations())
                     .iterationsPerThread(starterArgs.getIterations())
                     .runFor(starterArgs.getRunningTime(), starterArgs.getRunningTimeUnit())
@@ -76,28 +110,32 @@ public class LoadGeneratorStarter {
                     .resource(starterArgs.getResource(builder))
                     .resourceRate(starterArgs.getResourceRate())
                     .rateRampUpPeriod(starterArgs.getRateRampUpPeriod())
-                    .httpClientTransportBuilder(starterArgs.getHttpClientTransportBuilder())
-                    .sslContextFactory(new SslContextFactory.Client(true))
                     .scheme(starterArgs.getScheme())
                     .host(starterArgs.getHost())
                     .port(starterArgs.getPort())
+                    .httpClientTransportBuilder(starterArgs.getHttpClientTransportBuilder())
+                    .sslContextFactory(new SslContextFactory.Client(true))
                     .maxRequestsQueued(starterArgs.getMaxRequestsQueued())
                     .connectBlocking(starterArgs.isConnectBlocking())
                     .connectTimeout(starterArgs.getConnectTimeout())
-                    .idleTimeout(starterArgs.getIdleTimeout());
+                    .idleTimeout(starterArgs.getIdleTimeout())
+                    .executor(starterArgs.getExecutor())
+                    .scheduler(starterArgs.getScheduler());
         } catch (Exception x) {
             throw new RuntimeException(x);
         }
     }
 
-    public static void run(LoadGenerator.Builder builder) {
-        run(builder.build());
-    }
-
+    /**
+     * <p>Runs a load generation, waiting indefinitely for completion.</p>
+     *
+     * @param loadGenerator the load generator to run
+     */
     public static void run(LoadGenerator loadGenerator) {
         LOGGER.info("load generator config: {}", loadGenerator.getConfig());
         LOGGER.info("load generation begin");
         CompletableFuture<Void> cf = loadGenerator.begin();
+        LOGGER.info("load generation end");
         cf.whenComplete((x, f) -> {
             if (f == null) {
                 LOGGER.info("load generation complete");
@@ -107,53 +145,31 @@ public class LoadGeneratorStarter {
         }).join();
     }
 
-    private static void displayGlobalSummaryListener(GlobalSummaryListener globalSummaryListener) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss z");
-        CollectorInformations latencyTimeSummary =
-                new CollectorInformations(globalSummaryListener.getLatencyTimeHistogram() //
-                        .getIntervalHistogram());
-
-        long totalRequestCommitted = globalSummaryListener.getRequestCommitTotal();
-        long start = latencyTimeSummary.getStartTimeStamp();
-        long end = latencyTimeSummary.getEndTimeStamp();
-
-        LOGGER.info("");
+    private static void displayReport(ReportListener listener) {
+        Histogram responseTimes = listener.getResponseTimeHistogram();
+        HistogramSnapshot snapshot = new HistogramSnapshot(responseTimes, 16, "response times", "ms", TimeUnit.NANOSECONDS::toMillis);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
         LOGGER.info("");
         LOGGER.info("----------------------------------------------------");
-        LOGGER.info("--------    Latency Time Summary     ---------------");
+        LOGGER.info("-------------  Load Generator Report  --------------");
         LOGGER.info("----------------------------------------------------");
-        LOGGER.info("total count:" + latencyTimeSummary.getTotalCount());
-        LOGGER.info("maxLatency:" //
-                + nanosToMillis(latencyTimeSummary.getMaxValue()));
-        LOGGER.info("minLatency:" //
-                + nanosToMillis(latencyTimeSummary.getMinValue()));
-        LOGGER.info("aveLatency:" //
-                + nanosToMillis(Math.round(latencyTimeSummary.getMean())));
-        LOGGER.info("50Latency:" //
-                + nanosToMillis(latencyTimeSummary.getValue50()));
-        LOGGER.info("90Latency:" //
-                + nanosToMillis(latencyTimeSummary.getValue90()));
-        LOGGER.info("stdDeviation:" //
-                + nanosToMillis(Math.round(latencyTimeSummary.getStdDeviation())));
-        LOGGER.info("start: {}, end: {}", //
-                simpleDateFormat.format(latencyTimeSummary.getStartTimeStamp()), //
-                simpleDateFormat.format(latencyTimeSummary.getEndTimeStamp()));
-        LOGGER.info("----------------------------------------------------");
-        LOGGER.info("-----------     Estimated QPS     ------------------");
-        LOGGER.info("----------------------------------------------------");
-        long timeInSeconds = TimeUnit.SECONDS.convert(end - start, TimeUnit.MILLISECONDS);
-        long qps = totalRequestCommitted / timeInSeconds;
-        LOGGER.info("estimated QPS : " + qps);
-        LOGGER.info("----------------------------------------------------");
-        LOGGER.info("response 1xx family: " + globalSummaryListener.getResponses1xx().longValue());
-        LOGGER.info("response 2xx family: " + globalSummaryListener.getResponses2xx().longValue());
-        LOGGER.info("response 3xx family: " + globalSummaryListener.getResponses3xx().longValue());
-        LOGGER.info("response 4xx family: " + globalSummaryListener.getResponses4xx().longValue());
-        LOGGER.info("response 5xx family: " + globalSummaryListener.getResponses5xx().longValue());
+        long startTime = responseTimes.getStartTimeStamp();
+        LOGGER.info("begin  : {}", simpleDateFormat.format(startTime));
+        long endTime = responseTimes.getEndTimeStamp();
+        LOGGER.info("end    : {}", simpleDateFormat.format(endTime));
+        LOGGER.info("elapsed: {} s", String.format("%.3f", ((double)endTime - startTime) / 1000));
         LOGGER.info("");
-    }
-
-    private static long nanosToMillis(long nanosValue) {
-        return TimeUnit.NANOSECONDS.toMillis(nanosValue);
+        LOGGER.info("histogram:");
+        Arrays.stream(snapshot.toString().split(System.lineSeparator())).forEach(line -> LOGGER.info("{}", line));
+        LOGGER.info("");
+        LOGGER.info("request rate (requests/s)  : {}", String.format("%.3f", listener.getRequestRate()));
+        LOGGER.info("response rate (responses/s): {}", String.format("%.3f", listener.getResponseRate()));
+        LOGGER.info("download rate (bytes/s)    : {}", String.format("%.3f", listener.getDownloadRate()));
+        LOGGER.info("response 1xx group: {}", listener.getResponses1xx());
+        LOGGER.info("response 2xx group: {}", listener.getResponses2xx());
+        LOGGER.info("response 3xx group: {}", listener.getResponses3xx());
+        LOGGER.info("response 4xx group: {}", listener.getResponses4xx());
+        LOGGER.info("response 5xx group: {}", listener.getResponses5xx());
+        LOGGER.info("----------------------------------------------------");
     }
 }

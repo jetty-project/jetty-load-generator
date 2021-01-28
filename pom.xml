@@ -12,6 +12,8 @@
     The Jetty HTTP and HTTP/2 Load Generator
   </description>
 
+  <inceptionYear>2016</inceptionYear>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jetty.version>9.4.36.v20210114</jetty.version>
@@ -49,9 +51,7 @@
 
   <modules>
     <module>jetty-load-generator-client</module>
-    <module>jetty-load-generator-collector</module>
     <module>jetty-load-generator-listeners</module>
-    <module>jetty-load-generator-store</module>
     <module>jetty-load-generator-starter</module>
   </modules>
 
@@ -163,6 +163,35 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <inherited>false</inherited>
+        <configuration>
+          <header>header-template.txt</header>
+          <failIfMissing>true</failIfMissing>
+          <aggregate>true</aggregate>
+          <strictCheck>true</strictCheck>
+          <properties>
+            <copyright-range>${project.inceptionYear}-2021</copyright-range>
+          </properties>
+          <mapping>
+            <java>DOUBLESLASH_STYLE</java>
+          </mapping>
+          <includes>
+            <include>**/*.java</include>
+          </includes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>check-copyright-header</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-release-plugin</artifactId>
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -246,6 +275,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.0.0-M5</version>
+        </plugin>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>4.0.rc2</version>
         </plugin>
       </plugins>
     </pluginManagement>

@@ -1,19 +1,14 @@
 //
-//  ========================================================================
-//  Copyright (c) 1995-2019 Mort Bay Consulting Pty. Ltd.
-//  ------------------------------------------------------------------------
-//  All rights reserved. This program and the accompanying materials
-//  are made available under the terms of the Eclipse Public License v1.0
-//  and Apache License v2.0 which accompanies this distribution.
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
 //
-//      The Eclipse Public License is available at
-//      http://www.eclipse.org/legal/epl-v10.html
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
-//      The Apache License v2.0 is available at
-//      http://www.opensource.org/licenses/apache2.0.php
-//
-//  You may elect to redistribute this code under either of these licenses.
-//  ========================================================================
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
 //
 
 package org.mortbay.jetty.load.generator;
@@ -23,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
-
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpMethod;
 
@@ -31,7 +25,7 @@ import org.eclipse.jetty.http.HttpMethod;
  * <p>A resource node to be fetched by the load generator.</p>
  * <p>Resources are organized in a tree, and the load generator
  * fetches parent resources before children resources, while sibling
- * resources are sent in parallel.</p>
+ * resources are fetched in parallel.</p>
  * <p>A Resource without a path is a <em>group</em> resource,
  * only meant to group resources together (for example to fetch all
  * JavaScript resources as a group before fetching the image resources).</p>
@@ -42,7 +36,7 @@ public class Resource {
     private final List<Resource> resources = new ArrayList<>();
     private final HttpFields requestHeaders = new HttpFields();
     private String method = HttpMethod.GET.asString();
-    private String path = "/";
+    private String path;
     private int requestLength;
     private int responseLength;
 
@@ -50,12 +44,12 @@ public class Resource {
         this((String)null);
     }
 
-    public Resource(Resource... resources) {
-        this(null, resources);
-    }
-
     public Resource(String path) {
         this(path, new Resource[0]);
+    }
+
+    public Resource(Resource... resources) {
+        this(null, resources);
     }
 
     public Resource(String path, Resource... resources) {
@@ -215,7 +209,7 @@ public class Resource {
     }
 
     /**
-     * Value class containing information per-resource and per-request.
+     * <p>Value class containing information per-resource and per-request.</p>
      */
     public static class Info {
         private final Resource resource;
@@ -319,20 +313,26 @@ public class Resource {
         }
     }
 
+    /**
+     * <p>Generic listener for resource events.</p>
+     *
+     * @see NodeListener
+     * @see TreeListener
+     */
     public interface Listener extends EventListener {
     }
 
     /**
-     * <p>Listener for node events.</p>
-     * <p>Node events are emitted for non-warmup resource requests that completed successfully.</p>
+     * <p>Listener for resource node events.</p>
+     * <p>Resource node events are emitted for non-warmup resource requests that completed successfully.</p>
      */
     public interface NodeListener extends Listener {
         public void onResourceNode(Info info);
     }
 
     /**
-     * <p>Listener for tree node events.</p>
-     * <p>Tree node events are emitted for the non-warmup root resource.</p>
+     * <p>Listener for resource tree events.</p>
+     * <p>Resource tree events are emitted for the non-warmup root resource.</p>
      */
     public interface TreeListener extends Listener {
         public void onResourceTree(Info info);

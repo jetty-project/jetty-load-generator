@@ -1,13 +1,24 @@
+//
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
+//
+
 package org.mortbay.jetty.load.generator;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.client.api.Request;
@@ -15,15 +26,10 @@ import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.mortbay.jetty.load.generator.util.MonitoringThreadPoolExecutor;
 
 public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
-    @Before
-    public void prepare() throws Exception {
-    }
-
     @Test
     public void testHTTP2WithoutPush() throws Exception {
         prepareServer(new HTTP2ServerConnectionFactory(new HttpConfiguration()), new TestHandler());
@@ -36,7 +42,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         testHTTP2();
     }
 
-    private void testHTTP2() throws Exception {
+    private void testHTTP2() {
         MonitoringThreadPoolExecutor executor = new MonitoringThreadPoolExecutor( 1024, 60, TimeUnit.SECONDS);
 
         AtomicLong requests = new AtomicLong();

@@ -1,31 +1,25 @@
 //
-//  ========================================================================
-//  Copyright (c) 1995-2019 Mort Bay Consulting Pty. Ltd.
-//  ------------------------------------------------------------------------
-//  All rights reserved. This program and the accompanying materials
-//  are made available under the terms of the Eclipse Public License v1.0
-//  and Apache License v2.0 which accompanies this distribution.
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
 //
-//      The Eclipse Public License is available at
-//      http://www.eclipse.org/legal/epl-v10.html
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
-//      The Apache License v2.0 is available at
-//      http://www.opensource.org/licenses/apache2.0.php
-//
-//  You may elect to redistribute this code under either of these licenses.
-//  ========================================================================
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
 //
 
 package org.mortbay.jetty.load.generator;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -36,6 +30,7 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.StatisticsServlet;
+import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.ExecutorThreadPool;
@@ -44,115 +39,86 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FailFastTest
-{
+public class FailFastTest {
+    private static final Logger LOGGER = Log.getLogger(FailFastTest.class);
 
-    private static final Logger LOGGER = Log.getLogger( FailFastTest.class );
-    protected Resource resource;
-    protected Server server;
-    protected ServerConnector connector;
-    TestHandler testHandler;
-
+    private Server server;
+    private ServerConnector connector;
 
     @Before
-    public void startJetty()
-        throws Exception
-    {
+    public void startJetty() throws Exception {
         StatisticsHandler statisticsHandler = new StatisticsHandler();
-        server = new Server( new ExecutorThreadPool( 5120) );
-        connector = new ServerConnector( server, new HttpConnectionFactory( new HttpConfiguration() ) );
-        server.addConnector( connector );
-        server.setHandler( statisticsHandler );
-        ServletContextHandler statsContext = new ServletContextHandler( statisticsHandler, "/" );
-        statsContext.addServlet( new ServletHolder( new StatisticsServlet() ), "/stats" );
-        testHandler = new TestHandler();
-        testHandler.server = server;
-        statsContext.addServlet( new ServletHolder( testHandler ), "/" );
-        statsContext.setSessionHandler( new SessionHandler() );
+        server = new Server(new ExecutorThreadPool(5120));
+        connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
+        server.addConnector(connector);
+        server.setHandler(statisticsHandler);
+        ServletContextHandler statsContext = new ServletContextHandler(statisticsHandler, "/");
+        statsContext.addServlet(new ServletHolder(new StatisticsServlet()), "/stats");
+        ServerStopServlet servlet = new ServerStopServlet(server);
+        statsContext.addServlet(new ServletHolder(servlet), "/");
+        statsContext.setSessionHandler(new SessionHandler());
         server.start();
     }
 
     @After
-    public void stopJetty()
-        throws Exception
-    {
-        if ( server.isRunning() )
-        {
+    public void stopJetty() throws Exception {
+        if (server != null) {
             server.stop();
         }
     }
 
     @Test
-    public void should_fail_fast_on_server_stop()
-        throws Exception
-    {
-        AtomicInteger onFailure = new AtomicInteger( 0 ), onCommit = new AtomicInteger( 0 );
-        LoadGenerator.Builder builder = //
-            new LoadGenerator.Builder() //
-                .host( "localhost" ) //
-                .port( connector.getLocalPort() ) //
-                .resource( new Resource( "/index.html?fail=5" ) ) //
-                .warmupIterationsPerThread( 1 ) //
-                .usersPerThread( 1 ) //
-                .threads( 1 ) //
-                .resourceRate( 5 )
-                .iterationsPerThread( 25 ) //
-                //.runFor( 10, TimeUnit.SECONDS ) //
-                .requestListener( new Request.Listener.Adapter() {
+    public void testShouldFailFastOnServerStop() {
+        AtomicInteger onFailure = new AtomicInteger(0);
+        AtomicInteger onCommit = new AtomicInteger(0);
+        LoadGenerator.Builder builder = LoadGenerator.builder()
+                .host("localhost")
+                .port(connector.getLocalPort())
+                .resource(new Resource("/index.html?fail=5"))
+                .warmupIterationsPerThread(1)
+                .usersPerThread(1)
+                .threads(1)
+                .resourceRate(5)
+                .iterationsPerThread(25)
+                .requestListener(new Request.Listener.Adapter() {
                     @Override
-                    public void onFailure( Request request, Throwable failure )
-                    {
-                        LOGGER.info( "fail: {}", onFailure.incrementAndGet() );
+                    public void onFailure(Request request, Throwable failure) {
+                        LOGGER.info("fail: {}", onFailure.incrementAndGet());
                     }
 
                     @Override
-                    public void onCommit( Request request )
-                    {
-                        LOGGER.info( "onCommit: {}", onCommit.incrementAndGet() );
+                    public void onCommit(Request request) {
+                        LOGGER.info("onCommit: {}", onCommit.incrementAndGet());
                     }
-                } );
-        boolean exception = false;
-        try
-        {
-            builder.build().begin().get();
+                });
+
+        try {
+            builder.build().begin().get(15, TimeUnit.SECONDS);
+            Assert.fail();
+        } catch (Exception ignored) {
         }
-        catch ( Exception e )
-        {
-            exception = true;
-        }
-        Assert.assertTrue( exception );
-        LOGGER.info( "onFailure: {}, onCommit: {}", onFailure, onCommit);
+
+        LOGGER.info("onFailure: {}, onCommit: {}", onFailure, onCommit);
         int onFailureCall = onFailure.get();
-        // the value is really dependant on machine...
+        // The value is really dependant on machine...
         Assert.assertTrue("onFailureCall is " + onFailureCall, onFailureCall < 10);
     }
 
-    static class TestHandler
-        extends HttpServlet
-    {
+    private static class ServerStopServlet extends HttpServlet {
+        private final AtomicInteger requests = new AtomicInteger();
+        private final Server server;
 
-        AtomicInteger getNumber = new AtomicInteger( 0 );
-        Server server;
+        private ServerStopServlet(Server server) {
+            this.server = server;
+        }
 
         @Override
-        protected void service( HttpServletRequest request, HttpServletResponse response )
-            throws ServletException, IOException
-        {
-            if ( getNumber.addAndGet( 1 ) >
-                Integer.parseInt( request.getParameter( "fail" ) ) )
-            {
-                try
-                {
-                    server.stop();
-                }
-                catch ( Exception e )
-                {
-                    throw new RuntimeException( e.getMessage(), e );
-                }
+        protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
+            if (requests.incrementAndGet() > Integer.parseInt(request.getParameter("fail"))) {
+                new Thread(() -> LifeCycle.stop(server)).start();
             }
-            response.getOutputStream().write( "Jetty rocks!!".getBytes() );
+            response.getOutputStream().write("Jetty rocks!!".getBytes(StandardCharsets.UTF_8));
             response.flushBuffer();
         }
     }
-
 }

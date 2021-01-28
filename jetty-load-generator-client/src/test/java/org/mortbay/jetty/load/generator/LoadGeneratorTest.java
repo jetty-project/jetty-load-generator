@@ -1,23 +1,20 @@
 //
-//  ========================================================================
-//  Copyright (c) 1995-2019 Mort Bay Consulting Pty. Ltd.
-//  ------------------------------------------------------------------------
-//  All rights reserved. This program and the accompanying materials
-//  are made available under the terms of the Eclipse Public License v1.0
-//  and Apache License v2.0 which accompanies this distribution.
+// ========================================================================
+// Copyright (c) 2016-2021 Mort Bay Consulting Pty Ltd and others.
 //
-//      The Eclipse Public License is available at
-//      http://www.eclipse.org/legal/epl-v10.html
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
 //
-//      The Apache License v2.0 is available at
-//      http://www.opensource.org/licenses/apache2.0.php
-//
-//  You may elect to redistribute this code under either of these licenses.
-//  ========================================================================
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+// ========================================================================
 //
 
 package org.mortbay.jetty.load.generator;
 
+import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,12 +26,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-
 import javax.management.ObjectName;
-
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.jmx.MBeanContainer;
@@ -44,6 +41,7 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.junit.After;
 import org.junit.Assert;
@@ -105,11 +103,53 @@ public class LoadGeneratorTest {
     }
 
     @Test
+    public void testSlowServer() throws Exception {
+        int iterations = 1;
+        CountDownLatch serverLatch = new CountDownLatch(iterations);
+        long delay = 500;
+        prepare(new AbstractHandler() {
+            @Override
+            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+                try {
+                    jettyRequest.setHandled(true);
+                    Thread.sleep(delay);
+                    serverLatch.countDown();
+                } catch (InterruptedException x) {
+                    throw new InterruptedIOException();
+                }
+            }
+        });
+
+        long start = System.nanoTime();
+        AtomicLong beginTimeStamp = new AtomicLong();
+        AtomicLong endTimeStamp = new AtomicLong();
+        AtomicLong completeTimeStamp = new AtomicLong();
+        LoadGenerator loadGenerator = LoadGenerator.builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .warmupIterationsPerThread(0)
+                .iterationsPerThread(iterations)
+                .listener((LoadGenerator.BeginListener)g -> beginTimeStamp.set(System.nanoTime()))
+                .listener((LoadGenerator.EndListener)g -> endTimeStamp.set(System.nanoTime()))
+                .listener((LoadGenerator.CompleteListener)g -> completeTimeStamp.set(System.nanoTime()))
+                .build();
+        CompletableFuture<Void> complete = loadGenerator.begin();
+
+        complete.get(5, TimeUnit.SECONDS);
+        // Make sure the completion happened after the server completed.
+        Assert.assertTrue(serverLatch.await(5, TimeUnit.SECONDS));
+        // Verify timings.
+        Assert.assertTrue(start < beginTimeStamp.get());
+        Assert.assertTrue(beginTimeStamp.get() < endTimeStamp.get());
+        Assert.assertTrue(endTimeStamp.get() + delay / 2 < completeTimeStamp.get());
+    }
+
+    @Test
     public void testMultipleThreads() throws Exception {
         prepare(new TestHandler());
 
         Set<String> threads = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+        LoadGenerator loadGenerator = LoadGenerator.builder()
                 .port(connector.getLocalPort())
                 .httpClientTransportBuilder(clientTransportBuilder)
                 .threads(2)
@@ -189,7 +229,7 @@ public class LoadGeneratorTest {
                 .build();
         loadGenerator.begin().get(5, TimeUnit.SECONDS);
 
-        Assert.assertEquals("/,/1,/11,/", resources.stream().collect(Collectors.joining(",")));
+        Assert.assertEquals("/,/1,/11,/", String.join(",", resources));
         Assert.assertTrue(infos.stream().allMatch(info -> info.getStatus() == 200));
     }
 
@@ -213,7 +253,7 @@ public class LoadGeneratorTest {
                 .build();
         loadGenerator.begin().get(5, TimeUnit.SECONDS);
 
-        Assert.assertEquals("/1,<group>", resources.stream().collect(Collectors.joining(",")));
+        Assert.assertEquals("/1,<group>", String.join(",", resources));
     }
 
     @Test
