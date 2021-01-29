@@ -354,10 +354,10 @@ public class LoadGenerator extends ContainerLifeCycle {
                 .method(resource.getMethod())
                 .path(resource.getPath());
         request.getHeaders().addAll(resource.getRequestHeaders());
-        request.header(Resource.RESPONSE_LENGTH, Integer.toString(resource.getResponseLength()));
-        int requestLength = resource.getRequestLength();
+        request.header(Resource.RESPONSE_LENGTH, Long.toString(resource.getResponseLength()));
+        long requestLength = resource.getRequestLength();
         if (requestLength > 0) {
-            request.content(new BytesContentProvider(new byte[requestLength]));
+            request.content(new BytesContentProvider(new byte[Math.toIntExact(requestLength)]));
         }
         return request;
     }
@@ -387,7 +387,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             }
         }, nodes);
         Sender sender = new Sender(client, warmup, treeCallback);
-        sender.offer(Collections.singletonList(info));
+        sender.offer(List.of(info));
         sender.send();
     }
 
@@ -471,47 +471,51 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         private void send(List<Resource.Info> resources) {
-            for (Resource.Info info : resources) {
-                Resource resource = info.getResource();
-                info.setRequestTime(System.nanoTime());
-                if (resource.getPath() != null) {
-                    HttpRequest httpRequest = (HttpRequest)newRequest(client, config, resource);
+            try {
+                for (Resource.Info info : resources) {
+                    Resource resource = info.getResource();
+                    info.setRequestTime(System.nanoTime());
+                    if (resource.getPath() != null) {
+                        HttpRequest httpRequest = (HttpRequest)newRequest(client, config, resource);
 
-                    if (pushCache.contains(httpRequest.getURI())) {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("skip sending pushed {}", resource);
+                        if (pushCache.contains(httpRequest.getURI())) {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("skip sending pushed {}", resource);
+                            }
+                        } else {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("sending {}{}", warmup ? "warmup " : "", resource);
+                            }
+
+                            httpRequest.pushListener((request, pushed) -> {
+                                URI pushedURI = pushed.getURI();
+                                Resource child = resource.findDescendant(pushedURI);
+                                if (LOGGER.isDebugEnabled()) {
+                                    LOGGER.debug("pushed {}", child);
+                                }
+                                if (child != null && pushCache.add(pushedURI)) {
+                                    Resource.Info pushedInfo = child.newInfo();
+                                    pushedInfo.setRequestTime(System.nanoTime());
+                                    pushedInfo.setPushed(true);
+                                    return new ResponseHandler(pushedInfo);
+                                } else {
+                                    return null;
+                                }
+                            });
+
+                            Request request = config.getRequestListeners().stream()
+                                    .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
+                            request.send(new ResponseHandler(info));
                         }
                     } else {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("sending {}{}", warmup ? "warmup " : "", resource);
-                        }
-
-                        httpRequest.pushListener((request, pushed) -> {
-                            URI pushedURI = pushed.getURI();
-                            Resource child = resource.findDescendant(pushedURI);
-                            if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("pushed {}", child);
-                            }
-                            if (child != null && pushCache.add(pushedURI)) {
-                                Resource.Info pushedInfo = child.newInfo();
-                                pushedInfo.setRequestTime(System.nanoTime());
-                                pushedInfo.setPushed(true);
-                                return new ResponseHandler(pushedInfo);
-                            } else {
-                                return null;
-                            }
-                        });
-
-                        Request request = config.getRequestListeners().stream()
-                                .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
-                        request.send(new ResponseHandler(info));
+                        info.setResponseTime(System.nanoTime());
+                        // Don't fire the resource event for "group" resources.
+                        callback.succeeded();
+                        sendChildren(resource);
                     }
-                } else {
-                    info.setResponseTime(System.nanoTime());
-                    // Don't fire the resource event for "group" resources.
-                    callback.succeeded();
-                    sendChildren(resource);
                 }
+            } catch (Throwable x) {
+                callback.failed(x);
             }
         }
 

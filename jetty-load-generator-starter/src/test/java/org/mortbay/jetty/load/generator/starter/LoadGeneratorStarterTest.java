@@ -13,19 +13,19 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -36,6 +36,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.StatisticsServlet;
 import org.eclipse.jetty.util.IO;
+import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -159,11 +160,13 @@ public class LoadGeneratorStarterTest {
     @Test
     public void fromGroovyToJSON() throws Exception {
         try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
-            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Collections.emptyMap());
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-            Path tmpPath = Files.createTempFile("profile", ".tmp");
-            objectMapper.writeValue(tmpPath.toFile(), resource);
+            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Map.of());
+            Path tmpPath = Files.createTempFile("resources_", ".tmp");
+            tmpPath.toFile().deleteOnExit();
+            try (BufferedWriter writer = Files.newBufferedWriter(tmpPath, StandardCharsets.UTF_8)) {
+                JSON json = new JSON();
+                writer.write(json.toJSON(resource));
+            }
             Resource fromJson = LoadGeneratorStarterArgs.evaluateJSON(tmpPath);
             Assert.assertEquals(resource.descendantCount(), fromJson.descendantCount());
         }
@@ -172,7 +175,7 @@ public class LoadGeneratorStarterTest {
     @Test
     public void calculate_descendant_number() throws Exception {
         try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
-            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Collections.emptyMap());
+            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Map.of());
             Assert.assertEquals(17, resource.descendantCount());
         }
     }

@@ -11,16 +11,17 @@
 // ========================================================================
 //
 
-package org.mortbay.jetty.load.generator.listeners;
+package org.mortbay.jetty.load.generator;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.TimeUnit;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.client.util.BufferingResponseListener;
 import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.util.ajax.JSON;
 
 /**
  * <p>A value class representing server-side information.</p>
@@ -40,7 +41,7 @@ import org.eclipse.jetty.http.HttpStatus;
  * }
  * </pre>
  */
-public class ServerInfo {
+public class ServerInfo implements JSON.Convertible {
     private String serverVersion;
     private int processorCount;
     private long totalMemory;
@@ -88,20 +89,50 @@ public class ServerInfo {
     }
 
     @Override
+    public void toJSON(JSON.Output out) {
+        out.add("serverVersion", getServerVersion());
+        out.add("processorCount", getProcessorCount());
+        out.add("totalMemory", getTotalMemory());
+        out.add("gitHash", getGitHash());
+        out.add("javaVersion", getJavaVersion());
+    }
+
+    @Override
+    public void fromJSON(Map map) {
+        setServerVersion((String)map.get("serverVersion"));
+        setProcessorCount(((Number)map.get("processorCount")).intValue());
+        setTotalMemory(((Number)map.get("totalMemory")).longValue());
+        setGitHash((String)map.get("gitHash"));
+        setJavaVersion((String)map.get("javaVersion"));
+    }
+
+    @Override
     public String toString() {
-        return String.format("%s{jettyVersion='%s', availableProcessors=%d, totalMemory=%d, gitHash='%s', javaVersion='%s'}",
+        return String.format("%s{jettyVersion=%s, availableProcessors=%d, totalMemory=%d, gitHash=%s, javaVersion=%s}",
                 getClass().getSimpleName(), getServerVersion(), getProcessorCount(), getTotalMemory(), getGitHash(), getJavaVersion());
     }
 
-    public static ServerInfo retrieveServerInfo(HttpClient httpClient, URI uri) throws Exception {
-        ContentResponse contentResponse = httpClient.newRequest(uri)
-                .timeout(5, TimeUnit.SECONDS)
-                .send();
-        if (contentResponse.getStatus() != HttpStatus.OK_200) {
-            throw new IOException("could not retrieve server info: HTTP " + contentResponse.getStatus());
-        }
-        return new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .readValue(contentResponse.getContent(), ServerInfo.class);
+    public static CompletableFuture<ServerInfo> retrieveServerInfo(HttpClient httpClient, URI uri) {
+        CompletableFuture<ServerInfo> complete = new CompletableFuture<>();
+        httpClient.newRequest(uri).send(new BufferingResponseListener() {
+            @Override
+            public void onComplete(Result result) {
+                if (result.isSucceeded()) {
+                    int status = result.getResponse().getStatus();
+                    if (status == HttpStatus.OK_200) {
+                        ServerInfo serverInfo = new ServerInfo();
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> map = (Map<String, Object>)JSON.parse(getContentAsString());
+                        serverInfo.fromJSON(map);
+                        complete.complete(serverInfo);
+                    } else {
+                        complete.completeExceptionally(new IOException("could not retrieve server info: HTTP " + status));
+                    }
+                } else {
+                    complete.completeExceptionally(result.getFailure());
+                }
+            }
+        });
+        return complete;
     }
 }

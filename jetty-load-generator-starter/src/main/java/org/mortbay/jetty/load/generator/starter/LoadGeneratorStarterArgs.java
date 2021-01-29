@@ -13,8 +13,10 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,11 +26,10 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import com.beust.jcommander.Parameter;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
@@ -394,9 +395,12 @@ public class LoadGeneratorStarterArgs {
     }
 
     static Resource evaluateJSON(Path profilePath) throws IOException {
-        return new ObjectMapper()
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .readValue(profilePath.toFile(), Resource.class);
+        try (BufferedReader reader = Files.newBufferedReader(profilePath, StandardCharsets.UTF_8)) {
+            JSON json = new JSON();
+            Resource resource = new Resource();
+            resource.fromJSON((Map<?, ?>)json.parse(new JSON.ReaderSource(reader)));
+            return resource;
+        }
     }
 
     static Resource evaluateGroovy(Reader script, Map<String, Object> context) {

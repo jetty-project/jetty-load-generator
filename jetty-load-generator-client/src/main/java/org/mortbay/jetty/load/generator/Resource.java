@@ -15,11 +15,17 @@ package org.mortbay.jetty.load.generator;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.eclipse.jetty.http.HttpField;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.util.ajax.JSON;
 
 /**
  * <p>A resource node to be fetched by the load generator.</p>
@@ -30,15 +36,15 @@ import org.eclipse.jetty.http.HttpMethod;
  * only meant to group resources together (for example to fetch all
  * JavaScript resources as a group before fetching the image resources).</p>
  */
-public class Resource {
+public class Resource implements JSON.Convertible {
     public static final String RESPONSE_LENGTH = "JLG-Response-Length";
 
     private final List<Resource> resources = new ArrayList<>();
     private final HttpFields requestHeaders = new HttpFields();
     private String method = HttpMethod.GET.asString();
     private String path;
-    private int requestLength;
-    private int responseLength;
+    private long requestLength;
+    private long responseLength;
 
     public Resource() {
         this((String)null);
@@ -89,35 +95,35 @@ public class Resource {
      * @param requestLength the request content length
      * @return this Resource
      */
-    public Resource requestLength(int requestLength) {
+    public Resource requestLength(long requestLength) {
         this.requestLength = requestLength;
         return this;
     }
 
-    public int getRequestLength() {
+    public long getRequestLength() {
         return requestLength;
     }
 
     /**
-     * Adds a request header.
+     * <p>Adds a request header.</p>
      *
-     * @param name the header name
+     * @param name  the header name
      * @param value the header value
      * @return this Resource
      */
     public Resource requestHeader(String name, String value) {
-        this.requestHeaders.add( name, value);
+        this.requestHeaders.add(name, value);
         return this;
     }
 
     /**
-     * Adds request headers.
+     * <p>Adds request headers.</p>
      *
      * @param headers the request headers
      * @return this Resource
      */
     public Resource requestHeaders(HttpFields headers) {
-        this.requestHeaders.addAll( headers);
+        this.requestHeaders.addAll(headers);
         return this;
     }
 
@@ -134,13 +140,24 @@ public class Resource {
      * @param responseLength the response content length
      * @return this Resource
      */
-    public Resource responseLength(int responseLength) {
+    public Resource responseLength(long responseLength) {
         this.responseLength = responseLength;
         return this;
     }
 
-    public int getResponseLength() {
+    public long getResponseLength() {
         return responseLength;
+    }
+
+    /**
+     * <p>Adds children resources.</p>
+     *
+     * @param resources the children resources to add
+     * @return this Resource
+     */
+    public Resource resources(Resource... resources) {
+        this.resources.addAll(List.of(resources));
+        return this;
     }
 
     /**
@@ -195,6 +212,67 @@ public class Resource {
      */
     public Info newInfo() {
         return new Info(this);
+    }
+
+    @Override
+    public void toJSON(JSON.Output out) {
+        out.add("method", getMethod());
+        out.add("path", getPath());
+        out.add("requestLength", getRequestLength());
+        out.add("requestHeaders", toMap(getRequestHeaders()));
+        out.add("resources", getResources());
+        out.add("responseLength", getResponseLength());
+    }
+
+    @Override
+    public void fromJSON(Map map) {
+        method((String)map.get("method"));
+        path((String)map.get("path"));
+        requestLength(((Number)map.get("requestLength")).longValue());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> requestHeaders = (Map<String, Object>)map.get("requestHeaders");
+        requestHeaders(toHttpFields(requestHeaders));
+        resources(toResources(map.get("resources")));
+        responseLength(((Number)map.get("responseLength")).longValue());
+    }
+
+    private static Map<String, Object> toMap(HttpFields fields) {
+        return fields.stream()
+                .map(field -> new Object() {
+                    final String name = field.getName();
+                    final String[] values = field.getValues();
+                })
+                .collect(Collectors.toMap(tuple -> tuple.name, tuple -> tuple.values));
+    }
+
+    private static HttpFields toHttpFields(Map<String, Object> map) {
+        HttpFields fields = new HttpFields();
+        map.entrySet().stream()
+                .map(entry -> new HttpField(entry.getKey(), Arrays.stream((Object[])entry.getValue()).map(String::valueOf).collect(Collectors.joining(","))))
+                .forEach(fields::put);
+        return fields;
+    }
+
+    private static Resource[] toResources(Object objects) {
+        if (objects != null) {
+            Object[] array = null;
+            if (objects.getClass().isArray()) {
+                array = (Object[])objects;
+            } else if (objects instanceof Collection) {
+                array = ((Collection<?>)objects).toArray();
+            }
+            if (array != null) {
+                return Arrays.stream(array)
+                        .map(object -> (Map<?, ?>)object)
+                        .map(map -> {
+                            Resource child = new Resource();
+                            child.fromJSON(map);
+                            return child;
+                        })
+                        .toArray(Resource[]::new);
+            }
+        }
+        return new Resource[0];
     }
 
     @Override

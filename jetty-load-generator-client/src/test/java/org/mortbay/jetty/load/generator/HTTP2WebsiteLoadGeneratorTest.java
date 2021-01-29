@@ -25,9 +25,9 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
+import org.eclipse.jetty.util.thread.MonitoredQueuedThreadPool;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mortbay.jetty.load.generator.util.MonitoringThreadPoolExecutor;
 
 public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
     @Test
@@ -42,8 +42,9 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         testHTTP2();
     }
 
-    private void testHTTP2() {
-        MonitoringThreadPoolExecutor executor = new MonitoringThreadPoolExecutor( 1024, 60, TimeUnit.SECONDS);
+    private void testHTTP2() throws Exception {
+        MonitoredQueuedThreadPool executor = new MonitoredQueuedThreadPool(1024);
+        executor.start();
 
         AtomicLong requests = new AtomicLong();
         Histogram treeHistogram = new AtomicHistogram(TimeUnit.MICROSECONDS.toNanos(1), TimeUnit.SECONDS.toNanos(10), 3);
@@ -93,12 +94,12 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         System.err.println(rootSnapshot);
 
         System.err.printf("client thread pool - max_threads: %d, max_queue_size: %d, max_queue_latency: %dms%n%n",
-                executor.getMaxActiveThreads(),
+                executor.getMaxBusyThreads(),
                 executor.getMaxQueueSize(),
                 TimeUnit.NANOSECONDS.toMillis(executor.getMaxQueueLatency())
         );
 
-        executor.shutdown();
+        executor.stop();
     }
 
     private class PushingHandler extends TestHandler {
@@ -108,7 +109,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
                 for (Resource resource : resource.getResources()) {
                     jettyRequest.getPushBuilder()
                             .path(resource.getPath())
-                            .setHeader(Resource.RESPONSE_LENGTH, Integer.toString(resource.getResponseLength()))
+                            .setHeader(Resource.RESPONSE_LENGTH, Long.toString(resource.getResponseLength()))
                             .push();
                 }
             }

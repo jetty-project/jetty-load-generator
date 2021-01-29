@@ -20,10 +20,10 @@ import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
+import org.eclipse.jetty.util.thread.MonitoredQueuedThreadPool;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mortbay.jetty.load.generator.util.MonitoringThreadPoolExecutor;
 
 public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
     @Before
@@ -32,8 +32,9 @@ public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
     }
 
     @Test
-    public void testHTTP1() {
-        MonitoringThreadPoolExecutor executor = new MonitoringThreadPoolExecutor( 1024, 60, TimeUnit.SECONDS);
+    public void testHTTP1() throws Exception {
+        MonitoredQueuedThreadPool executor = new MonitoredQueuedThreadPool(1024);
+        executor.start();
 
         AtomicLong requests = new AtomicLong();
         Histogram treeHistogram = new AtomicHistogram(TimeUnit.MICROSECONDS.toNanos(1), TimeUnit.SECONDS.toNanos(10), 3);
@@ -83,11 +84,11 @@ public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         System.err.println(rootSnapshot);
 
         System.err.printf("client thread pool - max_threads: %d, max_queue_size: %d, max_queue_latency: %dms%n%n",
-                executor.getMaxActiveThreads(),
+                executor.getMaxBusyThreads(),
                 executor.getMaxQueueSize(),
                 TimeUnit.NANOSECONDS.toMillis(executor.getMaxQueueLatency())
         );
 
-        executor.shutdown();
+        executor.stop();
     }
 }
