@@ -193,7 +193,7 @@ public class Resource implements JSON.Convertible {
     }
 
     /**
-     * @return the number of descendant resource nodes
+     * @return the number of descendant resource nodes, including this node
      */
     public int descendantCount() {
         return descendantCount(this);
@@ -277,13 +277,14 @@ public class Resource implements JSON.Convertible {
 
     @Override
     public String toString() {
-        return String.format("%s@%h{%s %s - %d/%d}",
+        return String.format("%s@%h{%s %s,reqLen=%d,respLen=%d,children=%d}",
                 getClass().getSimpleName(),
                 hashCode(),
                 getMethod(),
                 getPath(),
                 getRequestLength(),
-                getResponseLength());
+                getResponseLength(),
+                getResources().size());
     }
 
     /**
@@ -400,6 +401,11 @@ public class Resource implements JSON.Convertible {
 
         void setFailure(Throwable failure) {
             this.failure = failure;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s@%x[%s]", getClass().getSimpleName(), hashCode(), getResource());
         }
     }
 

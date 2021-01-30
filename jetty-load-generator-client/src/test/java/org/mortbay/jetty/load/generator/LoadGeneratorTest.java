@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.ObjectName;
 import javax.servlet.http.HttpServletRequest;
@@ -76,7 +77,7 @@ public class LoadGeneratorTest {
         }
     }
 
-    private void prepare(Handler handler) throws Exception {
+    private void startServer(Handler handler) throws Exception {
         server = new Server();
         connector = new ServerConnector(server, connectionFactory);
         server.addConnector(connector);
@@ -93,7 +94,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testDefaultConfiguration() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .port(connector.getLocalPort())
@@ -107,7 +108,7 @@ public class LoadGeneratorTest {
         int iterations = 1;
         CountDownLatch serverLatch = new CountDownLatch(iterations);
         long delay = 500;
-        prepare(new AbstractHandler() {
+        startServer(new AbstractHandler() {
             @Override
             public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
                 try {
@@ -146,7 +147,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testMultipleThreads() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         Set<String> threads = Collections.newSetFromMap(new ConcurrentHashMap<>());
         LoadGenerator loadGenerator = LoadGenerator.builder()
@@ -167,7 +168,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testInterrupt() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .port(connector.getLocalPort())
@@ -194,7 +195,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testRunFor() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         long time = 2;
         TimeUnit unit = TimeUnit.SECONDS;
@@ -209,7 +210,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testResourceTree() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         Queue<String> resources = new ConcurrentLinkedDeque<>();
         List<Resource.Info> infos = new ArrayList<>();
@@ -235,7 +236,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testResourceGroup() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         Queue<String> resources = new ConcurrentLinkedDeque<>();
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
@@ -258,7 +259,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testWarmupDoesNotNotifyResourceListeners() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         AtomicLong requests = new AtomicLong();
         AtomicLong resources = new AtomicLong();
@@ -286,7 +287,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testTwoRuns() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         AtomicLong requests = new AtomicLong();
         AtomicLong resources = new AtomicLong();
@@ -320,7 +321,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testJMX() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .port(connector.getLocalPort())
@@ -367,7 +368,7 @@ public class LoadGeneratorTest {
         if (connectionFactory instanceof HTTP2CServerConnectionFactory) {
             ((HTTP2CServerConnectionFactory)connectionFactory).setMaxConcurrentStreams(rate);
         }
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         int iterations = 5 * rate;
         AtomicLong requests = new AtomicLong();
@@ -396,7 +397,7 @@ public class LoadGeneratorTest {
 
     @Test
     public void testRateRampUp() throws Exception {
-        prepare(new TestHandler());
+        startServer(new TestHandler());
 
         int rate = 10;
         long ramp = 5;
@@ -422,6 +423,45 @@ public class LoadGeneratorTest {
         long expected = rate * ramp / 2;
         Assert.assertTrue(expected - 1 <= requests.get());
         Assert.assertTrue(requests.get() <= expected + 1);
+    }
+
+    @Test
+    public void testSomeRequestFailure() throws Exception {
+        startServer(new AbstractHandler() {
+            private final AtomicInteger requests = new AtomicInteger();
+
+            @Override
+            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
+                jettyRequest.setHandled(true);
+                if (requests.incrementAndGet() == 2) {
+                    // Fail only the second request.
+                    jettyRequest.getHttpChannel().abort(new IOException());
+                }
+            }
+        });
+
+        int count = 3;
+        AtomicInteger resources = new AtomicInteger();
+        AtomicInteger failures = new AtomicInteger();
+        LoadGenerator loadGenerator = LoadGenerator.builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .threads(1)
+                .iterationsPerThread(count)
+                // Allow enough time for requests to be sequential.
+                .resourceRate(2)
+                .resourceListener((Resource.NodeListener)info -> {
+                    resources.incrementAndGet();
+                    if (info.getFailure() != null) {
+                        failures.incrementAndGet();
+                    }
+                })
+                .build();
+
+        loadGenerator.begin().get();
+
+        Assert.assertEquals(count, resources.get());
+        Assert.assertEquals(1, failures.get());
     }
 
     private enum TransportType {

@@ -479,7 +479,6 @@ public class LoadGenerator extends ContainerLifeCycle {
             try {
                 for (Resource.Info info : resources) {
                     Resource resource = info.getResource();
-                    info.setRequestTime(System.nanoTime());
                     if (resource.getPath() != null) {
                         HttpRequest httpRequest = (HttpRequest)newRequest(client, config, resource);
 
@@ -510,10 +509,10 @@ public class LoadGenerator extends ContainerLifeCycle {
 
                             Request request = config.getRequestListeners().stream()
                                     .reduce(httpRequest, Request::listener, (r1, r2) -> r1);
+                            info.setRequestTime(System.nanoTime());
                             request.send(new ResponseHandler(info));
                         }
                     } else {
-                        info.setResponseTime(System.nanoTime());
                         // Don't fire the resource event for "group" resources.
                         callback.succeeded();
                         sendChildren(resource);
@@ -553,22 +552,23 @@ public class LoadGenerator extends ContainerLifeCycle {
 
             @Override
             public void onComplete(Result result) {
+                info.setResponseTime(System.nanoTime());
                 Resource resource = info.getResource();
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("completed {}: {}", resource, result);
                 }
                 if (result.isSucceeded()) {
-                    info.setResponseTime(System.nanoTime());
                     info.setStatus(result.getResponse().getStatus());
-                    if (!warmup) {
-                        fireResourceNodeEvent(info);
-                    }
-                    callback.succeeded();
                 } else {
                     Throwable failure = result.getFailure();
                     info.setFailure(failure);
-                    callback.failed(failure);
                 }
+                if (!warmup) {
+                    fireResourceNodeEvent(info);
+                }
+                // Succeed the callback even in case of
+                // failures to continue the load generation.
+                callback.succeeded();
                 sendChildren(resource);
             }
         }
