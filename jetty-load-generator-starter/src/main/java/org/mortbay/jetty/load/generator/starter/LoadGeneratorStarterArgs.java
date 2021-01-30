@@ -71,7 +71,7 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--resource-groovy-path", "-rgp"}, description = "Path to resource Groovy file")
     private String resourceGroovyPath;
 
-    @Parameter(names = {"--resource-rate", "-rr"}, description = "Total resource tree rate, per second")
+    @Parameter(names = {"--resource-rate", "-rr"}, description = "Total resource tree rate, per second; use 0 for max request rate")
     private int resourceRate = 1;
 
     @Parameter(names = {"--rate-ramp-up", "-rru"}, description = "Rate ramp-up period, in seconds")

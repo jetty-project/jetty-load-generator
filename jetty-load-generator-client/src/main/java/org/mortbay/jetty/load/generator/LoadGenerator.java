@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
@@ -39,6 +40,7 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
 import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.CountingCallback;
 import org.eclipse.jetty.util.SocketAddressResolver;
@@ -215,6 +217,13 @@ public class LoadGenerator extends ContainerLifeCycle {
             }
 
             HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
+
+            Collection<Connection.Listener> connectionListeners = getBeans(Connection.Listener.class);
+            for (int i = 0; i < clients.length; ++i) {
+                HttpClient client = clients[i] = newHttpClient(getConfig());
+                connectionListeners.forEach(client::addBean);
+                addManaged(client);
+            }
             // HttpClient cannot be stopped from one of its own threads.
             result = process.whenCompleteAsync((r, x) -> {
                 if (LOGGER.isDebugEnabled()) {
@@ -222,10 +231,6 @@ public class LoadGenerator extends ContainerLifeCycle {
                 }
                 Arrays.stream(clients).forEach(this::stopHttpClient);
             }, executorService);
-            for (int i = 0; i < clients.length; ++i) {
-                HttpClient client = clients[i] = newHttpClient(getConfig());
-                addManaged(client);
-            }
 
             Callback processCallback = new Callback() {
                 @Override
@@ -560,7 +565,9 @@ public class LoadGenerator extends ContainerLifeCycle {
                     }
                     callback.succeeded();
                 } else {
-                    callback.failed(result.getFailure());
+                    Throwable failure = result.getFailure();
+                    info.setFailure(failure);
+                    callback.failed(failure);
                 }
                 sendChildren(resource);
             }

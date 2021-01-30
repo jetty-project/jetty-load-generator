@@ -50,6 +50,7 @@ public class LoadGeneratorStarter {
                 .requestListener(listener)
                 .resourceListener(listener)
                 .build();
+        generator.addBean(listener);
         if (starterArgs.isJMX()) {
             MBeanContainer mbeanContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
             generator.addBean(mbeanContainer);
@@ -154,18 +155,22 @@ public class LoadGeneratorStarter {
         LOGGER.info("-------------  Load Generator Report  --------------");
         LOGGER.info("----------------------------------------------------");
         LOGGER.info("{}://{}:{} over {}", config.getScheme(), config.getHost(), config.getPort(), config.getHttpClientTransportBuilder().getType());
+        LOGGER.info("resource tree     : {} resources", config.getResource().descendantCount());
         long startTime = responseTimes.getStartTimeStamp();
-        LOGGER.info("begin  : {}", simpleDateFormat.format(startTime));
+        LOGGER.info("begin date time   : {}", simpleDateFormat.format(startTime));
         long endTime = responseTimes.getEndTimeStamp();
-        LOGGER.info("end    : {}", simpleDateFormat.format(endTime));
-        LOGGER.info("elapsed: {} s", String.format("%.3f", ((double)endTime - startTime) / 1000));
+        LOGGER.info("complete date time: {}", simpleDateFormat.format(endTime));
+        LOGGER.info("elapsed time      : {} s", String.format("%.3f", ((double)endTime - startTime) / 1000));
+        LOGGER.info("average cpu time  : {}/{}", String.format("%.3f", listener.getAverageCPUPercent()), Runtime.getRuntime().availableProcessors() * 100);
         LOGGER.info("");
         LOGGER.info("histogram:");
         Arrays.stream(snapshot.toString().split(System.lineSeparator())).forEach(line -> LOGGER.info("{}", line));
         LOGGER.info("");
         LOGGER.info("request rate (requests/s)  : {}", String.format("%.3f", listener.getRequestRate()));
+        LOGGER.info("send rate (bytes/s)        : {}", String.format("%.3f", listener.getSentBytesRate()));
         LOGGER.info("response rate (responses/s): {}", String.format("%.3f", listener.getResponseRate()));
-        LOGGER.info("download rate (bytes/s)    : {}", String.format("%.3f", listener.getDownloadRate()));
+        LOGGER.info("receive rate (bytes/s)     : {}", String.format("%.3f", listener.getReceivedBytesRate()));
+        LOGGER.info("failures          : {}", listener.getFailures());
         LOGGER.info("response 1xx group: {}", listener.getResponses1xx());
         LOGGER.info("response 2xx group: {}", listener.getResponses2xx());
         LOGGER.info("response 3xx group: {}", listener.getResponses3xx());

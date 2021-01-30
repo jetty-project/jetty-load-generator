@@ -34,10 +34,6 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-util-ajax</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.toolchain</groupId>
-      <artifactId>jetty-perf-helper</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
@@ -67,6 +63,11 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-xml</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty.toolchain</groupId>
+      <artifactId>jetty-perf-helper</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

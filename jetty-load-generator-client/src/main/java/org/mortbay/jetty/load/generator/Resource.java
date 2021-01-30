@@ -298,6 +298,7 @@ public class Resource implements JSON.Convertible {
         private long contentLength;
         private boolean pushed;
         private int status;
+        private Throwable failure;
 
         private Info(Resource resource) {
             this.resource = resource;
@@ -317,7 +318,7 @@ public class Resource implements JSON.Convertible {
             return requestTime;
         }
 
-        public void setRequestTime(long requestTime) {
+        void setRequestTime(long requestTime) {
             this.requestTime = requestTime;
         }
 
@@ -328,7 +329,7 @@ public class Resource implements JSON.Convertible {
             return latencyTime;
         }
 
-        public void setLatencyTime(long latencyTime) {
+        void setLatencyTime(long latencyTime) {
             this.latencyTime = latencyTime;
         }
 
@@ -339,7 +340,7 @@ public class Resource implements JSON.Convertible {
             return responseTime;
         }
 
-        public void setResponseTime(long responseTime) {
+        void setResponseTime(long responseTime) {
             this.responseTime = responseTime;
         }
 
@@ -350,14 +351,14 @@ public class Resource implements JSON.Convertible {
             return treeTime;
         }
 
-        public void setTreeTime(long treeTime) {
+        void setTreeTime(long treeTime) {
             this.treeTime = treeTime;
         }
 
         /**
          * @param bytes the number of bytes to add to the response content length
          */
-        public void addContent(int bytes) {
+        void addContent(int bytes) {
             contentLength += bytes;
         }
 
@@ -375,7 +376,7 @@ public class Resource implements JSON.Convertible {
             return pushed;
         }
 
-        public void setPushed(boolean pushed) {
+        void setPushed(boolean pushed) {
             this.pushed = pushed;
         }
 
@@ -386,8 +387,19 @@ public class Resource implements JSON.Convertible {
             return status;
         }
 
-        public void setStatus(int status) {
+        void setStatus(int status) {
             this.status = status;
+        }
+
+        /**
+         * @return the request/response failure, if any
+         */
+        public Throwable getFailure() {
+            return failure;
+        }
+
+        void setFailure(Throwable failure) {
+            this.failure = failure;
         }
     }
 
