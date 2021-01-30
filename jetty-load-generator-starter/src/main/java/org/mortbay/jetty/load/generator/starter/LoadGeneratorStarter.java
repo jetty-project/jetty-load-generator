@@ -163,9 +163,11 @@ public class LoadGeneratorStarter {
         LOGGER.info("elapsed time      : {} s", String.format("%.3f", ((double)endTime - startTime) / 1000));
         LOGGER.info("average cpu time  : {}/{}", String.format("%.3f", listener.getAverageCPUPercent()), Runtime.getRuntime().availableProcessors() * 100);
         LOGGER.info("");
-        LOGGER.info("histogram:");
-        Arrays.stream(snapshot.toString().split(System.lineSeparator())).forEach(line -> LOGGER.info("{}", line));
-        LOGGER.info("");
+        if (responseTimes.getTotalCount() > 0) {
+            LOGGER.info("histogram:");
+            Arrays.stream(snapshot.toString().split(System.lineSeparator())).forEach(line -> LOGGER.info("{}", line));
+            LOGGER.info("");
+        }
         LOGGER.info("request rate (requests/s)  : {}", String.format("%.3f", listener.getRequestRate()));
         LOGGER.info("send rate (bytes/s)        : {}", String.format("%.3f", listener.getSentBytesRate()));
         LOGGER.info("response rate (responses/s): {}", String.format("%.3f", listener.getResponseRate()));
