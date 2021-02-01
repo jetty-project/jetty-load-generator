@@ -30,7 +30,7 @@ import org.eclipse.jetty.util.ajax.JSON;
  * <pre>
  * ServerInfo serverInfo = ServerInfo.retrieveServerInfo(httpClient, URI.create("http://localhost:8080/.well-known/serverInfo"));
  * </pre>
- * The server should respond with JSON content with the following format:</p>
+ * <p>The server should respond with JSON content with the following format:</p>
  * <pre>
  * {
  *     "serverVersion": "jetty-9.4.x",
