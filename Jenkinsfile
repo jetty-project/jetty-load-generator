@@ -15,11 +15,6 @@ pipeline {
                     execPattern: '**/target/jacoco.exec',
                     classPattern: '**/target/classes',
                     sourcePattern: '**/src/main/java'
-            script {
-              if (env.BRANCH_NAME == 'main') {
-                mavenBuild("jdk11", "deploy")
-              }
-            }
           }
         }
       }
