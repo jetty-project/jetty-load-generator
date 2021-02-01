@@ -371,6 +371,23 @@ public class LoadGeneratorStarterArgs {
 
     // APIs used by LoadGeneratorStarter.
 
+    public HTTPClientTransportBuilder getHttpClientTransportBuilder() {
+        String transport = getTransport();
+        switch (transport) {
+            case "http":
+            case "https": {
+                return new HTTP1ClientTransportBuilder().selectors(getSelectors());
+            }
+            case "h2c":
+            case "h2": {
+                return new HTTP2ClientTransportBuilder().selectors(getSelectors());
+            }
+            default: {
+                throw new IllegalArgumentException("unsupported transport " + transport);
+            }
+        }
+    }
+
     Resource getResource(LoadGenerator.Builder builder) throws Exception {
         String jsonPath = getResourceJSONPath();
         if (jsonPath != null) {
@@ -410,23 +427,6 @@ public class LoadGeneratorStarterArgs {
         Binding binding = new Binding(context);
         GroovyShell interpreter = new GroovyShell(binding, config);
         return (Resource)interpreter.evaluate(script);
-    }
-
-    HTTPClientTransportBuilder getHttpClientTransportBuilder() {
-        String transport = getTransport();
-        switch (transport) {
-            case "http":
-            case "https": {
-                return new HTTP1ClientTransportBuilder().selectors(getSelectors());
-            }
-            case "h2c":
-            case "h2": {
-                return new HTTP2ClientTransportBuilder().selectors(getSelectors());
-            }
-            default: {
-                throw new IllegalArgumentException("unsupported transport " + transport);
-            }
-        }
     }
 
     Executor getExecutor() {
