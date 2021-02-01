@@ -14,6 +14,8 @@
 package org.mortbay.jetty.load.generator.listeners;
 
 import java.lang.management.ManagementFactory;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -21,7 +23,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
-import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.io.ConnectionStatistics;
 import org.eclipse.jetty.util.component.ContainerLifeCycle;
@@ -39,7 +40,6 @@ import org.mortbay.jetty.load.generator.Resource;
  * LoadGenerator generator = LoadGenerator.builder()
  *     ...
  *     .listener(listener)
- *     .requestListener(listener)
  *     .resourceListener(listener)
  *     .build();
  *
@@ -53,11 +53,10 @@ import org.mortbay.jetty.load.generator.Resource;
  * System.err.printf("max response time: %d", listener.getResponseTimeHistogram().getMaxValue());
  * </pre>
  */
-public class ReportListener extends ContainerLifeCycle implements LoadGenerator.BeginListener, LoadGenerator.EndListener, LoadGenerator.CompleteListener, Request.Listener, Resource.NodeListener, Connection.Listener {
+public class ReportListener extends ContainerLifeCycle implements LoadGenerator.BeginListener, LoadGenerator.ReadyListener, LoadGenerator.EndListener, LoadGenerator.CompleteListener, Resource.NodeListener, Connection.Listener {
     private final ConnectionStatistics connectionStats = new ConnectionStatistics();
     private final Recorder recorder;
     private final AtomicReference<Histogram> histogram = new AtomicReference<>();
-    private final LongAdder requestCount = new LongAdder();
     private final LongAdder responses1xx = new LongAdder();
     private final LongAdder responses2xx = new LongAdder();
     private final LongAdder responses3xx = new LongAdder();
@@ -65,10 +64,12 @@ public class ReportListener extends ContainerLifeCycle implements LoadGenerator.
     private final LongAdder responses5xx = new LongAdder();
     private final LongAdder responseContent = new LongAdder();
     private final LongAdder failures = new LongAdder();
+    private volatile Instant beginInstant;
     private volatile long beginTime;
+    private volatile long readyTime;
     private volatile long endTime;
     private volatile long completeTime;
-    private volatile long beginCPUTime;
+    private volatile long readyCPUTime;
     private volatile long completeCPUTime;
 
     /**
@@ -92,10 +93,139 @@ public class ReportListener extends ContainerLifeCycle implements LoadGenerator.
         addBean(connectionStats);
     }
 
+    /**
+     * @return the Instant of the load generation {@link LoadGenerator.BeginListener begin event}
+     */
+    public Instant getBeginInstant() {
+        return beginInstant;
+    }
+
+    /**
+     * @return the Instant of the load generation {@link LoadGenerator.CompleteListener complete event}
+     */
+    public Instant getCompleteInstant() {
+        return beginInstant.plusNanos(completeTime - beginTime);
+    }
+
+    /**
+     * <p>Returns the duration of the load generation recording.</p>
+     * <p>The recording starts at the {@link LoadGenerator.ReadyListener ready event}
+     * and therefore excludes warmup.</p>
+     *
+     * @return the Duration of the load generation recording
+     */
+    public Duration getRecordingDuration() {
+        return Duration.ofNanos(getRecordingNanos());
+    }
+
+    /**
+     * <p>Returns the response time histogram.</p>
+     * <p>The response time is the time between a request is queued to be sent,
+     * to the time the response is fully received, in nanoseconds.</p>
+     * <p>Warmup requests are not recorded.</p>
+     *
+     * @return the response time histogram
+     */
+    public Histogram getResponseTimeHistogram() {
+        // The histogram is reset every time getIntervalHistogram() is called.
+        return histogram.updateAndGet(h -> h != null ? h : recorder.getIntervalHistogram());
+    }
+
+    /**
+     * @return the request rate, in requests/s
+     */
+    public double getRequestRate() {
+        return nanoRate(getResponseTimeHistogram().getTotalCount(), endTime - readyTime);
+    }
+
+    /**
+     * @return the response rate in responses/s
+     */
+    public double getResponseRate() {
+        return nanoRate(getResponseTimeHistogram().getTotalCount(), getRecordingNanos());
+    }
+
+    /**
+     * @return the rate of bytes sent, in bytes/s
+     */
+    public double getSentBytesRate() {
+        return nanoRate(connectionStats.getSentBytes(), getRecordingNanos());
+    }
+
+    /**
+     * @return the rate of bytes received, in bytes/s
+     */
+    public double getReceivedBytesRate() {
+        return nanoRate(connectionStats.getReceivedBytes(), getRecordingNanos());
+    }
+
+    /**
+     * @return the number of HTTP 1xx responses
+     */
+    public long getResponses1xx() {
+        return responses1xx.longValue();
+    }
+
+    /**
+     * @return the number of HTTP 2xx responses
+     */
+    public long getResponses2xx() {
+        return responses2xx.longValue();
+    }
+
+    /**
+     * @return the number of HTTP 3xx responses
+     */
+    public long getResponses3xx() {
+        return responses3xx.longValue();
+    }
+
+    /**
+     * @return the number of HTTP 4xx responses
+     */
+    public long getResponses4xx() {
+        return responses4xx.longValue();
+    }
+
+    /**
+     * @return the number of HTTP 5xx responses
+     */
+    public long getResponses5xx() {
+        return responses5xx.longValue();
+    }
+
+    /**
+     * @return the number of failures
+     */
+    public long getFailures() {
+        return failures.longValue();
+    }
+
+    /**
+     * <p>Returns the average CPU load during recording.</p>
+     * <p>This is the CPU time for the load generator JVM, across all cores, divided by the recording duration.</p>
+     * <p>This number is typically greater than 100 because it takes into account all cores.</p>
+     * <p>For example, a value of {@code 456.789} on a 12 core machine means that during the recording
+     * about 4.5 cores out of 12 were at 100% utilization.
+     * Equivalently, it means that each core was at {@code 456.789/12}, about 38%, utilization.</p>
+     *
+     * @return the average CPU load during recording
+     */
+    public double getAverageCPUPercent() {
+        long elapsedTime = getRecordingNanos();
+        return elapsedTime == 0 ? 0 : 100D * (completeCPUTime - readyCPUTime) / elapsedTime;
+    }
+
     @Override
     public void onBegin(LoadGenerator generator) {
+        beginInstant = Instant.now();
         beginTime = System.nanoTime();
-        beginCPUTime = getProcessCPUTime();
+    }
+
+    @Override
+    public void onReady(LoadGenerator generator) {
+        readyTime = System.nanoTime();
+        readyCPUTime = getProcessCPUTime();
     }
 
     @Override
@@ -107,11 +237,6 @@ public class ReportListener extends ContainerLifeCycle implements LoadGenerator.
     public void onComplete(LoadGenerator generator) {
         completeTime = System.nanoTime();
         completeCPUTime = getProcessCPUTime();
-    }
-
-    @Override
-    public void onBegin(Request request) {
-        requestCount.increment();
     }
 
     @Override
@@ -158,56 +283,6 @@ public class ReportListener extends ContainerLifeCycle implements LoadGenerator.
         }
     }
 
-    public Histogram getResponseTimeHistogram() {
-        // The histogram is reset every time getIntervalHistogram() is called.
-        return histogram.updateAndGet(h -> h != null ? h : recorder.getIntervalHistogram());
-    }
-
-    public double getRequestRate() {
-        return nanoRate(requestCount.doubleValue(), endTime - beginTime);
-    }
-
-    public double getResponseRate() {
-        return nanoRate(getResponseTimeHistogram().getTotalCount(), getElapsedTime());
-    }
-
-    public double getSentBytesRate() {
-        return nanoRate(connectionStats.getSentBytes(), getElapsedTime());
-    }
-
-    public double getReceivedBytesRate() {
-        return nanoRate(connectionStats.getReceivedBytes(), getElapsedTime());
-    }
-
-    public long getResponses1xx() {
-        return responses1xx.longValue();
-    }
-
-    public long getResponses2xx() {
-        return responses2xx.longValue();
-    }
-
-    public long getResponses3xx() {
-        return responses3xx.longValue();
-    }
-
-    public long getResponses4xx() {
-        return responses4xx.longValue();
-    }
-
-    public long getResponses5xx() {
-        return responses5xx.longValue();
-    }
-
-    public long getFailures() {
-        return failures.longValue();
-    }
-
-    public double getAverageCPUPercent() {
-        long elapsedTime = getElapsedTime();
-        return elapsedTime == 0 ? 0 : 100D * (completeCPUTime - beginCPUTime) / elapsedTime;
-    }
-
     private double nanoRate(double dividend, long divisor) {
         return divisor == 0 ? 0 : (dividend * TimeUnit.SECONDS.toNanos(1)) / divisor;
     }
@@ -222,7 +297,7 @@ public class ReportListener extends ContainerLifeCycle implements LoadGenerator.
         }
     }
 
-    private long getElapsedTime() {
-        return completeTime - beginTime;
+    private long getRecordingNanos() {
+        return completeTime - readyTime;
     }
 }

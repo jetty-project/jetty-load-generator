@@ -14,7 +14,9 @@
 package org.mortbay.jetty.load.generator.starter;
 
 import java.lang.management.ManagementFactory;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +49,6 @@ public class LoadGeneratorStarter {
         ReportListener listener = new ReportListener();
         LoadGenerator generator = builder
                 .listener(listener)
-                .requestListener(listener)
                 .resourceListener(listener)
                 .build();
         generator.addBean(listener);
@@ -136,7 +137,6 @@ public class LoadGeneratorStarter {
         LOGGER.info("load generator config: {}", loadGenerator.getConfig());
         LOGGER.info("load generation begin");
         CompletableFuture<Void> cf = loadGenerator.begin();
-        LOGGER.info("load generation end");
         cf.whenComplete((x, f) -> {
             if (f == null) {
                 LOGGER.info("load generation complete");
@@ -149,19 +149,19 @@ public class LoadGeneratorStarter {
     private static void displayReport(LoadGenerator.Config config, ReportListener listener) {
         Histogram responseTimes = listener.getResponseTimeHistogram();
         HistogramSnapshot snapshot = new HistogramSnapshot(responseTimes, 16, "response times", "ms", TimeUnit.NANOSECONDS::toMillis);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.systemDefault());
         LOGGER.info("");
         LOGGER.info("----------------------------------------------------");
         LOGGER.info("-------------  Load Generator Report  --------------");
         LOGGER.info("----------------------------------------------------");
         LOGGER.info("{}://{}:{} over {}", config.getScheme(), config.getHost(), config.getPort(), config.getHttpClientTransportBuilder().getType());
         LOGGER.info("resource tree     : {} resources", config.getResource().descendantCount());
-        long startTime = responseTimes.getStartTimeStamp();
-        LOGGER.info("begin date time   : {}", simpleDateFormat.format(startTime));
-        long endTime = responseTimes.getEndTimeStamp();
-        LOGGER.info("complete date time: {}", simpleDateFormat.format(endTime));
-        LOGGER.info("elapsed time      : {} s", String.format("%.3f", ((double)endTime - startTime) / 1000));
-        LOGGER.info("average cpu time  : {}/{}", String.format("%.3f", listener.getAverageCPUPercent()), Runtime.getRuntime().availableProcessors() * 100);
+        Instant startInstant = listener.getBeginInstant();
+        LOGGER.info("begin date time   : {}", dateTimeFormatter.format(startInstant));
+        Instant completeInstant = listener.getCompleteInstant();
+        LOGGER.info("complete date time: {}", dateTimeFormatter.format(completeInstant));
+        LOGGER.info("recording time    : {} s", String.format("%.3f", (double)listener.getRecordingDuration().toMillis() / 1000));
+        LOGGER.info("average cpu load  : {}/{}", String.format("%.3f", listener.getAverageCPUPercent()), Runtime.getRuntime().availableProcessors() * 100);
         LOGGER.info("");
         if (responseTimes.getTotalCount() > 0) {
             LOGGER.info("histogram:");

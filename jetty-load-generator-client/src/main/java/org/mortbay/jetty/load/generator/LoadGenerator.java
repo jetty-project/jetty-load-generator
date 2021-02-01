@@ -27,6 +27,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -170,7 +171,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             LOGGER.debug("generating load, {}", config);
         }
         return spawn()
-                .thenRun(() -> fireBeginEvent(this))
+                .thenRun(this::fireBeginEvent)
                 .thenCompose(x -> {
                     // These CompletableFutures will be completed when process()
                     // returns, i.e. when requests have been scheduled for send.
@@ -187,10 +188,10 @@ public class LoadGenerator extends ContainerLifeCycle {
                         requests[index] = CompletableFuture.supplyAsync(sender, executorService);
                     }
                     return CompletableFuture.allOf(requests)
-                            .thenRun(() -> fireEndEvent(this))
+                            .thenRun(this::fireEndEvent)
                             .thenCompose(v -> CompletableFuture.allOf(responses));
                 })
-                .thenRun(() -> fireCompleteEvent(this))
+                .thenRun(this::fireCompleteEvent)
                 // Call halt() even if previous stages failed.
                 .whenCompleteAsync((r, x) -> halt(), executorService);
     }
@@ -206,77 +207,94 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     private CompletableFuture<Void> process() {
-        CompletableFuture<Void> process = new CompletableFuture<>();
-        CompletableFuture<Void> result = process;
-        try {
-            barrier.await();
+        // The implementation of this method may look unnecessary complicated.
+        // The reason is that Callbacks propagate completion inwards,
+        // while CompletableFutures propagate completion outwards.
+        // The method returns a CompletableFuture, but the implementation
+        // uses Callbacks that need to reference the innermost CompletableFuture.
 
-            String threadName = Thread.currentThread().getName();
+        // This is the callback to use for the last iteration or when the run time is elapsed.
+        Callback.Completable lastCallback = new Callback.Completable() {
+            @Override
+            public void succeeded() {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("sender thread completed");
+                }
+                super.succeeded();
+            }
+
+            @Override
+            public void failed(Throwable x) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("sender thread failed", x);
+                }
+                super.failed(x);
+            }
+        };
+
+        // This is the callback to use for non-last iterations.
+        // It only forwards failures because success is notified directly using lastCallback.
+        Callback nonLastCallback = new Callback.Nested(lastCallback) {
+            @Override
+            public void succeeded() {
+            }
+        };
+
+        // This is the callback to use for warmup iterations.
+        int warmupIterations = config.getWarmupIterationsPerThread();
+        WarmupCallback warmupCallback = new WarmupCallback(lastCallback, warmupIterations);
+
+        // This is the CompletableFuture that we return to callers.
+        CompletableFuture<Void> result = lastCallback;
+        try {
+            // Wait for all the sender threads to arrive here.
+            awaitBarrier();
+
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("sender thread {} running", threadName);
+                LOGGER.debug("sender thread running");
             }
 
             HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
-
+            // Make sure HttpClients are stopped if they fail to start.
+            // HttpClient cannot be stopped from one of its own threads.
+            result = result.whenCompleteAsync((r, x) -> {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("stopping http clients");
+                }
+                Arrays.stream(clients).forEach(this::stopHttpClient);
+            }, executorService);
             Collection<Connection.Listener> connectionListeners = getBeans(Connection.Listener.class);
             for (int i = 0; i < clients.length; ++i) {
                 HttpClient client = clients[i] = newHttpClient(getConfig());
                 connectionListeners.forEach(client::addBean);
                 addManaged(client);
             }
-            // HttpClient cannot be stopped from one of its own threads.
-            result = process.whenCompleteAsync((r, x) -> {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("stopping http clients");
-                }
-                Arrays.stream(clients).forEach(this::stopHttpClient);
-            }, executorService);
-
-            Callback processCallback = new Callback() {
-                @Override
-                public void succeeded() {
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("sender thread {} completed", threadName);
-                    }
-                    process.complete(null);
-                }
-
-                @Override
-                public void failed(Throwable x) {
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("sender thread " + threadName + " failed", x);
-                    }
-                    process.completeExceptionally(x);
-                }
-            };
-
-            // This callback only forwards failure, success is notified explicitly.
-            Callback callback = new Callback.Nested(processCallback) {
-                @Override
-                public void succeeded() {
-                }
-            };
 
             int rate = config.getResourceRate();
             long period = rate > 0 ? TimeUnit.SECONDS.toNanos(config.getThreads()) / rate : 0;
             long rateRampUpPeriod = TimeUnit.SECONDS.toNanos(config.getRateRampUpPeriod());
 
             long runFor = config.getRunFor();
-            int warmupIterations = config.getWarmupIterationsPerThread();
             int iterations = runFor > 0 ? 0 : config.getIterationsPerThread();
 
-            long begin = System.nanoTime();
             long total = 0;
             long unsent = 0;
             int clientIndex = 0;
+            boolean warmup = true;
+            long begin = System.nanoTime();
+            long warmupWait = 0;
 
             send:
             while (true) {
+                // Typically only one batch is sent.
+                // However, for high rates the period may be smaller than the
+                // timer resolution so the sleep may last more than expected.
+                // Also in case of GC pauses time may be lost.
+                // To compensate for oversleeping, the batch is adjusted.
                 long batch = 1;
                 if (period > 0) {
                     TimeUnit.NANOSECONDS.sleep(period);
-                    // We need to compensate for oversleeping.
-                    long elapsed = System.nanoTime() - begin;
+                    long elapsed = System.nanoTime() - begin - warmupWait;
                     long expected = Math.round((double)elapsed / period);
                     if (rateRampUpPeriod > 0 && elapsed < rateRampUpPeriod) {
                         long send = Math.round(0.5D * elapsed * elapsed / rateRampUpPeriod / period);
@@ -289,27 +307,41 @@ public class LoadGenerator extends ContainerLifeCycle {
                     total = expected;
                 }
 
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("sending batch: {} resources", batch);
+                }
+
                 while (batch > 0) {
-                    HttpClient client = clients[clientIndex];
-
-                    boolean warmup = false;
+                    Callback callback;
                     boolean lastIteration = false;
-                    if (warmupIterations > 0) {
-                        warmup = --warmupIterations >= 0;
-                    } else if (iterations > 0) {
-                        lastIteration = --iterations == 0;
+                    if (warmup) {
+                        if (warmupIterations == 0) {
+                            warmup = false;
+                            long start = System.nanoTime();
+                            warmupCallback.join();
+                            warmupWait = System.nanoTime() - start;
+                            continue;
+                        } else {
+                            --warmupIterations;
+                            callback = warmupCallback;
+                        }
+                    } else {
+                        if (iterations > 0) {
+                            lastIteration = --iterations == 0;
+                        } else {
+                            lastIteration = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
+                        }
+                        callback = lastIteration ? lastCallback : nonLastCallback;
                     }
-                    // Sends the resource one more time after the time expired,
-                    // but guarantees that the callback is notified correctly.
-                    boolean ranEnough = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
-                    Callback c = lastIteration || ranEnough ? processCallback : callback;
 
-                    sendResourceTree(client, config.getResource(), warmup, c);
+                    HttpClient client = clients[clientIndex];
+                    sendResourceTree(client, config.getResource(), warmup, callback);
                     --batch;
 
-                    if (lastIteration || ranEnough || process.isCompletedExceptionally()) {
+                    if (lastIteration || lastCallback.isCompletedExceptionally()) {
                         break send;
                     }
+
                     if (interrupt) {
                         callback.failed(new InterruptedException());
                         break send;
@@ -324,7 +356,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(x);
             }
-            process.completeExceptionally(x);
+            lastCallback.completeExceptionally(x);
         }
         return result;
     }
@@ -369,14 +401,14 @@ public class LoadGenerator extends ContainerLifeCycle {
 
     private void sendResourceTree(HttpClient client, Resource resource, boolean warmup, Callback callback) {
         int nodes = resource.descendantCount();
-        Resource.Info info = resource.newInfo();
+        Resource.Info info = resource.newInfo(this);
         CountingCallback treeCallback = new CountingCallback(new Callback() {
             @Override
             public void succeeded() {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("completed tree for {}", resource);
-                }
                 info.setTreeTime(System.nanoTime());
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("completed {}tree for {}", warmup ? "warmup " : "", resource);
+                }
                 if (!warmup) {
                     fireResourceTreeEvent(info);
                 }
@@ -396,25 +428,52 @@ public class LoadGenerator extends ContainerLifeCycle {
         sender.send();
     }
 
-    private void fireBeginEvent(LoadGenerator generator) {
+    private int awaitBarrier() {
+        try {
+            return barrier.await();
+        } catch (Throwable x) {
+            throw new RuntimeException(x);
+        }
+    }
+
+    private void fireBeginEvent() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("emitting begin event");
+        }
         config.getListeners().stream()
                 .filter(l -> l instanceof BeginListener)
                 .map(l -> (BeginListener)l)
-                .forEach(l -> l.onBegin(generator));
+                .forEach(l -> l.onBegin(this));
     }
 
-    private void fireEndEvent(LoadGenerator generator) {
+    private void fireReadyEvent() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("emitting ready event");
+        }
+        config.getListeners().stream()
+                .filter(l -> l instanceof ReadyListener)
+                .map(l -> (ReadyListener)l)
+                .forEach(l -> l.onReady(this));
+    }
+
+    private void fireEndEvent() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("emitting end event");
+        }
         config.getListeners().stream()
                 .filter(l -> l instanceof EndListener)
                 .map(l -> (EndListener)l)
-                .forEach(l -> l.onEnd(generator));
+                .forEach(l -> l.onEnd(this));
     }
 
-    private void fireCompleteEvent(LoadGenerator generator) {
+    private void fireCompleteEvent() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("emitting complete event");
+        }
         config.getListeners().stream()
                 .filter(l -> l instanceof CompleteListener)
                 .map(l -> (CompleteListener)l)
-                .forEach(l -> l.onComplete(generator));
+                .forEach(l -> l.onComplete(this));
     }
 
     private void fireResourceNodeEvent(Resource.Info info) {
@@ -484,21 +543,21 @@ public class LoadGenerator extends ContainerLifeCycle {
 
                         if (pushCache.contains(httpRequest.getURI())) {
                             if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("skip sending pushed {}", resource);
+                                LOGGER.debug("skip sending pushed {}", info);
                             }
                         } else {
                             if (LOGGER.isDebugEnabled()) {
-                                LOGGER.debug("sending {}{}", warmup ? "warmup " : "", resource);
+                                LOGGER.debug("sending {}{}", warmup ? "warmup " : "", info);
                             }
 
                             httpRequest.pushListener((request, pushed) -> {
                                 URI pushedURI = pushed.getURI();
                                 Resource child = resource.findDescendant(pushedURI);
-                                if (LOGGER.isDebugEnabled()) {
-                                    LOGGER.debug("pushed {}", child);
-                                }
                                 if (child != null && pushCache.add(pushedURI)) {
-                                    Resource.Info pushedInfo = child.newInfo();
+                                    Resource.Info pushedInfo = child.newInfo(LoadGenerator.this);
+                                    if (LOGGER.isDebugEnabled()) {
+                                        LOGGER.debug("pushed {}", pushedInfo);
+                                    }
                                     pushedInfo.setRequestTime(System.nanoTime());
                                     pushedInfo.setPushed(true);
                                     return new ResponseHandler(pushedInfo);
@@ -526,7 +585,9 @@ public class LoadGenerator extends ContainerLifeCycle {
         private void sendChildren(Resource resource) {
             List<Resource> children = resource.getResources();
             if (!children.isEmpty()) {
-                offer(children.stream().map(Resource::newInfo).collect(Collectors.toList()));
+                offer(children.stream()
+                        .map(child -> child.newInfo(LoadGenerator.this))
+                        .collect(Collectors.toList()));
                 send();
             }
         }
@@ -553,9 +614,8 @@ public class LoadGenerator extends ContainerLifeCycle {
             @Override
             public void onComplete(Result result) {
                 info.setResponseTime(System.nanoTime());
-                Resource resource = info.getResource();
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("completed {}: {}", resource, result);
+                    LOGGER.debug("completed {}{}: {}", warmup ? "warmup " : "", info, result);
                 }
                 if (result.isSucceeded()) {
                     info.setStatus(result.getResponse().getStatus());
@@ -569,7 +629,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                 // Succeed the callback even in case of
                 // failures to continue the load generation.
                 callback.succeeded();
-                sendChildren(resource);
+                sendChildren(info.getResource());
             }
         }
     }
@@ -1033,6 +1093,19 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     /**
+     * <p>A listener for the LoadGenerator "ready" event.</p>
+     * <p>The "ready" event is emitted when the load generation warmup is finished.</p>
+     */
+    public interface ReadyListener extends Listener {
+        /**
+         * <p>Callback method invoked when the "ready" event is emitted.</p>
+         *
+         * @param generator the load generator
+         */
+        public void onReady(LoadGenerator generator);
+    }
+
+    /**
      * <p>A listener for the LoadGenerator "end" event.</p>
      * <p>The "end" event is emitted when the load generation ends,
      * that is when the last request has been sent.</p>
@@ -1062,5 +1135,60 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @param generator the load generator
          */
         void onComplete(LoadGenerator generator);
+    }
+
+    private class WarmupCallback extends Callback.Nested {
+        private final CountDownLatch latch;
+        private final Callback counter;
+
+        public WarmupCallback(Callback callback, int warmupIterations) {
+            super(callback);
+            latch = new CountDownLatch(warmupIterations == 0 ? 0 : 1);
+            counter = warmupIterations == 0 ? Callback.from(NOOP::succeeded, callback::failed) :
+                    new CountingCallback(Callback.from(this::success, this::failure), warmupIterations);
+        }
+
+        @Override
+        public void succeeded() {
+            counter.succeeded();
+        }
+
+        @Override
+        public void failed(Throwable x) {
+            counter.failed(x);
+        }
+
+        public void join() {
+            try {
+                latch.await();
+            } catch (InterruptedException x) {
+                throw new RuntimeException(x);
+            }
+        }
+
+        private void success() {
+            try {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("awaiting barrier for ready event");
+                }
+                if (awaitBarrier() == 0) {
+                    fireReadyEvent();
+                }
+                // Wait for the "ready" listener to complete.
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("awaiting barrier for ready listener");
+                }
+                awaitBarrier();
+                // Do not succeed the nested callback, as these are just warmup iterations.
+            } finally {
+                latch.countDown();
+            }
+        }
+
+        private void failure(Throwable failure) {
+            latch.countDown();
+            // Only failures are forwarded to the nested callback.
+            super.failed(failure);
+        }
     }
 }

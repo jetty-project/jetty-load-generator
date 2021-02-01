@@ -207,11 +207,8 @@ public class Resource implements JSON.Convertible {
         return result;
     }
 
-    /**
-     * @return a new Info object
-     */
-    public Info newInfo() {
-        return new Info(this);
+    Info newInfo(LoadGenerator generator) {
+        return new Info(generator, this);
     }
 
     @Override
@@ -291,6 +288,7 @@ public class Resource implements JSON.Convertible {
      * <p>Value class containing information per-resource and per-request.</p>
      */
     public static class Info {
+        private final LoadGenerator generator;
         private final Resource resource;
         private long requestTime;
         private long latencyTime;
@@ -301,8 +299,13 @@ public class Resource implements JSON.Convertible {
         private int status;
         private Throwable failure;
 
-        private Info(Resource resource) {
+        private Info(LoadGenerator generator, Resource resource) {
+            this.generator = generator;
             this.resource = resource;
+        }
+
+        public LoadGenerator getLoadGenerator() {
+            return generator;
         }
 
         /**

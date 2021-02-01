@@ -464,6 +464,47 @@ public class LoadGeneratorTest {
         Assert.assertEquals(1, failures.get());
     }
 
+    @Test
+    public void testReadyEvent() throws Exception {
+        startServer(new TestHandler());
+
+        int threads = 2;
+        int count = 30;
+        AtomicInteger resources = new AtomicInteger();
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        LoadGenerator loadGenerator = LoadGenerator.builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .threads(threads)
+                .warmupIterationsPerThread(20)
+                .iterationsPerThread(count)
+                .resourceRate(1000)
+                .listener((LoadGenerator.ReadyListener)g -> {
+                    try {
+                        Thread.sleep(1000);
+                        // Make sure no request has been sent.
+                        if (resources.get() > 0) {
+                            g.interrupt();
+                        }
+                        readyLatch.countDown();
+                    } catch (InterruptedException x) {
+                        x.printStackTrace();
+                    }
+                })
+                .resourceListener((Resource.NodeListener)info -> {
+                    if (readyLatch.getCount() > 0) {
+                        info.getLoadGenerator().interrupt();
+                    }
+                    resources.incrementAndGet();
+                })
+                .build();
+
+        loadGenerator.begin().get();
+
+        Assert.assertTrue(readyLatch.await(5, TimeUnit.SECONDS));
+        Assert.assertEquals(threads * count, resources.get());
+    }
+
     private enum TransportType {
         H1C, H2C
     }

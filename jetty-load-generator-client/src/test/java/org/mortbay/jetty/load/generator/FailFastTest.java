@@ -37,6 +37,7 @@ import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class FailFastTest {
@@ -68,7 +69,9 @@ public class FailFastTest {
     }
 
     @Test
-    public void testShouldFailFastOnServerStop() {
+    // Other load test tools continue to send load even if the server is down.
+    @Ignore
+    public void testFailFastOnServerStop() {
         AtomicInteger onFailure = new AtomicInteger(0);
         AtomicInteger onCommit = new AtomicInteger(0);
         LoadGenerator.Builder builder = LoadGenerator.builder()
