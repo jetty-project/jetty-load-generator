@@ -168,10 +168,11 @@ public class LoadGeneratorStarter {
             Arrays.stream(snapshot.toString().split(System.lineSeparator())).forEach(line -> LOGGER.info("{}", line));
             LOGGER.info("");
         }
-        LOGGER.info("request rate (requests/s)  : {}", String.format("%.3f", listener.getRequestRate()));
-        LOGGER.info("send rate (bytes/s)        : {}", String.format("%.3f", listener.getSentBytesRate()));
-        LOGGER.info("response rate (responses/s): {}", String.format("%.3f", listener.getResponseRate()));
-        LOGGER.info("receive rate (bytes/s)     : {}", String.format("%.3f", listener.getReceivedBytesRate()));
+        LOGGER.info("nominal request rate (requests/s): {}", String.format("%.3f", (double)config.getResourceRate()));
+        LOGGER.info("request rate (requests/s)        : {}", String.format("%.3f", listener.getRequestRate()));
+        LOGGER.info("send rate (bytes/s)              : {}", String.format("%.3f", listener.getSentBytesRate()));
+        LOGGER.info("response rate (responses/s)      : {}", String.format("%.3f", listener.getResponseRate()));
+        LOGGER.info("receive rate (bytes/s)           : {}", String.format("%.3f", listener.getReceivedBytesRate()));
         LOGGER.info("failures          : {}", listener.getFailures());
         LOGGER.info("response 1xx group: {}", listener.getResponses1xx());
         LOGGER.info("response 2xx group: {}", listener.getResponses2xx());
