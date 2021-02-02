@@ -443,7 +443,15 @@ public class LoadGenerator extends ContainerLifeCycle {
         config.getListeners().stream()
                 .filter(l -> l instanceof BeginListener)
                 .map(l -> (BeginListener)l)
-                .forEach(l -> l.onBegin(this));
+                .forEach(this::invokeBeginListener);
+    }
+
+    private void invokeBeginListener(BeginListener listener) {
+        try {
+            listener.onBegin(this);
+        } catch (Throwable x) {
+            LOGGER.info("ignored failure while invoking listener {}", listener, x);
+        }
     }
 
     private void fireReadyEvent() {
@@ -453,7 +461,15 @@ public class LoadGenerator extends ContainerLifeCycle {
         config.getListeners().stream()
                 .filter(l -> l instanceof ReadyListener)
                 .map(l -> (ReadyListener)l)
-                .forEach(l -> l.onReady(this));
+                .forEach(this::invokeReadyListener);
+    }
+
+    private void invokeReadyListener(ReadyListener listener) {
+        try {
+            listener.onReady(this);
+        } catch (Throwable x) {
+            LOGGER.info("ignored failure while invoking listener {}", listener, x);
+        }
     }
 
     private void fireEndEvent() {
@@ -463,7 +479,15 @@ public class LoadGenerator extends ContainerLifeCycle {
         config.getListeners().stream()
                 .filter(l -> l instanceof EndListener)
                 .map(l -> (EndListener)l)
-                .forEach(l -> l.onEnd(this));
+                .forEach(this::invokeEndListener);
+    }
+
+    private void invokeEndListener(EndListener listener) {
+        try {
+            listener.onEnd(this);
+        } catch (Throwable x) {
+            LOGGER.info("ignored failure while invoking listener {}", listener, x);
+        }
     }
 
     private void fireCompleteEvent() {
@@ -473,21 +497,45 @@ public class LoadGenerator extends ContainerLifeCycle {
         config.getListeners().stream()
                 .filter(l -> l instanceof CompleteListener)
                 .map(l -> (CompleteListener)l)
-                .forEach(l -> l.onComplete(this));
+                .forEach(this::invokeCompleteListener);
+    }
+
+    private void invokeCompleteListener(CompleteListener listener) {
+        try {
+            listener.onComplete(this);
+        } catch (Throwable x) {
+            LOGGER.info("ignored failure while invoking listener {}", listener, x);
+        }
     }
 
     private void fireResourceNodeEvent(Resource.Info info) {
         config.getResourceListeners().stream()
                 .filter(l -> l instanceof Resource.NodeListener)
                 .map(l -> (Resource.NodeListener)l)
-                .forEach(l -> l.onResourceNode(info));
+                .forEach(l -> invokeResourceNodeListener(l, info));
+    }
+
+    private void invokeResourceNodeListener(Resource.NodeListener listener, Resource.Info info) {
+        try {
+            listener.onResourceNode(info);
+        } catch (Throwable x) {
+            LOGGER.info("ignored failure while invoking listener {}", listener, x);
+        }
     }
 
     private void fireResourceTreeEvent(Resource.Info info) {
         config.getResourceListeners().stream()
                 .filter(l -> l instanceof Resource.TreeListener)
                 .map(l -> (Resource.TreeListener)l)
-                .forEach(l -> l.onResourceTree(info));
+                .forEach(l -> invokeResourceTreeListener(l, info));
+    }
+
+    private void invokeResourceTreeListener(Resource.TreeListener listener, Resource.Info info) {
+        try {
+            listener.onResourceTree(info);
+        } catch (Throwable x) {
+            LOGGER.info("ignored failure while invoking listener {}", listener, x);
+        }
     }
 
     private class Sender {

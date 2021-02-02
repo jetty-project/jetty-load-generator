@@ -155,7 +155,7 @@ public class LoadGeneratorStarter {
         LOGGER.info("-------------  Load Generator Report  --------------");
         LOGGER.info("----------------------------------------------------");
         LOGGER.info("{}://{}:{} over {}", config.getScheme(), config.getHost(), config.getPort(), config.getHttpClientTransportBuilder().getType());
-        LOGGER.info("resource tree     : {} resources", config.getResource().descendantCount());
+        LOGGER.info("resource tree     : {} resource(s)", config.getResource().descendantCount());
         Instant startInstant = listener.getBeginInstant();
         LOGGER.info("begin date time   : {}", dateTimeFormatter.format(startInstant));
         Instant completeInstant = listener.getCompleteInstant();
