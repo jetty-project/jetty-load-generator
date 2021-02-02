@@ -408,16 +408,20 @@ public class LoadGeneratorStarterArgs {
                 return evaluateGroovy(reader, context);
             }
         }
-        throw new IllegalArgumentException("resource not defined");
+        return new Resource("/");
     }
 
     static Resource evaluateJSON(Path profilePath) throws IOException {
         try (BufferedReader reader = Files.newBufferedReader(profilePath, StandardCharsets.UTF_8)) {
-            JSON json = new JSON();
-            Resource resource = new Resource();
-            resource.fromJSON((Map<?, ?>)json.parse(new JSON.ReaderSource(reader)));
-            return resource;
+            return evaluateJSON(reader);
         }
+    }
+
+    static Resource evaluateJSON(Reader reader) {
+        JSON json = new JSON();
+        Resource resource = new Resource();
+        resource.fromJSON((Map<?, ?>)json.parse(new JSON.ReaderSource(reader)));
+        return resource;
     }
 
     static Resource evaluateGroovy(Reader script, Map<String, Object> context) {
