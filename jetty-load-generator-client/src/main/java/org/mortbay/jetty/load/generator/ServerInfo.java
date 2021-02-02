@@ -100,8 +100,14 @@ public class ServerInfo implements JSON.Convertible {
     @Override
     public void fromJSON(Map map) {
         setServerVersion((String)map.get("serverVersion"));
-        setProcessorCount(((Number)map.get("processorCount")).intValue());
-        setTotalMemory(((Number)map.get("totalMemory")).longValue());
+        Number processorCount = (Number)map.get("processorCount");
+        if (processorCount != null) {
+            setProcessorCount(processorCount.intValue());
+        }
+        Number totalMemory = (Number)map.get("totalMemory");
+        if (totalMemory != null) {
+            setTotalMemory(totalMemory.longValue());
+        }
         setGitHash((String)map.get("gitHash"));
         setJavaVersion((String)map.get("javaVersion"));
     }

@@ -213,24 +213,50 @@ public class Resource implements JSON.Convertible {
 
     @Override
     public void toJSON(JSON.Output out) {
-        out.add("method", getMethod());
-        out.add("path", getPath());
+        String method = getMethod();
+        if (method != null) {
+            out.add("method", method);
+        }
+        String path = getPath();
+        if (path == null) {
+            path = "/";
+        }
+        out.add("path", path);
         out.add("requestLength", getRequestLength());
-        out.add("requestHeaders", toMap(getRequestHeaders()));
-        out.add("resources", getResources());
         out.add("responseLength", getResponseLength());
+        HttpFields requestHeaders = getRequestHeaders();
+        if (requestHeaders != null) {
+            out.add("requestHeaders", toMap(requestHeaders));
+        }
+        List<Resource> resources = getResources();
+        if (resources != null) {
+            out.add("resources", resources);
+        }
     }
 
     @Override
     public void fromJSON(Map map) {
-        method((String)map.get("method"));
-        path((String)map.get("path"));
-        requestLength(((Number)map.get("requestLength")).longValue());
+        String method = (String)map.get("method");
+        if (method != null) {
+            method(method);
+        }
+        String path = (String)map.get("path");
+        if (path == null) {
+            path = "/";
+        }
+        path(path);
+        Number requestLength = (Number)map.get("requestLength");
+        if (requestLength != null) {
+            requestLength(requestLength.longValue());
+        }
+        Number responseLength = (Number)map.get("responseLength");
+        if (responseLength != null) {
+            responseLength(responseLength.longValue());
+        }
         @SuppressWarnings("unchecked")
         Map<String, Object> requestHeaders = (Map<String, Object>)map.get("requestHeaders");
         requestHeaders(toHttpFields(requestHeaders));
         resources(toResources(map.get("resources")));
-        responseLength(((Number)map.get("responseLength")).longValue());
     }
 
     private static Map<String, Object> toMap(HttpFields fields) {
@@ -244,9 +270,11 @@ public class Resource implements JSON.Convertible {
 
     private static HttpFields toHttpFields(Map<String, Object> map) {
         HttpFields fields = new HttpFields();
-        map.entrySet().stream()
-                .map(entry -> new HttpField(entry.getKey(), Arrays.stream((Object[])entry.getValue()).map(String::valueOf).collect(Collectors.joining(","))))
-                .forEach(fields::put);
+        if (map != null) {
+            map.entrySet().stream()
+                    .map(entry -> new HttpField(entry.getKey(), Arrays.stream((Object[])entry.getValue()).map(String::valueOf).collect(Collectors.joining(","))))
+                    .forEach(fields::put);
+        }
         return fields;
     }
 

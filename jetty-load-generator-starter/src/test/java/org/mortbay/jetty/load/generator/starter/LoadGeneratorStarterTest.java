@@ -16,10 +16,12 @@ package org.mortbay.jetty.load.generator.starter;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -79,7 +81,7 @@ public class LoadGeneratorStarterTest {
     }
 
     @Test
-    public void simpleTest() {
+    public void testSimple() {
         String[] args = new String[]{
                 "--warmup-iterations",
                 "10",
@@ -108,7 +110,7 @@ public class LoadGeneratorStarterTest {
 
     @Test
     @Ignore("see FailFastTest")
-    public void failFast() {
+    public void testFailFast() {
         String[] args = new String[]{
                 "--warmup-iterations",
                 "10",
@@ -160,7 +162,7 @@ public class LoadGeneratorStarterTest {
     }
 
     @Test
-    public void fromGroovyToJSON() throws Exception {
+    public void testFromGroovyToJSON() throws Exception {
         try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
             Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Map.of());
             Path tmpPath = Files.createTempFile("resources_", ".tmp");
@@ -175,10 +177,42 @@ public class LoadGeneratorStarterTest {
     }
 
     @Test
-    public void calculate_descendant_number() throws Exception {
+    public void testCalculateDescendantCount() throws Exception {
         try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
             Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Map.of());
             Assert.assertEquals(17, resource.descendantCount());
+        }
+    }
+
+    @Test
+    public void testSimplestJSON() {
+        String path = "/index.html";
+        try (StringReader reader = new StringReader("{\"path\":\"" + path + "\"}")) {
+            Resource resource = LoadGeneratorStarterArgs.evaluateJSON(reader);
+            Assert.assertEquals(path, resource.getPath());
+        }
+    }
+
+    @Test
+    public void testFullJSON() {
+        try (StringReader reader = new StringReader("" +
+                "{" +
+                "\"method\":\"POST\"," +
+                "\"path\":\"/index.html\"," +
+                "\"requestLength\":1," +
+                "\"responseLength\":2," +
+                "\"requestHeaders\":{\"Foo\":[\"Bar\"]}," +
+                "\"resources\":[{\"path\":\"/styles.css\"}]" +
+                "}")) {
+            Resource resource = LoadGeneratorStarterArgs.evaluateJSON(reader);
+            Assert.assertEquals("POST", resource.getMethod());
+            Assert.assertEquals("/index.html", resource.getPath());
+            Assert.assertEquals(1, resource.getRequestLength());
+            Assert.assertEquals(2, resource.getResponseLength());
+            Assert.assertEquals("Bar", resource.getRequestHeaders().get("Foo"));
+            List<Resource> children = resource.getResources();
+            Assert.assertEquals(1, children.size());
+            Assert.assertEquals("/styles.css", children.get(0).getPath());
         }
     }
 
