@@ -1192,8 +1192,8 @@ public class LoadGenerator extends ContainerLifeCycle {
         public WarmupCallback(Callback callback, int warmupIterations) {
             super(callback);
             latch = new CountDownLatch(warmupIterations == 0 ? 0 : 1);
-            counter = warmupIterations == 0 ? Callback.from(NOOP::succeeded, callback::failed) :
-                    new CountingCallback(Callback.from(this::success, this::failure), warmupIterations);
+            // If there are no warmup iterations, the callback will never be invoked.
+            counter = warmupIterations == 0 ? NOOP : new CountingCallback(Callback.from(this::success, this::failure), warmupIterations);
         }
 
         @Override
@@ -1208,6 +1208,9 @@ public class LoadGenerator extends ContainerLifeCycle {
 
         public void join() {
             try {
+                if (counter == NOOP) {
+                    fireReadyEvent();
+                }
                 latch.await();
             } catch (InterruptedException x) {
                 throw new RuntimeException(x);
@@ -1227,7 +1230,8 @@ public class LoadGenerator extends ContainerLifeCycle {
                     LOGGER.debug("awaiting barrier for ready listener");
                 }
                 awaitBarrier();
-                // Do not succeed the nested callback, as these are just warmup iterations.
+                // Do not forward success the nested callback,
+                // as these are just warmup iterations.
             } finally {
                 latch.countDown();
             }

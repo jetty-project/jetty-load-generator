@@ -505,6 +505,27 @@ public class LoadGeneratorTest {
         Assert.assertEquals(threads * count, resources.get());
     }
 
+    @Test
+    public void testReadyEventWithoutWarmup() throws Exception {
+        startServer(new TestHandler());
+
+        int threads = 2;
+        int count = 30;
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        LoadGenerator loadGenerator = LoadGenerator.builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .threads(threads)
+                .iterationsPerThread(count)
+                .resourceRate(0)
+                .listener((LoadGenerator.ReadyListener)g -> readyLatch.countDown())
+                .build();
+
+        loadGenerator.begin().get();
+
+        Assert.assertTrue(readyLatch.await(5, TimeUnit.SECONDS));
+    }
+
     private enum TransportType {
         H1C, H2C
     }
