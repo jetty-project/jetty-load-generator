@@ -2,12 +2,22 @@
 
 # Jetty Load Generator Project
 
-Jetty's `LoadGenerator` is an API to load-test HTTP servers, based on Jetty's `HttpClient`, that supports both HTTP/1.1 and HTTP/2.
+Jetty's `LoadGenerator` is an API to load-test HTTP servers, based on Jetty's `HttpClient` and Java 11+.
 
-Modules:
+The design of the `LoadGenerator` is based around these concepts:
+
+* Generate requests asynchronously at a constant rate, independently of responses.
+* Model [requests as web pages](#resource-apis), simulating what browsers do to download a web page.
+* Support both HTTP/1.1 and HTTP/2 (and future versions of the HTTP protocol).
+* Emit response events asynchronously, so they can be recorded, for example, in a response time histogram.
+
+You can embed Jetty's `LoadGenerator` in Java applications -- this will give you full flexibility, or you can use it as a command-line tool -- and therefore use it in scripts.
+
+The project artifacts are:
+
 * `jetty-load-generator-client` -- Java APIs, see [this section](#load-generator-apis)
 * `jetty-load-generator-listeners` -- useful listeners for events emitted during load-test
-* `jetty-load-generator-starter` -- command-line load test uber jar, see [this section](#command-line-load-generation)
+* `jetty-load-generator-starter` -- command-line load test uber-jar, see [this section](#command-line-load-generation)
 
 ## Recommended Load Generation Setup
 
@@ -58,7 +68,7 @@ Resource resource = new Resource("/index.html",
 ```
 
 `Resource` trees are requested to the server similarly to how a browser would do.
-In the example above, `/index.html` will be requested and awaited; when its response arrives `LoadGenerator` will send its children (in parallel if possible), siblings `/styles.css` and `/application.js`.  
+In the example above, `/index.html` will be requested and awaited; when its response arrives, `LoadGenerator` will send its children (in parallel if possible): `/styles.css` and `/application.js`.  
 
 Resources can be defined in Java, Groovy files, Jetty XML files, or JSON files.
 
@@ -150,7 +160,8 @@ The `Histogram` APIs provides count, percentiles, average, minimum and maximum v
 
 ## Command-Line Load Generation
 
-Artifact `jetty-load-generator-starter-<version>-uber.jar` allows you to generate load using the command-line and therefore scripts. 
+Artifact `jetty-load-generator-starter-<version>-uber.jar` allows you to generate load using the command-line.
+The uber-jar already contains all the required dependencies.
 
 To display usage:
 
@@ -173,4 +184,12 @@ java -jar jetty-load-generator-starter-<version>-uber.jar
         --warmup-iterations 10
         --iterations 100
         --display-stats
+```
+
+The `/tmp/resource.json` can be as simple as:
+
+```json
+{
+  "path": "/index.html"
+}
 ```
