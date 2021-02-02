@@ -148,7 +148,7 @@ public class LoadGeneratorStarter {
 
     private static void displayReport(LoadGenerator.Config config, ReportListener listener) {
         Histogram responseTimes = listener.getResponseTimeHistogram();
-        HistogramSnapshot snapshot = new HistogramSnapshot(responseTimes, 16, "response times", "ms", TimeUnit.NANOSECONDS::toMillis);
+        HistogramSnapshot snapshot = new HistogramSnapshot(responseTimes, 20, "response times", "ms", TimeUnit.NANOSECONDS::toMillis);
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.systemDefault());
         LOGGER.info("");
         LOGGER.info("----------------------------------------------------");
