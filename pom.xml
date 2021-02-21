@@ -16,7 +16,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jetty.version>9.4.36.v20210114</jetty.version>
+    <jetty.version>9.4.37.v20210219</jetty.version>
   </properties>
 
   <licenses>
@@ -386,6 +386,16 @@
       </releases>
       <snapshots>
         <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>jetty.staging</id>
+      <url>https://oss.sonatype.org/content/groups/jetty-with-staging</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
       </snapshots>
     </repository>
   </repositories>
