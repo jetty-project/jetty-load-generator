@@ -388,6 +388,7 @@ public class LoadGenerator extends ContainerLifeCycle {
     protected Request newRequest(HttpClient client, Config config, Resource resource) {
         Request request = client.newRequest(config.getHost(), config.getPort())
                 .scheme(config.getScheme())
+                .attribute(Resource.class.getName(), resource)
                 .method(resource.getMethod())
                 .path(resource.getPath());
         request.getHeaders().addAll(resource.getRequestHeaders());

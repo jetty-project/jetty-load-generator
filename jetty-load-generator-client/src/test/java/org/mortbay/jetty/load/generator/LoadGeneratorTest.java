@@ -34,6 +34,7 @@ import javax.management.ObjectName;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.ConnectionFactory;
@@ -524,6 +525,42 @@ public class LoadGeneratorTest {
         loadGenerator.begin().get();
 
         Assert.assertTrue(readyLatch.await(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void testResourceFromRequestAttribute() throws Exception {
+        Resource resource = new Resource("/original");
+        String extraPath = "/" + Integer.toHexString(resource.hashCode());
+        startServer(new AbstractHandler() {
+            @Override
+            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
+                jettyRequest.setHandled(true);
+                response.setStatus(target.endsWith(extraPath) ? HttpStatus.OK_200 : HttpStatus.INTERNAL_SERVER_ERROR_500);
+            }
+        });
+
+        CountDownLatch latch = new CountDownLatch(1);
+        LoadGenerator loadGenerator = LoadGenerator.builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .resource(resource)
+                .requestListener(new Request.Listener() {
+                    @Override
+                    public void onBegin(Request request) {
+                        Resource resource = (Resource)request.getAttributes().get(Resource.class.getName());
+                        request.path(resource.getPath() + extraPath);
+                    }
+                })
+                .resourceListener((Resource.NodeListener)info -> {
+                    if (info.getStatus() == HttpStatus.OK_200) {
+                        latch.countDown();
+                    }
+                })
+                .build();
+
+        loadGenerator.begin().get();
+
+        Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
     private enum TransportType {
