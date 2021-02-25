@@ -155,7 +155,8 @@ public class LoadGeneratorStarter {
         LOGGER.info("-------------  Load Generator Report  --------------");
         LOGGER.info("----------------------------------------------------");
         LOGGER.info("{}://{}:{} over {}", config.getScheme(), config.getHost(), config.getPort(), config.getHttpClientTransportBuilder().getType());
-        LOGGER.info("resource tree     : {} resource(s)", config.getResource().descendantCount());
+        int resourceCount = config.getResource().descendantCount();
+        LOGGER.info("resource tree     : {} resource(s)", resourceCount);
         Instant startInstant = listener.getBeginInstant();
         LOGGER.info("begin date time   : {}", dateTimeFormatter.format(startInstant));
         Instant completeInstant = listener.getCompleteInstant();
@@ -168,11 +169,13 @@ public class LoadGeneratorStarter {
             Arrays.stream(snapshot.toString().split(System.lineSeparator())).forEach(line -> LOGGER.info("{}", line));
             LOGGER.info("");
         }
-        LOGGER.info("nominal request rate (requests/s): {}", String.format("%.3f", (double)config.getResourceRate()));
-        LOGGER.info("request rate (requests/s)        : {}", String.format("%.3f", listener.getRequestRate()));
-        LOGGER.info("send rate (bytes/s)              : {}", String.format("%.3f", listener.getSentBytesRate()));
-        LOGGER.info("response rate (responses/s)      : {}", String.format("%.3f", listener.getResponseRate()));
-        LOGGER.info("receive rate (bytes/s)           : {}", String.format("%.3f", listener.getReceivedBytesRate()));
+        double resourceRate = config.getResourceRate();
+        LOGGER.info("nominal resource rate (resources/s): {}", String.format("%.3f", resourceRate));
+        LOGGER.info("nominal request rate (requests/s)  : {}", String.format("%.3f", resourceRate * resourceCount));
+        LOGGER.info("request rate (requests/s)          : {}", String.format("%.3f", listener.getRequestRate()));
+        LOGGER.info("response rate (responses/s)        : {}", String.format("%.3f", listener.getResponseRate()));
+        LOGGER.info("send rate (bytes/s)                : {}", String.format("%.3f", listener.getSentBytesRate()));
+        LOGGER.info("receive rate (bytes/s)             : {}", String.format("%.3f", listener.getReceivedBytesRate()));
         LOGGER.info("failures          : {}", listener.getFailures());
         LOGGER.info("response 1xx group: {}", listener.getResponses1xx());
         LOGGER.info("response 2xx group: {}", listener.getResponses2xx());
