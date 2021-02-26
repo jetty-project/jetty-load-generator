@@ -563,6 +563,44 @@ public class LoadGeneratorTest {
         Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
+    @Test
+    public void testServerSlowOnFirstIterationFastOnLastIteration() throws Exception {
+        int resourceRate = 3;
+        startServer(new AbstractHandler() {
+            private final AtomicInteger requests = new AtomicInteger();
+            @Override
+            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+                jettyRequest.setHandled(true);
+                if (requests.incrementAndGet() == 1) {
+                    try {
+                        Thread.sleep(4 * 1000 / resourceRate);
+                    } catch (InterruptedException x) {
+                        throw new InterruptedIOException();
+                    }
+                }
+            }
+        });
+
+        int requestCount = 2;
+        CountDownLatch latch = new CountDownLatch(requestCount);
+        LoadGenerator loadGenerator = LoadGenerator.builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .resourceRate(resourceRate)
+                .threads(1)
+                .iterationsPerThread(requestCount)
+                .resourceListener((Resource.NodeListener)info -> {
+                    if (info.getStatus() == HttpStatus.OK_200) {
+                        latch.countDown();
+                    }
+                })
+                .build();
+
+        loadGenerator.begin().get();
+
+        Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+    }
+
     private enum TransportType {
         H1C, H2C
     }

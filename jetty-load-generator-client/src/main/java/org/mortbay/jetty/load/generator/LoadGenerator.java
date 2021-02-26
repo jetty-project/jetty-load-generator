@@ -213,39 +213,15 @@ public class LoadGenerator extends ContainerLifeCycle {
         // The method returns a CompletableFuture, but the implementation
         // uses Callbacks that need to reference the innermost CompletableFuture.
 
-        // This is the callback to use for the last iteration or when the run time is elapsed.
-        Callback.Completable lastCallback = new Callback.Completable() {
-            @Override
-            public void succeeded() {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("sender thread completed");
-                }
-                super.succeeded();
-            }
+        List<CompletableFuture<Void>> allPromises = new ArrayList<>();
+        Callback.Completable anyFailure = new Callback.Completable();
 
-            @Override
-            public void failed(Throwable x) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("sender thread failed", x);
-                }
-                super.failed(x);
-            }
-        };
-
-        // This is the callback to use for non-last iterations.
-        // It only forwards failures because success is notified directly using lastCallback.
-        Callback nonLastCallback = new Callback.Nested(lastCallback) {
-            @Override
-            public void succeeded() {
-            }
-        };
+        HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
 
         // This is the callback to use for warmup iterations.
         int warmupIterations = config.getWarmupIterationsPerThread();
-        WarmupCallback warmupCallback = new WarmupCallback(lastCallback, warmupIterations);
+        WarmupCallback warmupCallback = new WarmupCallback(anyFailure, warmupIterations);
 
-        // This is the CompletableFuture that we return to callers.
-        CompletableFuture<Void> result = lastCallback;
         try {
             // Wait for all the sender threads to arrive here.
             awaitBarrier();
@@ -254,15 +230,6 @@ public class LoadGenerator extends ContainerLifeCycle {
                 LOGGER.debug("sender thread running");
             }
 
-            HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
-            // Make sure HttpClients are stopped if they fail to start.
-            // HttpClient cannot be stopped from one of its own threads.
-            result = result.whenCompleteAsync((r, x) -> {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("stopping http clients");
-                }
-                Arrays.stream(clients).forEach(this::stopHttpClient);
-            }, executorService);
             Collection<Connection.Listener> connectionListeners = getBeans(Connection.Listener.class);
             for (int i = 0; i < clients.length; ++i) {
                 HttpClient client = clients[i] = newHttpClient(getConfig());
@@ -331,20 +298,25 @@ public class LoadGenerator extends ContainerLifeCycle {
                         } else {
                             lastIteration = runFor > 0 && TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) >= runFor;
                         }
-                        callback = lastIteration ? lastCallback : nonLastCallback;
+                        Callback.Completable promise = new Callback.Completable();
+                        callback = promise;
+                        // Fail fast in case of failures.
+                        allPromises.add(promise.exceptionally(x -> {
+                            anyFailure.completeExceptionally(x);
+                            return null;
+                        }));
                     }
 
                     HttpClient client = clients[clientIndex];
                     sendResourceTree(client, config.getResource(), warmup, callback);
                     --batch;
 
-                    if (lastIteration || lastCallback.isCompletedExceptionally()) {
+                    if (lastIteration || anyFailure.isCompletedExceptionally()) {
                         break send;
                     }
 
                     if (interrupt) {
-                        callback.failed(new InterruptedException());
-                        break send;
+                        throw new InterruptedException("sender thread interrupted");
                     }
 
                     if (++clientIndex == clients.length) {
@@ -356,9 +328,29 @@ public class LoadGenerator extends ContainerLifeCycle {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(x);
             }
-            lastCallback.completeExceptionally(x);
+            anyFailure.completeExceptionally(x);
         }
-        return result;
+
+        CompletableFuture<Void> allResults = CompletableFuture.allOf(allPromises.toArray(CompletableFuture[]::new));
+        return CompletableFuture.anyOf(allResults, anyFailure)
+                .whenComplete((r, x) -> {
+                    if (LOGGER.isDebugEnabled()) {
+                        if (x == null) {
+                            LOGGER.debug("sender thread completed");
+                        } else {
+                            LOGGER.debug("sender thread failed", x);
+                        }
+                    }
+                })
+                // HttpClient cannot be stopped from one of its own threads.
+                .whenCompleteAsync((r, x) -> {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("stopping http clients");
+                    }
+                    Arrays.stream(clients).forEach(this::stopHttpClient);
+                }, executorService)
+                // Just to please the compiler and convert back to CompletableFuture<Void>.
+                .thenRun(() -> {});
     }
 
     protected HttpClient newHttpClient(Config config) {
