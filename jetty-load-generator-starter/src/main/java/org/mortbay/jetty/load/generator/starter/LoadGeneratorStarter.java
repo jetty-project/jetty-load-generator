@@ -13,11 +13,17 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -25,9 +31,9 @@ import com.beust.jcommander.JCommander;
 import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
+import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.listeners.ReportListener;
 
@@ -40,7 +46,7 @@ import org.mortbay.jetty.load.generator.listeners.ReportListener;
 public class LoadGeneratorStarter {
     private static final Logger LOGGER = Log.getLogger(LoadGeneratorStarter.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         LoadGeneratorStarterArgs starterArgs = parse(args);
         if (starterArgs == null) {
             return;
@@ -57,8 +63,20 @@ public class LoadGeneratorStarter {
             generator.addBean(mbeanContainer);
         }
         run(generator);
+        ReportListener.Report report = listener.whenComplete().join();
         if (starterArgs.isDisplayStats()) {
-            displayReport(generator.getConfig(), listener);
+            displayReport(generator.getConfig(), report);
+        }
+        String statsFile = starterArgs.getStatsFile();
+        if (statsFile != null) {
+            try (OutputStream output = Files.newOutputStream(Path.of(statsFile))) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("config", generator.getConfig());
+                map.put("report", report);
+                JSON json = new JSON();
+                output.write(json.toJSON(map).getBytes(StandardCharsets.UTF_8));
+                LOGGER.info("load generator report saved to: {}", statsFile);
+            }
         }
     }
 
@@ -116,7 +134,7 @@ public class LoadGeneratorStarter {
                     .host(starterArgs.getHost())
                     .port(starterArgs.getPort())
                     .httpClientTransportBuilder(starterArgs.getHttpClientTransportBuilder())
-                    .sslContextFactory(new SslContextFactory.Client(true))
+                    .sslContextFactory(starterArgs.getSslContextFactory())
                     .maxRequestsQueued(starterArgs.getMaxRequestsQueued())
                     .connectBlocking(starterArgs.isConnectBlocking())
                     .connectTimeout(starterArgs.getConnectTimeout())
@@ -146,8 +164,8 @@ public class LoadGeneratorStarter {
         }).join();
     }
 
-    private static void displayReport(LoadGenerator.Config config, ReportListener listener) {
-        Histogram responseTimes = listener.getResponseTimeHistogram();
+    private static void displayReport(LoadGenerator.Config config, ReportListener.Report report) {
+        Histogram responseTimes = report.getResponseTimeHistogram();
         HistogramSnapshot snapshot = new HistogramSnapshot(responseTimes, 20, "response times", "ms", TimeUnit.NANOSECONDS::toMillis);
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.systemDefault());
         LOGGER.info("");
@@ -157,12 +175,12 @@ public class LoadGeneratorStarter {
         LOGGER.info("{}://{}:{} over {}", config.getScheme(), config.getHost(), config.getPort(), config.getHttpClientTransportBuilder().getType());
         int resourceCount = config.getResource().descendantCount();
         LOGGER.info("resource tree     : {} resource(s)", resourceCount);
-        Instant startInstant = listener.getBeginInstant();
-        LOGGER.info("begin date time   : {}", dateTimeFormatter.format(startInstant));
-        Instant completeInstant = listener.getCompleteInstant();
+        Instant beginInstant = report.getBeginInstant();
+        LOGGER.info("begin date time   : {}", dateTimeFormatter.format(beginInstant));
+        Instant completeInstant = report.getCompleteInstant();
         LOGGER.info("complete date time: {}", dateTimeFormatter.format(completeInstant));
-        LOGGER.info("recording time    : {} s", String.format("%.3f", (double)listener.getRecordingDuration().toMillis() / 1000));
-        LOGGER.info("average cpu load  : {}/{}", String.format("%.3f", listener.getAverageCPUPercent()), Runtime.getRuntime().availableProcessors() * 100);
+        LOGGER.info("recording time    : {} s", String.format("%.3f", (double)report.getRecordingDuration().toMillis() / 1000));
+        LOGGER.info("average cpu load  : {}/{}", String.format("%.3f", report.getAverageCPUPercent()), Runtime.getRuntime().availableProcessors() * 100);
         LOGGER.info("");
         if (responseTimes.getTotalCount() > 0) {
             LOGGER.info("histogram:");
@@ -172,16 +190,16 @@ public class LoadGeneratorStarter {
         double resourceRate = config.getResourceRate();
         LOGGER.info("nominal resource rate (resources/s): {}", String.format("%.3f", resourceRate));
         LOGGER.info("nominal request rate (requests/s)  : {}", String.format("%.3f", resourceRate * resourceCount));
-        LOGGER.info("request rate (requests/s)          : {}", String.format("%.3f", listener.getRequestRate()));
-        LOGGER.info("response rate (responses/s)        : {}", String.format("%.3f", listener.getResponseRate()));
-        LOGGER.info("send rate (bytes/s)                : {}", String.format("%.3f", listener.getSentBytesRate()));
-        LOGGER.info("receive rate (bytes/s)             : {}", String.format("%.3f", listener.getReceivedBytesRate()));
-        LOGGER.info("failures          : {}", listener.getFailures());
-        LOGGER.info("response 1xx group: {}", listener.getResponses1xx());
-        LOGGER.info("response 2xx group: {}", listener.getResponses2xx());
-        LOGGER.info("response 3xx group: {}", listener.getResponses3xx());
-        LOGGER.info("response 4xx group: {}", listener.getResponses4xx());
-        LOGGER.info("response 5xx group: {}", listener.getResponses5xx());
+        LOGGER.info("request rate (requests/s)          : {}", String.format("%.3f", report.getRequestRate()));
+        LOGGER.info("response rate (responses/s)        : {}", String.format("%.3f", report.getResponseRate()));
+        LOGGER.info("send rate (bytes/s)                : {}", String.format("%.3f", report.getSentBytesRate()));
+        LOGGER.info("receive rate (bytes/s)             : {}", String.format("%.3f", report.getReceivedBytesRate()));
+        LOGGER.info("failures          : {}", report.getFailures());
+        LOGGER.info("response 1xx group: {}", report.getResponses1xx());
+        LOGGER.info("response 2xx group: {}", report.getResponses2xx());
+        LOGGER.info("response 3xx group: {}", report.getResponses3xx());
+        LOGGER.info("response 4xx group: {}", report.getResponses4xx());
+        LOGGER.info("response 5xx group: {}", report.getResponses5xx());
         LOGGER.info("----------------------------------------------------");
     }
 }

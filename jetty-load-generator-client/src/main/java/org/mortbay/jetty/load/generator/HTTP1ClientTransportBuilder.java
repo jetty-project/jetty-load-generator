@@ -13,13 +13,17 @@
 
 package org.mortbay.jetty.load.generator;
 
+import java.util.Map;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
+import org.eclipse.jetty.util.ajax.JSON;
 
 /**
  * <p>Helper builder to provide an http(s) {@link HttpClientTransport}.</p>
  */
 public class HTTP1ClientTransportBuilder implements HTTPClientTransportBuilder {
+    public static final String TYPE = "http/1.1";
+
     private int selectors = 1;
 
     /**
@@ -37,11 +41,22 @@ public class HTTP1ClientTransportBuilder implements HTTPClientTransportBuilder {
 
     @Override
     public String getType() {
-        return "http/1.1";
+        return TYPE;
     }
 
     @Override
     public HttpClientTransport build() {
         return new HttpClientTransportOverHTTP(getSelectors());
+    }
+
+    @Override
+    public void toJSON(JSON.Output out) {
+        out.add("type", getType());
+        out.add("selectors", getSelectors());
+    }
+
+    @Override
+    public void fromJSON(Map map) {
+        selectors = LoadGenerator.Config.asInt(map, "selectors");
     }
 }

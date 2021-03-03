@@ -13,14 +13,18 @@
 
 package org.mortbay.jetty.load.generator;
 
+import java.util.Map;
 import org.eclipse.jetty.client.HttpClientTransport;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
+import org.eclipse.jetty.util.ajax.JSON;
 
 /**
  * <p>Helper builder to provide an HTTP/2 {@link HttpClientTransport}.</p>
  */
 public class HTTP2ClientTransportBuilder implements HTTPClientTransportBuilder {
+    public static final String TYPE = "http/2";
+
     private int selectors = 1;
     private int sessionRecvWindow = 16 * 1024 * 1024;
     private int streamRecvWindow = 16 * 1024 * 1024;
@@ -66,17 +70,30 @@ public class HTTP2ClientTransportBuilder implements HTTPClientTransportBuilder {
 
     @Override
     public String getType() {
-        return "http/2";
+        return TYPE;
     }
 
     @Override
     public HttpClientTransport build() {
         HTTP2Client http2Client = new HTTP2Client();
-        // Chrome uses 15 MiB session and 6 MiB stream windows.
-        // Firefox uses 12 MiB session and stream windows.
         http2Client.setInitialSessionRecvWindow(getSessionRecvWindow());
         http2Client.setInitialStreamRecvWindow(getStreamRecvWindow());
         http2Client.setSelectors(getSelectors());
         return new HttpClientTransportOverHTTP2(http2Client);
+    }
+
+    @Override
+    public void toJSON(JSON.Output out) {
+        out.add("type", getType());
+        out.add("selectors", getSelectors());
+        out.add("sessionRecvWindow", getSessionRecvWindow());
+        out.add("streamRecvWindow", getStreamRecvWindow());
+    }
+
+    @Override
+    public void fromJSON(Map map) {
+        selectors = LoadGenerator.Config.asInt(map, "selectors");
+        sessionRecvWindow = LoadGenerator.Config.asInt(map, "sessionRecvWindow");
+        streamRecvWindow = LoadGenerator.Config.asInt(map, "streamRecvWindow");
     }
 }

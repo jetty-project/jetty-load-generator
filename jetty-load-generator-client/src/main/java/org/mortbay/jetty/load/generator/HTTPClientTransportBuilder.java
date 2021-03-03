@@ -14,11 +14,12 @@
 package org.mortbay.jetty.load.generator;
 
 import org.eclipse.jetty.client.HttpClientTransport;
+import org.eclipse.jetty.util.ajax.JSON;
 
 /**
  * <p>A builder for {@link HttpClientTransport}.</p>
  */
-public interface HTTPClientTransportBuilder {
+public interface HTTPClientTransportBuilder extends JSON.Convertible {
     /**
      * @return the transport type, such as "http/1.1" or "http/2"
      */

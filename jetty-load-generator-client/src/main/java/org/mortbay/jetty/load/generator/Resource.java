@@ -261,11 +261,7 @@ public class Resource implements JSON.Convertible {
 
     private static Map<String, Object> toMap(HttpFields fields) {
         return fields.stream()
-                .map(field -> new Object() {
-                    final String name = field.getName();
-                    final String[] values = field.getValues();
-                })
-                .collect(Collectors.toMap(tuple -> tuple.name, tuple -> tuple.values));
+                .collect(Collectors.toMap(HttpField::getName, HttpField::getValues));
     }
 
     private static HttpFields toHttpFields(Map<String, Object> map) {

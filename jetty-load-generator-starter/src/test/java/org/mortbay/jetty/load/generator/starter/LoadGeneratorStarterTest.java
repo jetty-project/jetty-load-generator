@@ -13,8 +13,11 @@
 
 package org.mortbay.jetty.load.generator.starter;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.HdrHistogram.EncodableHistogram;
+import org.HdrHistogram.HistogramLogReader;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -81,7 +86,7 @@ public class LoadGeneratorStarterTest {
     }
 
     @Test
-    public void testSimple() {
+    public void testSimple() throws Exception {
         String[] args = new String[]{
                 "--warmup-iterations",
                 "10",
@@ -213,6 +218,43 @@ public class LoadGeneratorStarterTest {
             List<Resource> children = resource.getResources();
             Assert.assertEquals(1, children.size());
             Assert.assertEquals("/styles.css", children.get(0).getPath());
+        }
+    }
+
+    @Test
+    public void testStatsFile() throws Exception {
+        Path statsPath = Files.createTempFile(Path.of("target"), "jlg-stats-", ".json");
+        statsPath.toFile().deleteOnExit();
+        String[] args = new String[]{
+                "--port",
+                Integer.toString(connector.getLocalPort()),
+                "--iterations",
+                "10",
+                "--resource-rate",
+                "10",
+                "--stats-file",
+                statsPath.toString()
+        };
+        LoadGeneratorStarter.main(args);
+
+        try (BufferedReader reader = Files.newBufferedReader(statsPath, StandardCharsets.UTF_8)) {
+            JSON json = new JSON();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>)json.parse(new JSON.ReaderSource(reader));
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> configMap = (Map<String, Object>)map.get("config");
+            LoadGenerator.Config config = new LoadGenerator.Config();
+            config.fromJSON(configMap);
+            Assert.assertEquals(connector.getLocalPort(), config.getPort());
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> reportMap = (Map<String, Object>)map.get("report");
+            try (InputStream inputStream = new ByteArrayInputStream(((String)reportMap.get("histogram")).getBytes(StandardCharsets.UTF_8))) {
+                HistogramLogReader histogramReader = new HistogramLogReader(inputStream);
+                EncodableHistogram histogram = histogramReader.nextIntervalHistogram();
+                Assert.assertNotNull(histogram);
+            }
         }
     }
 

@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
@@ -45,6 +46,7 @@ import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.CountingCallback;
 import org.eclipse.jetty.util.SocketAddressResolver;
+import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.ManagedOperation;
@@ -681,7 +683,7 @@ public class LoadGenerator extends ContainerLifeCycle {
      * @see Builder
      */
     @ManagedObject("LoadGenerator Configuration")
-    public static class Config {
+    public static class Config implements JSON.Convertible {
         protected int threads = 1;
         protected int warmupIterationsPerThread = 0;
         protected int iterationsPerThread = 1;
@@ -693,7 +695,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         protected String scheme = "http";
         protected String host = "localhost";
         protected int port = 8080;
-        protected HTTPClientTransportBuilder httpClientTransportBuilder;
+        protected HTTPClientTransportBuilder httpClientTransportBuilder = new HTTP1ClientTransportBuilder();
         protected SslContextFactory.Client sslContextFactory;
         protected Scheduler scheduler;
         protected Executor executor;
@@ -816,6 +818,107 @@ public class LoadGenerator extends ContainerLifeCycle {
         @ManagedAttribute("Idle timeout in milliseconds")
         public long getIdleTimeout() {
             return idleTimeout;
+        }
+
+        @Override
+        public void toJSON(JSON.Output out) {
+            out.add("threads", getThreads());
+            out.add("warmupIterationsPerThread", getWarmupIterationsPerThread());
+            out.add("iterationsPerThread", getIterationsPerThread());
+            out.add("runFor", getRunFor());
+            out.add("usersPerThread", getUsersPerThread());
+            out.add("channelsPerUser", getChannelsPerUser());
+            out.add("resourceRate", getResourceRate());
+            out.add("rateRampUpPeriod", getRateRampUpPeriod());
+            out.add("scheme", getScheme());
+            out.add("host", getHost());
+            out.add("port", getPort());
+            out.add("transport", getHttpClientTransportBuilder());
+            out.add("resource", getResource());
+            out.add("maxRequestsQueued", getMaxRequestsQueued());
+            out.add("connectBlocking", isConnectBlocking());
+            out.add("connectTimeout", getConnectTimeout());
+            out.add("idleTimeout", getIdleTimeout());
+        }
+
+        @Override
+        public void fromJSON(Map map) {
+            threads = asInt(map, "threads");
+            warmupIterationsPerThread = asInt(map, "warmupIterationsPerThread");
+            iterationsPerThread = asInt(map, "iterationsPerThread");
+            runFor = asLong(map, "runFor");
+            usersPerThread = asInt(map, "usersPerThread");
+            channelsPerUser = asInt(map, "channelsPerUser");
+            resourceRate = asInt(map, "resourceRate");
+            rateRampUpPeriod = asLong(map, "rateRampUpPeriod");
+            scheme = asString(map, "scheme", "http");
+            host = asString(map, "host", "localhost");
+            port = asInt(map, "port");
+            httpClientTransportBuilder = asTransport(map);
+            resource = asResource(map);
+            maxRequestsQueued = asInt(map, "maxRequestsQueued");
+            connectBlocking = map.get("connectBlocking") == Boolean.TRUE;
+            connectTimeout = asInt(map, "connectTimeout");
+            idleTimeout = asInt(map, "idleTimeout");
+        }
+
+        static int asInt(Map<?, ?> map, String name) {
+            Object obj = map.get(name);
+            if (obj instanceof Number) {
+                return ((Number)obj).intValue();
+            }
+            return 0;
+        }
+
+        private long asLong(Map<?, ?> map, String name) {
+            Object obj = map.get(name);
+            if (obj instanceof Number) {
+                return ((Number)obj).longValue();
+            }
+            return 0;
+        }
+
+        private String asString(Map<?, ?> map, String name, String dftValue) {
+            Object obj = map.get(name);
+            if (obj == null) {
+                return dftValue;
+            }
+            return obj.toString();
+        }
+
+        private HTTPClientTransportBuilder asTransport(Map<?, ?> map) {
+            Object obj = map.get("transport");
+            if (obj == null) {
+                return new HTTP1ClientTransportBuilder();
+            }
+            Map<?, ?> transport = (Map<?, ?>)obj;
+            String type = (String)transport.get("type");
+            if (type == null) {
+                return new HTTP1ClientTransportBuilder();
+            }
+            HTTPClientTransportBuilder result;
+            switch (type) {
+                case HTTP1ClientTransportBuilder.TYPE:
+                    result = new HTTP1ClientTransportBuilder();
+                    break;
+                case HTTP2ClientTransportBuilder.TYPE:
+                    result = new HTTP2ClientTransportBuilder();
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown transport type: " + type);
+            }
+            result.fromJSON(transport);
+            return result;
+        }
+
+        private Resource asResource(Map<?, ?> map) {
+            Object obj = map.get("resource");
+            if (obj == null) {
+                return new Resource("/");
+            }
+            Resource result = new Resource();
+            result.fromJSON((Map<?,?>)obj);
+            return result;
         }
 
         @Override
@@ -1107,9 +1210,6 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @return a new LoadGenerator instance
          */
         public LoadGenerator build() {
-            if (httpClientTransportBuilder == null) {
-                httpClientTransportBuilder = new HTTP1ClientTransportBuilder();
-            }
             return new LoadGenerator(this);
         }
     }

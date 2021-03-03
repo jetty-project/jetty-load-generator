@@ -30,6 +30,7 @@ import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.eclipse.jetty.util.ajax.JSON;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
@@ -104,7 +105,7 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--idle-timeout", "-it"}, description = "TCP connection idle timeout, in milliseconds")
     private long idleTimeout = 15000;
 
-    @Parameter(names = {"--stats-file", "-sf"}, description = "Statistics output file path")
+    @Parameter(names = {"--stats-file", "-sf"}, description = "Statistics output file path in JSON format")
     private String statsFile;
 
     @Parameter(names = {"--display-stats", "-ds"}, description = "Whether to display statistics in the terminal")
@@ -370,6 +371,10 @@ public class LoadGeneratorStarterArgs {
     }
 
     // APIs used by LoadGeneratorStarter.
+
+    public SslContextFactory.Client getSslContextFactory() {
+        return new SslContextFactory.Client(true);
+    }
 
     public HTTPClientTransportBuilder getHttpClientTransportBuilder() {
         String transport = getTransport();
