@@ -114,10 +114,10 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--jmx"}, description = "Exports load generator components to the JVM platform MBeanServer as MBeans")
     private boolean jmx;
 
-    @Parameter(names = {"--executor-max-threads"})
+    @Parameter(names = {"--executor-max-threads"}, description = "Max number of executor threads")
     private int executorMaxThreads = 256;
 
-    @Parameter(names = {"--scheduler-max-threads"})
+    @Parameter(names = {"--scheduler-max-threads"}, description = "Max number of scheduler threads")
     private int schedulerMaxThreads = 1;
 
     @Parameter(names = {"--help"}, description = "Displays usage")
