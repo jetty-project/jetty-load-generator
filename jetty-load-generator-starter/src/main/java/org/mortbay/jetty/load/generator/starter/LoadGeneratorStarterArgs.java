@@ -111,7 +111,7 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--display-stats", "-ds"}, description = "Whether to display statistics in the terminal")
     private boolean displayStats;
 
-    @Parameter(names = {"--jmx"}, description = "Exports to JMX")
+    @Parameter(names = {"--jmx"}, description = "Exports load generator components to the JVM platform MBeanServer as MBeans")
     private boolean jmx;
 
     @Parameter(names = {"--executor-max-threads"})
