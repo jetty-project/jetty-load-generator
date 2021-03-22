@@ -348,10 +348,14 @@ public class LoadGeneratorTest {
 
         Thread.sleep(1000);
 
-        // need empty array otherwise jdk11 throw NPE
-        mbeanContainer.getMBeanServer().invoke(objectName, "interrupt", null, new String[]{});
+        // Needs empty arrays otherwise Java 11 throws NPE.
+        mbeanContainer.getMBeanServer().invoke(objectName, "interrupt", new Object[0], new String[0]);
 
         cf.handle((r, x) -> {
+            if (x == null)
+                Thread.dumpStack();
+            // Load generation was interrupted.
+            Assert.assertNotNull(x);
             Throwable cause = x.getCause();
             if (cause instanceof InterruptedException) {
                 return null;

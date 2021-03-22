@@ -205,6 +205,9 @@ public class LoadGenerator extends ContainerLifeCycle {
      */
     @ManagedOperation(value = "Interrupts this LoadGenerator", impact = "ACTION")
     public void interrupt() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("interrupting {}", this);
+        }
         interrupt = true;
     }
 
