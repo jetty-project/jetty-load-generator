@@ -117,9 +117,9 @@ public class LoadGenerator extends ContainerLifeCycle {
     private final Config config;
     private final CyclicBarrier barrier;
     private ExecutorService executorService;
-    private volatile boolean interrupt;
+    private volatile boolean interrupted;
 
-    private LoadGenerator(Config config) {
+    LoadGenerator(Config config) {
         this.config = config;
         this.barrier = new CyclicBarrier(config.threads);
         addBean(config);
@@ -141,7 +141,7 @@ public class LoadGenerator extends ContainerLifeCycle {
     @Override
     protected void doStart() throws Exception {
         executorService = Executors.newCachedThreadPool();
-        interrupt = false;
+        interrupted = false;
         super.doStart();
     }
 
@@ -208,7 +208,11 @@ public class LoadGenerator extends ContainerLifeCycle {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("interrupting {}", this);
         }
-        interrupt = true;
+        interrupted = true;
+    }
+
+    boolean isInterrupted() {
+        return interrupted;
     }
 
     private CompletableFuture<Void> process() {
@@ -320,7 +324,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                         break send;
                     }
 
-                    if (interrupt) {
+                    if (isInterrupted()) {
                         throw new InterruptedException("sender thread interrupted");
                     }
 
@@ -336,8 +340,22 @@ public class LoadGenerator extends ContainerLifeCycle {
             anyFailure.completeExceptionally(x);
         }
 
-        CompletableFuture<Void> allResults = CompletableFuture.allOf(allPromises.toArray(CompletableFuture[]::new));
-        return CompletableFuture.anyOf(allResults, anyFailure)
+        // If there was a failure, fail all the resource tree promises.
+        anyFailure.whenComplete((r, x) -> {
+            if (x != null) {
+                allPromises.forEach(p -> p.completeExceptionally(x));
+            }
+        });
+
+        return CompletableFuture.allOf(allPromises.toArray(CompletableFuture[]::new))
+                .whenComplete((r, x) -> {
+                    // When the resource tree promises are complete,
+                    // try to succeed anyFailure, if was not already failed.
+                    anyFailure.complete(null);
+                })
+                // FlatMap anyFailure with the promises, so that if all the
+                // promises have succeeded, the failure is reported anyway.
+                .thenCompose(y -> anyFailure)
                 .whenComplete((r, x) -> {
                     if (LOGGER.isDebugEnabled()) {
                         if (x == null) {
@@ -353,9 +371,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                         LOGGER.debug("stopping http clients");
                     }
                     Arrays.stream(clients).forEach(this::stopHttpClient);
-                }, executorService)
-                // Just to please the compiler and convert back to CompletableFuture<Void>.
-                .thenRun(() -> {});
+                }, executorService);
     }
 
     protected HttpClient newHttpClient(Config config) {
@@ -920,7 +936,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                 return new Resource("/");
             }
             Resource result = new Resource();
-            result.fromJSON((Map<?,?>)obj);
+            result.fromJSON((Map<?, ?>)obj);
             return result;
         }
 

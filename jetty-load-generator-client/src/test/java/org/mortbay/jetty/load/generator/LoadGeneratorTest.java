@@ -195,6 +195,42 @@ public class LoadGeneratorTest {
     }
 
     @Test
+    public void testInterruptAfterResourceComplete() throws Exception {
+        startServer(new AbstractHandler() {
+            @Override
+            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
+                jettyRequest.setHandled(true);
+            }
+        });
+
+        LoadGenerator.Builder config = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .iterationsPerThread(0)
+                .resourceListener((Resource.NodeListener)info -> {
+                    info.getLoadGenerator().interrupt();
+                });
+        LoadGenerator loadGenerator = new LoadGenerator(config) {
+            @Override
+            boolean isInterrupted() {
+                try {
+                    Thread.sleep(1000);
+                    return super.isInterrupted();
+                } catch (InterruptedException x) {
+                    return true;
+                }
+            }
+        };
+
+        CompletableFuture<Void> cf = loadGenerator.begin();
+
+        cf.handle((r, x) -> {
+            Assert.assertNotNull(x);
+            return r;
+        }).get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
     public void testRunFor() throws Exception {
         startServer(new TestHandler());
 
@@ -352,8 +388,6 @@ public class LoadGeneratorTest {
         mbeanContainer.getMBeanServer().invoke(objectName, "interrupt", new Object[0], new String[0]);
 
         cf.handle((r, x) -> {
-            if (x == null)
-                Thread.dumpStack();
             // Load generation was interrupted.
             Assert.assertNotNull(x);
             Throwable cause = x.getCause();
@@ -572,6 +606,7 @@ public class LoadGeneratorTest {
         int resourceRate = 3;
         startServer(new AbstractHandler() {
             private final AtomicInteger requests = new AtomicInteger();
+
             @Override
             public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
                 jettyRequest.setHandled(true);
