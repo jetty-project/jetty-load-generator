@@ -35,7 +35,7 @@ public abstract class WebsiteLoadGeneratorTest {
 
     public WebsiteLoadGeneratorTest() {
         // A dump of the resources needed by the webtide.com website.
-        HttpFields headers = new HttpFields();
+        HttpFields.Mutable headers = HttpFields.build();
         headers.put("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0");
         headers.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         headers.put("Accept-Language", "en-US,en;q=0.5");

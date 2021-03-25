@@ -40,7 +40,7 @@ public class Resource implements JSON.Convertible {
     public static final String RESPONSE_LENGTH = "JLG-Response-Length";
 
     private final List<Resource> resources = new ArrayList<>();
-    private final HttpFields requestHeaders = new HttpFields();
+    private final HttpFields.Mutable requestHeaders = HttpFields.build();
     private String method = HttpMethod.GET.asString();
     private String path;
     private long requestLength;
@@ -123,7 +123,7 @@ public class Resource implements JSON.Convertible {
      * @return this Resource
      */
     public Resource requestHeaders(HttpFields headers) {
-        this.requestHeaders.addAll(headers);
+        this.requestHeaders.add(headers);
         return this;
     }
 
@@ -235,7 +235,7 @@ public class Resource implements JSON.Convertible {
     }
 
     @Override
-    public void fromJSON(Map map) {
+    public void fromJSON(Map<String, Object> map) {
         String method = (String)map.get("method");
         if (method != null) {
             method(method);
@@ -265,13 +265,13 @@ public class Resource implements JSON.Convertible {
     }
 
     private static HttpFields toHttpFields(Map<String, Object> map) {
-        HttpFields fields = new HttpFields();
+        HttpFields.Mutable fields = HttpFields.build();
         if (map != null) {
             map.entrySet().stream()
                     .map(entry -> new HttpField(entry.getKey(), Arrays.stream((Object[])entry.getValue()).map(String::valueOf).collect(Collectors.joining(","))))
                     .forEach(fields::put);
         }
-        return fields;
+        return fields.asImmutable();
     }
 
     private static Resource[] toResources(Object objects) {
@@ -284,9 +284,10 @@ public class Resource implements JSON.Convertible {
             }
             if (array != null) {
                 return Arrays.stream(array)
-                        .map(object -> (Map<?, ?>)object)
-                        .map(map -> {
+                        .map(element -> {
                             Resource child = new Resource();
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> map = (Map<String, Object>)element;
                             child.fromJSON(map);
                             return child;
                         })

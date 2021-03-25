@@ -15,6 +15,7 @@ package org.mortbay.jetty.load.generator;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +42,8 @@ import org.eclipse.jetty.client.HttpRequest;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.client.api.Result;
-import org.eclipse.jetty.client.util.BytesContentProvider;
+import org.eclipse.jetty.client.util.BytesRequestContent;
+import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.CountingCallback;
@@ -52,10 +54,10 @@ import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.ManagedOperation;
 import org.eclipse.jetty.util.component.ContainerLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.Scheduler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>An HTTP Load Generator that sends {@link Resource resources} to the server as HTTP requests.</p>
@@ -105,7 +107,7 @@ import org.eclipse.jetty.util.thread.Scheduler;
  */
 @ManagedObject("LoadGenerator")
 public class LoadGenerator extends ContainerLifeCycle {
-    private static final Logger LOGGER = Log.getLogger(LoadGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadGenerator.class);
 
     /**
      * @return a new Builder
@@ -335,7 +337,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             }
         } catch (Throwable x) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(x);
+                LOGGER.debug("failure while sending requests", x);
             }
             anyFailure.completeExceptionally(x);
         }
@@ -375,15 +377,17 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     protected HttpClient newHttpClient(Config config) {
-        HttpClient httpClient = new HttpClient(config.getHttpClientTransportBuilder().build(), config.getSslContextFactory());
-        httpClient.setExecutor(config.getExecutor());
-        httpClient.setScheduler(config.getScheduler());
+        ClientConnector connector = new ClientConnector();
+        connector.setSslContextFactory(config.getSslContextFactory());
+        connector.setExecutor(config.getExecutor());
+        connector.setScheduler(config.getScheduler());
+        connector.setConnectBlocking(config.isConnectBlocking());
+        connector.setConnectTimeout(Duration.ofMillis(config.getConnectTimeout()));
+        connector.setIdleTimeout(Duration.ofMillis(config.getIdleTimeout()));
+        HttpClient httpClient = new HttpClient(config.getHttpClientTransportBuilder().connector(connector).build());
         httpClient.setMaxConnectionsPerDestination(config.getChannelsPerUser());
         httpClient.setMaxRequestsQueuedPerDestination(config.getMaxRequestsQueued());
         httpClient.setSocketAddressResolver(config.getSocketAddressResolver());
-        httpClient.setConnectBlocking(config.isConnectBlocking());
-        httpClient.setConnectTimeout(config.getConnectTimeout());
-        httpClient.setIdleTimeout(config.getIdleTimeout());
         return httpClient;
     }
 
@@ -394,7 +398,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                 removeBean(client);
             }
         } catch (Throwable x) {
-            LOGGER.ignore(x);
+            LOGGER.trace("ignored", x);
         }
     }
 
@@ -404,11 +408,11 @@ public class LoadGenerator extends ContainerLifeCycle {
                 .attribute(Resource.class.getName(), resource)
                 .method(resource.getMethod())
                 .path(resource.getPath());
-        request.getHeaders().addAll(resource.getRequestHeaders());
-        request.header(Resource.RESPONSE_LENGTH, Long.toString(resource.getResponseLength()));
+        request.headers(fields -> fields.add(resource.getRequestHeaders()));
+        request.headers(fields -> fields.put(Resource.RESPONSE_LENGTH, Long.toString(resource.getResponseLength())));
         long requestLength = resource.getRequestLength();
         if (requestLength > 0) {
-            request.content(new BytesContentProvider(new byte[Math.toIntExact(requestLength)]));
+            request.body(new BytesRequestContent(new byte[Math.toIntExact(requestLength)]));
         }
         return request;
     }
@@ -861,7 +865,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         @Override
-        public void fromJSON(Map map) {
+        public void fromJSON(Map<String, Object> map) {
             threads = asInt(map, "threads");
             warmupIterationsPerThread = asInt(map, "warmupIterationsPerThread");
             iterationsPerThread = asInt(map, "iterationsPerThread");
@@ -906,12 +910,12 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         private HTTPClientTransportBuilder asTransport(Map<?, ?> map) {
-            Object obj = map.get("transport");
-            if (obj == null) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> transportMap = (Map<String, Object>)map.get("transport");
+            if (transportMap == null) {
                 return new HTTP1ClientTransportBuilder();
             }
-            Map<?, ?> transport = (Map<?, ?>)obj;
-            String type = (String)transport.get("type");
+            String type = (String)transportMap.get("type");
             if (type == null) {
                 return new HTTP1ClientTransportBuilder();
             }
@@ -926,17 +930,18 @@ public class LoadGenerator extends ContainerLifeCycle {
                 default:
                     throw new IllegalArgumentException("unknown transport type: " + type);
             }
-            result.fromJSON(transport);
+            result.fromJSON(transportMap);
             return result;
         }
 
         private Resource asResource(Map<?, ?> map) {
-            Object obj = map.get("resource");
-            if (obj == null) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> resourceMap = (Map<String, Object>)map.get("resource");
+            if (resourceMap == null) {
                 return new Resource("/");
             }
             Resource result = new Resource();
-            result.fromJSON((Map<?, ?>)obj);
+            result.fromJSON(resourceMap);
             return result;
         }
 
@@ -1120,7 +1125,7 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @return this Builder
          */
         public Builder sslContextFactory(SslContextFactory.Client sslContextFactory) {
-            this.sslContextFactory = sslContextFactory;
+            this.sslContextFactory = Objects.requireNonNull(sslContextFactory);
             return this;
         }
 

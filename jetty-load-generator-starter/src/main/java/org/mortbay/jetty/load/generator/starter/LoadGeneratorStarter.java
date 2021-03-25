@@ -32,10 +32,10 @@ import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
 import org.eclipse.jetty.util.ajax.JSON;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.listeners.ReportListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>A convenience class to run the load generator from the command line.</p>
@@ -44,7 +44,7 @@ import org.mortbay.jetty.load.generator.listeners.ReportListener;
  * </pre>
  */
 public class LoadGeneratorStarter {
-    private static final Logger LOGGER = Log.getLogger(LoadGeneratorStarter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadGeneratorStarter.class);
 
     public static void main(String[] args) throws Exception {
         LoadGeneratorStarterArgs starterArgs = parse(args);

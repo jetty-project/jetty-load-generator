@@ -502,7 +502,7 @@ public class ReportListener extends ContainerLifeCycle implements LoadGenerator.
         }
 
         @Override
-        public void fromJSON(Map map) {
+        public void fromJSON(Map<String, Object> map) {
             throw new UnsupportedOperationException();
         }
     }

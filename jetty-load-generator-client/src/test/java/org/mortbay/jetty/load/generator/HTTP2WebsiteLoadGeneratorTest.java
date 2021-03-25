@@ -16,9 +16,9 @@ package org.mortbay.jetty.load.generator;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.client.api.Request;
@@ -107,7 +107,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
         public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             if (target.equals("/")) {
                 for (Resource resource : resource.getResources()) {
-                    jettyRequest.getPushBuilder()
+                    request.newPushBuilder()
                             .path(resource.getPath())
                             .setHeader(Resource.RESPONSE_LENGTH, Long.toString(resource.getResponseLength()))
                             .push();

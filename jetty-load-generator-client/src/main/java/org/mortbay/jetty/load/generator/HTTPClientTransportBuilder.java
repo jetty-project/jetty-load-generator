@@ -13,20 +13,67 @@
 
 package org.mortbay.jetty.load.generator;
 
+import java.util.Map;
 import org.eclipse.jetty.client.HttpClientTransport;
+import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
+import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.util.ajax.JSON;
 
 /**
  * <p>A builder for {@link HttpClientTransport}.</p>
  */
-public interface HTTPClientTransportBuilder extends JSON.Convertible {
+public abstract class HTTPClientTransportBuilder implements JSON.Convertible {
+    protected int selectors = 1;
+    protected ClientConnector connector;
+
+    /**
+     * @param selectors the number of NIO selectors
+     * @return this builder instance
+     */
+    public HTTPClientTransportBuilder selectors(int selectors) {
+        this.selectors = selectors;
+        return this;
+    }
+
+    public int getSelectors() {
+        return selectors;
+    }
+
+    public HTTPClientTransportBuilder connector(ClientConnector connector) {
+        this.connector = connector;
+        return this;
+    }
+
+    public ClientConnector getConnector() {
+        return connector;
+    }
+
     /**
      * @return the transport type, such as "http/1.1" or "http/2"
      */
-    public String getType();
+    public abstract String getType();
 
     /**
      * @return a new HttpClientTransport instance
      */
-    public HttpClientTransport build();
+    public HttpClientTransport build() {
+        ClientConnector connector = getConnector();
+        if (connector == null)
+            connector = new ClientConnector();
+        connector.setSelectors(getSelectors());
+        return newHttpClientTransport(connector);
+    }
+
+    protected abstract HttpClientTransport newHttpClientTransport(ClientConnector connector);
+
+    @Override
+    public void toJSON(JSON.Output out) {
+        out.add("type", getType());
+        out.add("selectors", getSelectors());
+    }
+
+    @Override
+    public void fromJSON(Map<String, Object> map) {
+        selectors = LoadGenerator.Config.asInt(map, "selectors");
+    }
 }

@@ -98,7 +98,7 @@ public class ServerInfo implements JSON.Convertible {
     }
 
     @Override
-    public void fromJSON(Map map) {
+    public void fromJSON(Map<String, Object> map) {
         setServerVersion((String)map.get("serverVersion"));
         Number processorCount = (Number)map.get("processorCount");
         if (processorCount != null) {
@@ -128,7 +128,7 @@ public class ServerInfo implements JSON.Convertible {
                     if (status == HttpStatus.OK_200) {
                         ServerInfo serverInfo = new ServerInfo();
                         @SuppressWarnings("unchecked")
-                        Map<String, Object> map = (Map<String, Object>)JSON.parse(getContentAsString());
+                        Map<String, Object> map = (Map<String, Object>)new JSON().parse(new JSON.StringSource(getContentAsString()));
                         serverInfo.fromJSON(map);
                         complete.complete(serverInfo);
                     } else {

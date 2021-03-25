@@ -425,7 +425,9 @@ public class LoadGeneratorStarterArgs {
     static Resource evaluateJSON(Reader reader) {
         JSON json = new JSON();
         Resource resource = new Resource();
-        resource.fromJSON((Map<?, ?>)json.parse(new JSON.ReaderSource(reader)));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> map = (Map<String, Object>)json.parse(new JSON.ReaderSource(reader));
+        resource.fromJSON(map);
         return resource;
     }
 

@@ -28,9 +28,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.HdrHistogram.EncodableHistogram;
 import org.HdrHistogram.HistogramLogReader;
 import org.eclipse.jetty.client.api.Request;
@@ -44,8 +44,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.StatisticsServlet;
 import org.eclipse.jetty.util.IO;
 import org.eclipse.jetty.util.ajax.JSON;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.junit.After;
 import org.junit.Assert;
@@ -54,9 +52,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoadGeneratorStarterTest {
-    private static final Logger LOGGER = Log.getLogger(LoadGeneratorStarterTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadGeneratorStarterTest.class);
 
     private Server server;
     private ServerConnector connector;
