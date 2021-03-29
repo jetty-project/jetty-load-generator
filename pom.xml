@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mortbay.jetty.loadgenerator</groupId>
   <artifactId>jetty-load-generator</artifactId>
-  <version>1.0.5-SNAPSHOT</version>
+  <version>1.0.5</version>
   <packaging>pom</packaging>
   <name>Jetty :: Load Generator</name>
   <url>https://github.com/jetty-project/jetty-load-generator</url>
@@ -34,7 +34,7 @@
     <connection>scm:git:git://github.com/jetty-project/jetty-load-generator.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jetty-project/jetty-load-generator.git</developerConnection>
     <url>https://github.com/jetty-project/jetty-load-generator</url>
-    <tag>release</tag>
+    <tag>jetty-load-generator-1.0.5</tag>
   </scm>
 
   <distributionManagement>
