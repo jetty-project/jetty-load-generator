@@ -15,7 +15,6 @@ package org.mortbay.jetty.load.generator;
 
 import java.util.Map;
 import org.eclipse.jetty.client.HttpClientTransport;
-import org.eclipse.jetty.client.http.HttpClientTransportOverHTTP;
 import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.util.ajax.JSON;
 
@@ -23,7 +22,7 @@ import org.eclipse.jetty.util.ajax.JSON;
  * <p>A builder for {@link HttpClientTransport}.</p>
  */
 public abstract class HTTPClientTransportBuilder implements JSON.Convertible {
-    protected int selectors = 1;
+    protected int selectors;
     protected ClientConnector connector;
 
     /**
@@ -58,9 +57,13 @@ public abstract class HTTPClientTransportBuilder implements JSON.Convertible {
      */
     public HttpClientTransport build() {
         ClientConnector connector = getConnector();
-        if (connector == null)
+        if (connector == null) {
             connector = new ClientConnector();
-        connector.setSelectors(getSelectors());
+        }
+        int selectors = getSelectors();
+        if (selectors > 0) {
+            connector.setSelectors(selectors);
+        }
         return newHttpClientTransport(connector);
     }
 
