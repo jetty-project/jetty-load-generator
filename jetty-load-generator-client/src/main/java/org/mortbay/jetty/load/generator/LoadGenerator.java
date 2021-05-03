@@ -1067,6 +1067,9 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @return this Builder
          */
         public Builder resourceRate(int resourceRate) {
+            if (resourceRate < 0) {
+                throw new IllegalArgumentException();
+            }
             this.resourceRate = resourceRate;
             return this;
         }
@@ -1236,6 +1239,9 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @return a new LoadGenerator instance
          */
         public LoadGenerator build() {
+            if (rateRampUpPeriod > 0 && resourceRate == 0) {
+                throw new IllegalArgumentException("invalid rate ramp-up greater than 0 with resource rate 0");
+            }
             return new LoadGenerator(this);
         }
     }
