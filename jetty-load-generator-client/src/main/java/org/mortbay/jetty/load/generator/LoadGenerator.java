@@ -445,7 +445,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             }
         }, nodes);
         Sender sender = new Sender(client, warmup, treeCallback);
-        sender.offer(List.of(info));
+        sender.offer(Collections.singletonList(info));
         sender.send();
     }
 

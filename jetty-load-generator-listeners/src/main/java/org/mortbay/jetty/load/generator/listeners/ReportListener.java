@@ -498,7 +498,7 @@ public class ReportListener extends ContainerLifeCycle implements LoadGenerator.
             HistogramLogWriter hw = new HistogramLogWriter(histogramOutput);
             hw.outputIntervalHistogram(getResponseTimeHistogram());
             hw.close();
-            out.add("histogram", histogramOutput.toString(StandardCharsets.UTF_8));
+            out.add("histogram", new String(histogramOutput.toByteArray(), StandardCharsets.UTF_8));
         }
 
         @Override
