@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -169,7 +170,7 @@ public class LoadGeneratorStarterTest {
     @Test
     public void testFromGroovyToJSON() throws Exception {
         try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
-            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Map.of());
+            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Collections.emptyMap());
             Path tmpPath = Files.createTempFile("resources_", ".tmp");
             tmpPath.toFile().deleteOnExit();
             try (BufferedWriter writer = Files.newBufferedWriter(tmpPath, StandardCharsets.UTF_8)) {
@@ -184,7 +185,7 @@ public class LoadGeneratorStarterTest {
     @Test
     public void testCalculateDescendantCount() throws Exception {
         try (Reader reader = Files.newBufferedReader(Paths.get("src/test/resources/tree_resources.groovy"))) {
-            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Map.of());
+            Resource resource = LoadGeneratorStarterArgs.evaluateGroovy(reader, Collections.emptyMap());
             Assert.assertEquals(17, resource.descendantCount());
         }
     }
@@ -223,7 +224,7 @@ public class LoadGeneratorStarterTest {
 
     @Test
     public void testStatsFile() throws Exception {
-        Path statsPath = Files.createTempFile(Path.of("target"), "jlg-stats-", ".json");
+        Path statsPath = Files.createTempFile(Paths.get("target"), "jlg-stats-", ".json");
         statsPath.toFile().deleteOnExit();
         String[] args = new String[]{
                 "--port",

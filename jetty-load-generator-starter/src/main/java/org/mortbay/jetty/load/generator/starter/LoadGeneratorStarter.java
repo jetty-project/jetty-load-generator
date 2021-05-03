@@ -17,7 +17,7 @@ import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -69,7 +69,7 @@ public class LoadGeneratorStarter {
         }
         String statsFile = starterArgs.getStatsFile();
         if (statsFile != null) {
-            try (OutputStream output = Files.newOutputStream(Path.of(statsFile))) {
+            try (OutputStream output = Files.newOutputStream(Paths.get(statsFile))) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("config", generator.getConfig());
                 map.put("report", report);

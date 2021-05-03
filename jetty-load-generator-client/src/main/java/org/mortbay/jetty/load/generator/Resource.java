@@ -156,7 +156,7 @@ public class Resource implements JSON.Convertible {
      * @return this Resource
      */
     public Resource resources(Resource... resources) {
-        this.resources.addAll(List.of(resources));
+        this.resources.addAll(Arrays.asList(resources));
         return this;
     }
 
