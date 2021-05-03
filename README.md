@@ -7,6 +7,7 @@ Jetty's `LoadGenerator` is an API to load-test HTTP servers, based on Jetty's `H
 | Jetty Load Generator Version | Jetty Version | Java Version
 | :---: | :---: | :---:
 | 1.0.x | 9.4.x | Java 11
+| 1.1.x | 9.4.x | Java 8
 | 2.0.x | 11.0.x | Java 11
 
 The design of the `LoadGenerator` is based around these concepts:
