@@ -1,2 +1,4 @@
-_extends: .github
-tag-template: jetty-load-generator-$NEXT_PATCH_VERSION
+template: |
+  ## Changes
+
+  $CHANGES
