@@ -268,8 +268,8 @@ public class LoadGenerator extends ContainerLifeCycle {
             long runFor = config.getRunFor();
             int iterations = runFor > 0 ? 0 : config.getIterationsPerThread();
 
-            long total = 0;
-            long unsent = 0;
+            long alreadySent = 0;
+            long rampUpUnsent = 0;
             int clientIndex = 0;
             boolean warmup = true;
             long begin = System.nanoTime();
@@ -282,27 +282,33 @@ public class LoadGenerator extends ContainerLifeCycle {
                 // timer resolution so the sleep may last more than expected.
                 // Also in case of GC pauses time may be lost.
                 // To compensate for oversleeping, the batch is adjusted.
-                long batch = 1;
+                long batchToSend = 1;
                 if (period > 0) {
                     TimeUnit.NANOSECONDS.sleep(period);
-                    long elapsed = System.nanoTime() - begin - warmupWait;
-                    long expected = Math.round((double)elapsed / period);
-                    if (rateRampUpPeriod > 0 && elapsed < rateRampUpPeriod) {
-                        long send = Math.round(0.5D * elapsed * elapsed / rateRampUpPeriod / period);
-                        unsent = expected - send;
-                        expected = send;
+                    long elapsedNanos = System.nanoTime() - begin - warmupWait;
+                    long expectedSent = Math.round((double)elapsedNanos / period);
+                    if (rateRampUpPeriod > 0 && elapsedNanos < rateRampUpPeriod) {
+                        // The rate ramp-up is linear: it will bring the rate up in the
+                        // given time, so that the rate over time graph is a right triangle.
+                        double rampUpRate = ((double)elapsedNanos / rateRampUpPeriod) / period;
+                        // The accumulated number of requests is the area of the triangle.
+                        long rampUpExpectedSent = Math.round(elapsedNanos * rampUpRate / 2);
+                        rampUpUnsent = expectedSent - rampUpExpectedSent;
+                        expectedSent = rampUpExpectedSent;
                     } else {
-                        expected -= unsent;
+                        // Adjust for those requests that could
+                        // not be sent in the last ramp-up step.
+                        expectedSent -= rampUpUnsent;
                     }
-                    batch = expected - total;
-                    total = expected;
+                    batchToSend = expectedSent - alreadySent;
+                    alreadySent = expectedSent;
                 }
 
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("sending batch: {} resources", batch);
+                    LOGGER.debug("sending batch: {} resources", batchToSend);
                 }
 
-                while (batch > 0) {
+                while (batchToSend > 0) {
                     Callback callback;
                     boolean lastIteration = false;
                     if (warmup) {
@@ -328,7 +334,7 @@ public class LoadGenerator extends ContainerLifeCycle {
 
                     HttpClient client = clients[clientIndex];
                     sendResourceTree(client, config.getResource(), warmup, callback);
-                    --batch;
+                    --batchToSend;
 
                     if (lastIteration || anyFailure.isCompletedExceptionally()) {
                         break send;
@@ -1066,6 +1072,9 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @return this Builder
          */
         public Builder resourceRate(int resourceRate) {
+            if (resourceRate < 0) {
+                throw new IllegalArgumentException();
+            }
             this.resourceRate = resourceRate;
             return this;
         }
@@ -1235,6 +1244,9 @@ public class LoadGenerator extends ContainerLifeCycle {
          * @return a new LoadGenerator instance
          */
         public LoadGenerator build() {
+            if (rateRampUpPeriod > 0 && resourceRate == 0) {
+                throw new IllegalArgumentException("invalid rate ramp-up greater than 0 with resource rate 0");
+            }
             return new LoadGenerator(this);
         }
     }
