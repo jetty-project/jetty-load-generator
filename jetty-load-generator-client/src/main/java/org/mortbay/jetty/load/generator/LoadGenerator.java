@@ -530,10 +530,13 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     private void fireResourceNodeEvent(Resource.Info info) {
-        config.getResourceListeners().stream()
-                .filter(l -> l instanceof Resource.NodeListener)
-                .map(l -> (Resource.NodeListener)l)
-                .forEach(l -> invokeResourceNodeListener(l, info));
+        // Java streams are too expensive allocation-wise
+        // to be used for events generated in large numbers.
+        for (Resource.Listener l : config.getResourceListeners()) {
+            if (l instanceof Resource.NodeListener) {
+                invokeResourceNodeListener((Resource.NodeListener)l, info);
+            }
+        }
     }
 
     private void invokeResourceNodeListener(Resource.NodeListener listener, Resource.Info info) {
@@ -545,10 +548,13 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     private void fireResourceTreeEvent(Resource.Info info) {
-        config.getResourceListeners().stream()
-                .filter(l -> l instanceof Resource.TreeListener)
-                .map(l -> (Resource.TreeListener)l)
-                .forEach(l -> invokeResourceTreeListener(l, info));
+        // Java streams are too expensive allocation-wise
+        // to be used for events generated in large numbers.
+        for (Resource.Listener l : config.getResourceListeners()) {
+            if (l instanceof Resource.TreeListener) {
+                invokeResourceTreeListener((Resource.TreeListener)l, info);
+            }
+        }
     }
 
     private void invokeResourceTreeListener(Resource.TreeListener listener, Resource.Info info) {
