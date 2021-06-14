@@ -35,6 +35,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
@@ -117,6 +118,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         return new Builder();
     }
 
+    private final AtomicInteger threadIds = new AtomicInteger();
     private final Config config;
     private final CyclicBarrier barrier;
     private ExecutorService executorService;
@@ -128,6 +130,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         addBean(config);
         addBean(config.getExecutor());
         addBean(config.getScheduler());
+        addBean(config.getSslContextFactory());
     }
 
     private CompletableFuture<Void> spawn() {
@@ -143,9 +146,13 @@ public class LoadGenerator extends ContainerLifeCycle {
 
     @Override
     protected void doStart() throws Exception {
-        executorService = Executors.newCachedThreadPool();
+        executorService = Executors.newCachedThreadPool(this::newThread);
         interrupted = false;
         super.doStart();
+    }
+
+    private Thread newThread(Runnable job) {
+        return new Thread(job, String.format("%s@%x-sender-%d", getClass().getSimpleName(), hashCode(), threadIds.getAndIncrement()));
     }
 
     private void halt() {
@@ -154,9 +161,10 @@ public class LoadGenerator extends ContainerLifeCycle {
 
     @Override
     protected void doStop() throws Exception {
-        super.doStop();
         interrupt();
         executorService.shutdown();
+        threadIds.set(0);
+        super.doStop();
     }
 
     /**
@@ -246,12 +254,14 @@ public class LoadGenerator extends ContainerLifeCycle {
             return null;
         });
 
+        String threadName = Thread.currentThread().getName();
+
         try {
             // Wait for all the sender threads to arrive here.
             awaitBarrier();
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("sender thread running");
+                LOGGER.debug("sender thread running: {}", threadName);
             }
 
             Collection<Connection.Listener> connectionListeners = getBeans(Connection.Listener.class);
@@ -329,6 +339,12 @@ public class LoadGenerator extends ContainerLifeCycle {
                     callback = runCallback;
                 }
 
+                if (lastIteration) {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("sending last resource tree");
+                    }
+                }
+
                 HttpClient client = clients[clientIndex];
                 sendResourceTree(client, config.getResource(), warmup, callback);
 
@@ -363,9 +379,9 @@ public class LoadGenerator extends ContainerLifeCycle {
                 .whenComplete((r, x) -> {
                     if (LOGGER.isDebugEnabled()) {
                         if (x == null) {
-                            LOGGER.debug("sender thread completed");
+                            LOGGER.debug("sender thread completed: {}", threadName);
                         } else {
-                            LOGGER.debug("sender thread failed", x);
+                            LOGGER.debug("sender thread failed: {}", threadName, x);
                         }
                     }
                 })
