@@ -126,6 +126,7 @@ public class LoadGenerator extends ContainerLifeCycle {
         addBean(config);
         addBean(config.getExecutor());
         addBean(config.getScheduler());
+        addBean(config.getSslContextFactory());
     }
 
     private CompletableFuture<Void> spawn() {
