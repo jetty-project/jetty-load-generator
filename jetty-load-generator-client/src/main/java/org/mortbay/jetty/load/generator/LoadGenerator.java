@@ -252,12 +252,14 @@ public class LoadGenerator extends ContainerLifeCycle {
             return null;
         });
 
+        String threadName = Thread.currentThread().getName();
+
         try {
             // Wait for all the sender threads to arrive here.
             awaitBarrier();
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("sender thread running");
+                LOGGER.debug("sender thread running: {}", threadName);
             }
 
             Collection<Connection.Listener> connectionListeners = getBeans(Connection.Listener.class);
@@ -335,6 +337,12 @@ public class LoadGenerator extends ContainerLifeCycle {
                     callback = runCallback;
                 }
 
+                if (lastIteration) {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("sending last resource tree");
+                    }
+                }
+
                 HttpClient client = clients[clientIndex];
                 sendResourceTree(client, config.getResource(), warmup, callback);
 
@@ -369,9 +377,9 @@ public class LoadGenerator extends ContainerLifeCycle {
                 .whenComplete((r, x) -> {
                     if (LOGGER.isDebugEnabled()) {
                         if (x == null) {
-                            LOGGER.debug("sender thread completed");
+                            LOGGER.debug("sender thread completed: {}", threadName);
                         } else {
-                            LOGGER.debug("sender thread failed", x);
+                            LOGGER.debug("sender thread failed: {}", threadName, x);
                         }
                     }
                 })
