@@ -45,6 +45,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.SocketAddressResolver;
+import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
@@ -90,10 +91,8 @@ public class LoadGeneratorTest {
     }
 
     @After
-    public void dispose() throws Exception {
-        if (server != null) {
-            server.stop();
-        }
+    public void dispose() {
+        LifeCycle.stop(server);
     }
 
     @Test
@@ -411,7 +410,7 @@ public class LoadGeneratorTest {
 
         CompletableFuture<Void> cf = loadGenerator.begin();
 
-        Thread.sleep(1000);
+        sleep(1000);
 
         // Needs empty arrays otherwise Java 11 throws NPE.
         mbeanContainer.getMBeanServer().invoke(objectName, "interrupt", new Object[0], new String[0]);
@@ -548,16 +547,12 @@ public class LoadGeneratorTest {
                 .iterationsPerThread(count)
                 .resourceRate(1000)
                 .listener((LoadGenerator.ReadyListener)g -> {
-                    try {
-                        Thread.sleep(1000);
-                        // Make sure no request has been sent.
-                        if (resources.get() > 0) {
-                            g.interrupt();
-                        }
-                        readyLatch.countDown();
-                    } catch (InterruptedException x) {
-                        x.printStackTrace();
+                    sleep(1000);
+                    // Make sure no request has been sent.
+                    if (resources.get() > 0) {
+                        g.interrupt();
                     }
+                    readyLatch.countDown();
                 })
                 .resourceListener((Resource.NodeListener)info -> {
                     if (readyLatch.getCount() > 0) {
@@ -637,14 +632,10 @@ public class LoadGeneratorTest {
             private final AtomicInteger requests = new AtomicInteger();
 
             @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
+            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
                 jettyRequest.setHandled(true);
                 if (requests.incrementAndGet() == 1) {
-                    try {
-                        Thread.sleep(4 * 1000 / resourceRate);
-                    } catch (InterruptedException x) {
-                        throw new InterruptedIOException();
-                    }
+                    sleep(4 * 1000 / resourceRate);
                 }
             }
         });
@@ -667,6 +658,14 @@ public class LoadGeneratorTest {
         loadGenerator.begin().get();
 
         Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+    }
+
+    private static void sleep(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException x) {
+            throw new RuntimeException(x);
+        }
     }
 
     private enum TransportType {
