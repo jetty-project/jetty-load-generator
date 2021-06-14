@@ -45,6 +45,9 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.SocketAddressResolver;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -102,6 +105,34 @@ public class LoadGeneratorTest {
                 .httpClientTransportBuilder(clientTransportBuilder)
                 .build();
         loadGenerator.begin().get(5, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testComponentsAreStarted() throws Exception {
+        startServer(new TestHandler());
+
+        QueuedThreadPool threadPool = new QueuedThreadPool();
+        ScheduledExecutorScheduler scheduler = new ScheduledExecutorScheduler();
+        SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
+        LoadGenerator loadGenerator = new LoadGenerator.Builder()
+                .port(connector.getLocalPort())
+                .httpClientTransportBuilder(clientTransportBuilder)
+                .executor(threadPool)
+                .scheduler(scheduler)
+                .sslContextFactory(sslContextFactory)
+                .build();
+
+        loadGenerator.start();
+        try {
+            Assert.assertTrue(threadPool.isStarted());
+            Assert.assertTrue(scheduler.isStarted());
+            Assert.assertTrue(sslContextFactory.isStarted());
+        } finally {
+            loadGenerator.stop();
+            Assert.assertTrue(threadPool.isStopped());
+            Assert.assertTrue(scheduler.isStopped());
+            Assert.assertTrue(sslContextFactory.isStopped());
+        }
     }
 
     @Test
@@ -207,9 +238,7 @@ public class LoadGeneratorTest {
                 .port(connector.getLocalPort())
                 .httpClientTransportBuilder(clientTransportBuilder)
                 .iterationsPerThread(0)
-                .resourceListener((Resource.NodeListener)info -> {
-                    info.getLoadGenerator().interrupt();
-                });
+                .resourceListener((Resource.NodeListener)info -> info.getLoadGenerator().interrupt());
         LoadGenerator loadGenerator = new LoadGenerator(config) {
             @Override
             boolean isInterrupted() {
