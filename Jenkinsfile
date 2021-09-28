@@ -1,53 +1,58 @@
 #!groovy
 
-pipeline {
-  agent any
-  stages {
-    stage("Parallel Stage") {
-      parallel {
-        stage("Build / Test - JDK11") {
-          agent { node { label 'linux' } }
-          options { timeout(time: 30, unit: 'MINUTES') }
-          steps {
-            mavenBuild("jdk11", "clean install")
-            // Collect up the jacoco execution results.
-            jacoco inclusionPattern: '**/org/mortbay/jetty/load/generator/**/*.class',
-                    execPattern: '**/target/jacoco.exec',
-                    classPattern: '**/target/classes',
-                    sourcePattern: '**/src/main/java'
+def oss = ["linux"]
+def jdks = ["jdk8", "jdk11", "jdk17"]
+
+def builds = [:]
+for (def os in oss) {
+  for (def jdk in jdks) {
+    builds[os + "_" + jdk] = newBuild(os, jdk)
+  }
+}
+
+parallel builds
+
+def newBuild(os, jdk) {
+  return {
+    node(os) {
+      def mvnName = 'maven3.5'
+      def settingsName = 'oss-settings.xml'
+      def mvnOpts = '-Xms2g -Xmx4g -Djava.awt.headless=true'
+
+      stage("Checkout - ${jdk}") {
+        checkout scm
+      }
+
+      stage("Build - ${jdk}") {
+        timeout(time: 1, unit: 'HOURS') {
+          withMaven(maven: mvnName,
+                  jdk: jdk,
+                  publisherStrategy: 'EXPLICIT',
+                  globalMavenSettingsConfig: settingsName,
+                  mavenOpts: mvnOpts) {
+            sh "mvn -V -B clean install -Dmaven.test.failure.ignore=true -e"
+          }
+
+          junit testResults: '**/target/surefire-reports/TEST-*.xml'
+          // Collect the JaCoCo execution results.
+          jacoco inclusionPattern: '**/org/mortbay/jetty/load/generator/**/*.class',
+                  execPattern: '**/target/jacoco.exec',
+                  classPattern: '**/target/classes',
+                  sourcePattern: '**/src/main/java'
+        }
+      }
+
+      stage("Javadoc - ${jdk}") {
+        timeout(time: 15, unit: 'MINUTES') {
+          withMaven(maven: mvnName,
+                  jdk: jdk,
+                  publisherStrategy: 'EXPLICIT',
+                  globalMavenSettingsConfig: settingsName,
+                  mavenOpts: mvnOpts) {
+            sh "mvn -V -B javadoc:javadoc -e"
           }
         }
       }
     }
   }
 }
-
-/**
- * To other developers, if you are using this method above, please use the following syntax.
- *
- * mavenBuild("<jdk>", "<profiles> <goals> <plugins> <properties>"
- *
- * @param jdk the jdk tool name (in jenkins) to use for this build
- * @param cmdline the command line in "<profiles> <goals> <properties>"`format.
- * @return the Jenkinsfile step representing a maven build
- */
-def mavenBuild(jdk, cmdline) {
-  def mvnName = 'maven3'
-  script {
-    try {
-      withEnv(["JAVA_HOME=${ tool "$jdk" }",
-               "PATH+MAVEN=${ tool "$jdk" }/bin:${tool "$mvnName"}/bin",
-               "MAVEN_OPTS=-Xms2g -Xmx4g -Djava.awt.headless=true"]) {
-        configFileProvider([configFile(fileId: 'oss-settings.xml', variable: 'GLOBAL_MVN_SETTINGS')]) {
-          sh "mvn --no-transfer-progress -s $GLOBAL_MVN_SETTINGS -B -V -e $cmdline"
-        }
-      }
-    }
-    finally
-    {
-      junit testResults: '**/target/surefire-reports/*.xml,**/target/invoker-reports/TEST*.xml', allowEmptyResults: true
-    }
-  }
-}
-
-// vim: et:ts=2:sw=2:ft=groovy
