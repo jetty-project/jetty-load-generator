@@ -16,7 +16,6 @@ package org.mortbay.jetty.load.generator.starter;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -28,23 +27,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.HdrHistogram.EncodableHistogram;
 import org.HdrHistogram.HistogramLogReader;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.server.Content;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlet.StatisticsServlet;
-import org.eclipse.jetty.util.IO;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.Fields;
 import org.eclipse.jetty.util.ajax.JSON;
+import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.junit.After;
 import org.junit.Assert;
@@ -61,7 +58,7 @@ public class LoadGeneratorStarterTest {
 
     private Server server;
     private ServerConnector connector;
-    private TestServlet testServlet;
+    private TestHandler testHandler;
 
     @Before
     public void startJetty() throws Exception {
@@ -70,20 +67,16 @@ public class LoadGeneratorStarterTest {
         server = new Server(serverThreads);
         connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
         server.addConnector(connector);
+        testHandler = new TestHandler(connector);
         StatisticsHandler statisticsHandler = new StatisticsHandler();
+        statisticsHandler.setHandler(testHandler);
         server.setHandler(statisticsHandler);
-        ServletContextHandler statsContext = new ServletContextHandler(statisticsHandler, "/");
-        statsContext.addServlet(new ServletHolder(new StatisticsServlet()), "/stats");
-        testServlet = new TestServlet(connector);
-        statsContext.addServlet(new ServletHolder(testServlet), "/");
         server.start();
     }
 
     @After
-    public void stopJetty() throws Exception {
-        if (server != null) {
-            server.stop();
-        }
+    public void stopJetty() {
+        LifeCycle.stop(server);
     }
 
     @Test
@@ -109,7 +102,7 @@ public class LoadGeneratorStarterTest {
                 "src/test/resources/tree_resources.groovy"
         };
         LoadGeneratorStarter.main(args);
-        int getNumber = testServlet.getNumber.get();
+        int getNumber = testHandler.getNumber.get();
         LOGGER.debug("received get: {}", getNumber);
         Assert.assertTrue("getNumber return: " + getNumber, getNumber > 10);
     }
@@ -162,7 +155,7 @@ public class LoadGeneratorStarterTest {
             // Expected.
         }
 
-        int getNumber = testServlet.getNumber.get();
+        int getNumber = testHandler.getNumber.get();
         Assert.assertEquals(5, getNumber);
         Assert.assertTrue(onFailure.get() < 10);
     }
@@ -259,21 +252,22 @@ public class LoadGeneratorStarterTest {
         }
     }
 
-    private static class TestServlet extends HttpServlet {
+    private static class TestHandler extends Handler.Processor {
         private final AtomicInteger getNumber = new AtomicInteger(0);
         private final AtomicInteger postNumber = new AtomicInteger(0);
         private final ServerConnector connector;
 
-        private TestServlet(ServerConnector connector) {
+        private TestHandler(ServerConnector connector) {
             this.connector = connector;
         }
 
         @Override
-        protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            Fields parameters = org.eclipse.jetty.server.Request.extractQueryParameters(request);
             String method = request.getMethod().toUpperCase(Locale.ENGLISH);
             switch (method) {
                 case "GET": {
-                    String fail = request.getParameter("fail");
+                    String fail = parameters.getValue("fail");
                     if (fail != null) {
                         if (getNumber.get() >= Integer.parseInt(fail)) {
                             try {
@@ -283,13 +277,12 @@ public class LoadGeneratorStarterTest {
                             }
                         }
                     }
-                    response.getOutputStream().write("Jetty rocks!!".getBytes());
-                    response.flushBuffer();
+                    response.write(true, callback, "Jetty rocks!!");
                     getNumber.addAndGet(1);
                     break;
                 }
                 case "POST": {
-                    IO.copy(request.getInputStream(), response.getOutputStream());
+                    Content.copy(request, response, callback);
                     postNumber.addAndGet(1);
                     break;
                 }

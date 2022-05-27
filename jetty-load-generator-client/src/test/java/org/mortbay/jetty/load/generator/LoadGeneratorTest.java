@@ -14,7 +14,6 @@
 package org.mortbay.jetty.load.generator;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,9 +30,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.ObjectName;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
@@ -42,9 +38,10 @@ import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.SocketAddressResolver;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -70,16 +67,15 @@ public class LoadGeneratorTest {
 
     public LoadGeneratorTest(TransportType transportType) {
         switch (transportType) {
-            case H1C:
+            case H1C -> {
                 connectionFactory = new HttpConnectionFactory();
                 clientTransportBuilder = new HTTP1ClientTransportBuilder();
-                break;
-            case H2C:
+            }
+            case H2C -> {
                 connectionFactory = new HTTP2CServerConnectionFactory(new HttpConfiguration());
                 clientTransportBuilder = new HTTP2ClientTransportBuilder();
-                break;
-            default:
-                throw new IllegalArgumentException();
+            }
+            default -> throw new IllegalArgumentException();
         }
     }
 
@@ -140,16 +136,12 @@ public class LoadGeneratorTest {
         int iterations = 1;
         CountDownLatch serverLatch = new CountDownLatch(iterations);
         long delay = 500;
-        startServer(new AbstractHandler() {
+        startServer(new Handler.Processor() {
             @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-                try {
-                    jettyRequest.setHandled(true);
-                    Thread.sleep(delay);
-                    serverLatch.countDown();
-                } catch (InterruptedException x) {
-                    throw new InterruptedIOException();
-                }
+            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) throws Exception {
+                Thread.sleep(delay);
+                serverLatch.countDown();
+                callback.succeeded();
             }
         });
 
@@ -187,7 +179,7 @@ public class LoadGeneratorTest {
                 .httpClientTransportBuilder(clientTransportBuilder)
                 .threads(2)
                 .iterationsPerThread(1)
-                .requestListener(new Request.Listener.Adapter() {
+                .requestListener(new Request.Listener() {
                     @Override
                     public void onBegin(Request request) {
                         threads.add(Thread.currentThread().getName());
@@ -227,10 +219,10 @@ public class LoadGeneratorTest {
 
     @Test
     public void testInterruptAfterResourceComplete() throws Exception {
-        startServer(new AbstractHandler() {
+        startServer(new Handler.Processor() {
             @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
-                jettyRequest.setHandled(true);
+            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+                callback.succeeded();
             }
         });
 
@@ -495,15 +487,16 @@ public class LoadGeneratorTest {
 
     @Test
     public void testSomeRequestFailure() throws Exception {
-        startServer(new AbstractHandler() {
+        startServer(new Handler.Processor() {
             private final AtomicInteger requests = new AtomicInteger();
 
             @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
-                jettyRequest.setHandled(true);
+            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 if (requests.incrementAndGet() == 2) {
                     // Fail only the second request.
-                    jettyRequest.getHttpChannel().abort(new IOException());
+                    callback.failed(new IOException());
+                } else {
+                    callback.succeeded();
                 }
             }
         });
@@ -520,7 +513,7 @@ public class LoadGeneratorTest {
                 .resourceRate(2)
                 .resourceListener((Resource.NodeListener)info -> {
                     resources.incrementAndGet();
-                    if (info.getFailure() != null) {
+                    if (info.getStatus() != HttpStatus.OK_200) {
                         failures.incrementAndGet();
                     }
                 })
@@ -594,11 +587,11 @@ public class LoadGeneratorTest {
     public void testResourceFromRequestAttribute() throws Exception {
         Resource resource = new Resource("/original");
         String extraPath = "/" + Integer.toHexString(resource.hashCode());
-        startServer(new AbstractHandler() {
+        startServer(new Handler.Processor() {
             @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
-                jettyRequest.setHandled(true);
-                response.setStatus(target.endsWith(extraPath) ? HttpStatus.OK_200 : HttpStatus.INTERNAL_SERVER_ERROR_500);
+            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+                response.setStatus(request.getPathInContext().endsWith(extraPath) ? HttpStatus.OK_200 : HttpStatus.INTERNAL_SERVER_ERROR_500);
+                callback.succeeded();
             }
         });
 
@@ -629,15 +622,15 @@ public class LoadGeneratorTest {
     @Test
     public void testServerSlowOnFirstIterationFastOnLastIteration() throws Exception {
         int resourceRate = 3;
-        startServer(new AbstractHandler() {
+        startServer(new Handler.Processor() {
             private final AtomicInteger requests = new AtomicInteger();
 
             @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
-                jettyRequest.setHandled(true);
+            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 if (requests.incrementAndGet() == 1) {
                     sleep(4 * 1000 / resourceRate);
                 }
+                callback.succeeded();
             }
         });
 

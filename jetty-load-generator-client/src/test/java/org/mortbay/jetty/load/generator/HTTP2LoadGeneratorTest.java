@@ -13,24 +13,26 @@
 
 package org.mortbay.jetty.load.generator;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.http.MetaData;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.After;
 import org.junit.Assert;
@@ -98,18 +100,25 @@ public class HTTP2LoadGeneratorTest {
     public void testPush() throws Exception {
         startServer(new TestHandler() {
             @Override
-            public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-                if ("/".equals(target)) {
-                    request.newPushBuilder()
-                            .path("/1")
-                            .setHeader(Resource.RESPONSE_LENGTH, String.valueOf(10 * 1024))
-                            .push();
-                    request.newPushBuilder()
-                            .path("/2")
-                            .setHeader(Resource.RESPONSE_LENGTH, String.valueOf(32 * 1024))
-                            .push();
+            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+                if ("/".equals(request.getPathInContext())) {
+                    MetaData.Request push1 = new MetaData.Request(
+                            HttpMethod.GET.asString(),
+                            HttpURI.build(request.getHttpURI()).path("/1"),
+                            HttpVersion.HTTP_2,
+                            HttpFields.build().put(Resource.RESPONSE_LENGTH, String.valueOf(10 * 1024))
+                    );
+                    request.push(push1);
+
+                    MetaData.Request push2 = new MetaData.Request(
+                            HttpMethod.GET.asString(),
+                            HttpURI.build(request.getHttpURI()).path("/2"),
+                            HttpVersion.HTTP_2,
+                            HttpFields.build().put(Resource.RESPONSE_LENGTH, String.valueOf(32 * 1024))
+                    );
+                    request.push(push2);
                 }
-                super.handle(target, jettyRequest, request, response);
+                super.process(request, response, callback);
             }
         });
 

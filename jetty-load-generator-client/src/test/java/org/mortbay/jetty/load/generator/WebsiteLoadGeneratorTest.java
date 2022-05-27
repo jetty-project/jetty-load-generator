@@ -20,7 +20,6 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.RequestLogWriter;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
@@ -81,18 +80,16 @@ public abstract class WebsiteLoadGeneratorTest {
 
         // The request log ensures that the request
         // is inspected how an application would do.
-        RequestLogHandler requestLogHandler = new RequestLogHandler();
         CustomRequestLog requestLog = new CustomRequestLog(new RequestLogWriter() {
             @Override
             public void write(String log) {
                 // Do not write the log.
             }
         }, CustomRequestLog.NCSA_FORMAT);
-        requestLogHandler.setRequestLog(requestLog);
+        server.setRequestLog(requestLog);
         serverStats = new StatisticsHandler();
 
-        server.setHandler(requestLogHandler);
-        requestLogHandler.setHandler(serverStats);
+        server.setHandler(serverStats);
         serverStats.setHandler(handler);
 
         scheduler = new ScheduledExecutorScheduler();

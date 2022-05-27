@@ -13,24 +13,18 @@
 
 package org.mortbay.jetty.load.generator;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
-import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlet.StatisticsServlet;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.Fields;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 import org.junit.After;
@@ -49,16 +43,14 @@ public class FailFastTest {
 
     @Before
     public void startJetty() throws Exception {
-        StatisticsHandler statisticsHandler = new StatisticsHandler();
         server = new Server(new ExecutorThreadPool(5120));
         connector = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
         server.addConnector(connector);
+
+        ServerStopHandler serverStopHandler = new ServerStopHandler(server);
+        StatisticsHandler statisticsHandler = new StatisticsHandler();
+        statisticsHandler.setHandler(serverStopHandler);
         server.setHandler(statisticsHandler);
-        ServletContextHandler statsContext = new ServletContextHandler(statisticsHandler, "/");
-        statsContext.addServlet(new ServletHolder(new StatisticsServlet()), "/stats");
-        ServerStopServlet servlet = new ServerStopServlet(server);
-        statsContext.addServlet(new ServletHolder(servlet), "/");
-        statsContext.setSessionHandler(new SessionHandler());
         server.start();
     }
 
@@ -108,21 +100,21 @@ public class FailFastTest {
         Assert.assertTrue("onFailureCall is " + onFailureCall, onFailureCall < 10);
     }
 
-    private static class ServerStopServlet extends HttpServlet {
+    private static class ServerStopHandler extends Handler.Processor {
         private final AtomicInteger requests = new AtomicInteger();
         private final Server server;
 
-        private ServerStopServlet(Server server) {
+        private ServerStopHandler(Server server) {
             this.server = server;
         }
 
         @Override
-        protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
-            if (requests.incrementAndGet() > Integer.parseInt(request.getParameter("fail"))) {
+        public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            Fields parameters = org.eclipse.jetty.server.Request.extractQueryParameters(request);
+            if (requests.incrementAndGet() > Integer.parseInt(parameters.getValue("fail"))) {
                 new Thread(() -> LifeCycle.stop(server)).start();
             }
-            response.getOutputStream().write("Jetty rocks!!".getBytes(StandardCharsets.UTF_8));
-            response.flushBuffer();
+            response.write(true, callback, "Jetty rocks!!");
         }
     }
 }

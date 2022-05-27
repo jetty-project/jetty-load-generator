@@ -13,28 +13,39 @@
 
 package org.mortbay.jetty.load.generator;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.IteratingNestedCallback;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-
-public class TestHandler extends AbstractHandler {
+public class TestHandler extends Handler.Processor {
     @Override
-    public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        jettyRequest.setHandled(true);
-        String header = request.getHeader(Resource.RESPONSE_LENGTH);
-        if (header != null) {
-            OutputStream output = response.getOutputStream();
-            int length = Integer.parseInt(header);
-            byte[] buffer = new byte[2048];
-            while (length > 0) {
-                int l = Math.min(length, buffer.length);
-                output.write(buffer, 0, l);
-                length -= l;
-            }
+    public void process(Request request, Response response, Callback callback) {
+        String header = request.getHeaders().get(Resource.RESPONSE_LENGTH);
+        int length = header != null ? Integer.parseInt(header) : 0;
+        if (length > 0) {
+            sendResponseContent(response, length, callback);
+        } else {
+            callback.succeeded();
         }
+    }
+
+    private void sendResponseContent(Response response, int contentLength, Callback callback) {
+        new IteratingNestedCallback(callback) {
+            private int length = contentLength;
+
+            @Override
+            protected Action process() {
+                if (length == 0) {
+                    return Action.SUCCEEDED;
+                }
+                int l = Math.min(length, 2048);
+                length -= l;
+                response.write(length == 0, this, ByteBuffer.allocate(l));
+                return Action.SCHEDULED;
+            }
+        }.iterate();
     }
 }

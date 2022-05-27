@@ -15,7 +15,6 @@ package org.mortbay.jetty.load.generator;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.client.api.Request;
@@ -67,17 +66,17 @@ public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
                 })
                 .build();
 
-        serverStats.statsReset();
+        long begin = System.nanoTime();
         loadGenerator.begin().join();
-        long elapsed = serverStats.getStatsOnMs();
+        long elapsed = System.nanoTime() - begin;
 
         Assert.assertEquals(0, requests.get());
 
         int serverRequests = serverStats.getRequests();
         System.err.printf("%nserver - requests: %d, rate: %.3f, max_request_time: %d%n%n",
                 serverRequests,
-                elapsed > 0 ? serverRequests * 1000F / elapsed : 0F,
-                serverStats.getRequestTimeMax());
+                elapsed > 0 ? serverRequests * 1_000_000_000F / elapsed : 0F,
+                TimeUnit.NANOSECONDS.toMillis(serverStats.getRequestTimeMax()));
 
         HistogramSnapshot treeSnapshot = new HistogramSnapshot(treeHistogram, 20, "tree response time", "us", TimeUnit.NANOSECONDS::toMicros);
         System.err.println(treeSnapshot);

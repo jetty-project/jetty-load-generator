@@ -13,19 +13,21 @@
 
 package org.mortbay.jetty.load.generator;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Histogram;
 import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.http.HttpURI;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.http.MetaData;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
+import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.thread.MonitoredQueuedThreadPool;
 import org.junit.Assert;
 import org.junit.Test;
@@ -77,17 +79,17 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
                 })
                 .build();
 
-        serverStats.statsReset();
+        long begin = System.nanoTime();
         loadGenerator.begin().join();
-        long elapsed = serverStats.getStatsOnMs();
+        long elapsed = System.nanoTime() - begin;
 
         Assert.assertEquals(0, requests.get());
 
         int serverRequests = serverStats.getRequests();
         System.err.printf("%nserver - requests: %d, rate: %.3f, max_request_time: %d%n%n",
                 serverRequests,
-                elapsed > 0 ? serverRequests * 1000F / elapsed : 0F,
-                serverStats.getRequestTimeMax());
+                elapsed > 0 ? serverRequests * 1_000_000_000F / elapsed : 0F,
+                TimeUnit.NANOSECONDS.toMillis(serverStats.getRequestTimeMax()));
 
         HistogramSnapshot treeSnapshot = new HistogramSnapshot(treeHistogram, 20, "tree response time", "us", TimeUnit.NANOSECONDS::toMicros);
         System.err.println(treeSnapshot);
@@ -105,16 +107,19 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
 
     private class PushingHandler extends TestHandler {
         @Override
-        public void handle(String target, org.eclipse.jetty.server.Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-            if (target.equals("/")) {
+        public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            if ("/".equals(request.getPathInContext())) {
                 for (Resource resource : resource.getResources()) {
-                    request.newPushBuilder()
-                            .path(resource.getPath())
-                            .setHeader(Resource.RESPONSE_LENGTH, Long.toString(resource.getResponseLength()))
-                            .push();
+                    MetaData.Request push = new MetaData.Request(
+                            HttpMethod.GET.asString(),
+                            HttpURI.build(request.getHttpURI()).path(resource.getPath()),
+                            HttpVersion.HTTP_2,
+                            HttpFields.build().put(Resource.RESPONSE_LENGTH, Long.toString(resource.getResponseLength()))
+                    );
+                    request.push(push);
                 }
             }
-            super.handle(target, jettyRequest, request, response);
+            super.process(request, response, callback);
         }
     }
 }
