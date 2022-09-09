@@ -129,9 +129,9 @@
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.codehaus.groovy</groupId>
+        <groupId>org.apache.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>3.0.11</version>
+        <version>4.0.4</version>
       </dependency>
 
       <dependency>
