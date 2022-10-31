@@ -403,7 +403,7 @@ public class LoadGeneratorStarterArgs {
         String xmlPath = getResourceXMLPath();
         if (xmlPath != null) {
             Path path = Paths.get(xmlPath);
-            return (Resource)new XmlConfiguration(org.eclipse.jetty.util.resource.Resource.newResource(path)).configure();
+            return (Resource)new XmlConfiguration(org.eclipse.jetty.util.resource.ResourceFactory.root().newResource(path)).configure();
         }
         String groovyPath = getResourceGroovyPath();
         if (groovyPath != null) {

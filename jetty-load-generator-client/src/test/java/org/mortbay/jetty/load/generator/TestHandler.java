@@ -43,7 +43,7 @@ public class TestHandler extends Handler.Processor {
                 }
                 int l = Math.min(length, 2048);
                 length -= l;
-                response.write(length == 0, this, ByteBuffer.allocate(l));
+                response.write(length == 0, ByteBuffer.allocate(l), this);
                 return Action.SCHEDULED;
             }
         }.iterate();

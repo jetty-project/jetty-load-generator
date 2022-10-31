@@ -80,7 +80,7 @@ public class ResourceBuildTest {
     @Test
     public void testWebsiteTreeWithXML() throws Exception {
         URL xml = Thread.currentThread().getContextClassLoader().getResource("website_profile.xml");
-        Resource sample = (Resource)new XmlConfiguration(Objects.requireNonNull(org.eclipse.jetty.util.resource.Resource.newResource(xml))).configure();
+        Resource sample = (Resource)new XmlConfiguration(Objects.requireNonNull(org.eclipse.jetty.util.resource.ResourceFactory.root().newResource(xml))).configure();
         assertWebsiteTree(sample);
     }
 
