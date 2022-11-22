@@ -101,7 +101,7 @@ public class HTTP2LoadGeneratorTest {
         startServer(new TestHandler() {
             @Override
             public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
-                if ("/".equals(request.getPathInContext())) {
+                if ("/".equals(org.eclipse.jetty.server.Request.getPathInContext(request))) {
                     MetaData.Request push1 = new MetaData.Request(
                             HttpMethod.GET.asString(),
                             HttpURI.build(request.getHttpURI()).path("/1"),

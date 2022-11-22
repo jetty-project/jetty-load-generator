@@ -649,7 +649,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                                 LOGGER.debug("sending {}{}", warmup ? "warmup " : "", info);
                             }
 
-                            httpRequest.pushListener((request, pushed) -> {
+                            httpRequest.onPush((request, pushed) -> {
                                 URI pushedURI = pushed.getURI();
                                 Resource child = resource.findDescendant(pushedURI);
                                 if (child != null && pushCache.add(pushedURI)) {

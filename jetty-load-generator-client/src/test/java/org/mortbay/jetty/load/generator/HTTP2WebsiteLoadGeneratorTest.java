@@ -108,7 +108,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
     private class PushingHandler extends TestHandler {
         @Override
         public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
-            if ("/".equals(request.getPathInContext())) {
+            if ("/".equals(org.eclipse.jetty.server.Request.getPathInContext(request))) {
                 for (Resource resource : resource.getResources()) {
                     MetaData.Request push = new MetaData.Request(
                             HttpMethod.GET.asString(),
