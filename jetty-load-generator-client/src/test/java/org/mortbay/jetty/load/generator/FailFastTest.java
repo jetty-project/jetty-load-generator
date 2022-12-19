@@ -102,7 +102,7 @@ public class FailFastTest {
         Assert.assertTrue("onFailureCall is " + onFailureCall, onFailureCall < 10);
     }
 
-    private static class ServerStopHandler extends Handler.Processor {
+    private static class ServerStopHandler extends Handler.Abstract {
         private final AtomicInteger requests = new AtomicInteger();
         private final Server server;
 
@@ -111,12 +111,13 @@ public class FailFastTest {
         }
 
         @Override
-        public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+        public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
             Fields parameters = org.eclipse.jetty.server.Request.extractQueryParameters(request);
             if (requests.incrementAndGet() > Integer.parseInt(parameters.getValue("fail"))) {
                 new Thread(() -> LifeCycle.stop(server)).start();
             }
             response.write(true, ByteBuffer.wrap("Jetty rocks!!".getBytes(StandardCharsets.UTF_8)), callback);
+            return true;
         }
     }
 }

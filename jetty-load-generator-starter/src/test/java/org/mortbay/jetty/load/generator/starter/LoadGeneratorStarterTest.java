@@ -253,7 +253,7 @@ public class LoadGeneratorStarterTest {
         }
     }
 
-    private static class TestHandler extends Handler.Processor {
+    private static class TestHandler extends Handler.Abstract {
         private final AtomicInteger getNumber = new AtomicInteger(0);
         private final AtomicInteger postNumber = new AtomicInteger(0);
         private final ServerConnector connector;
@@ -263,7 +263,7 @@ public class LoadGeneratorStarterTest {
         }
 
         @Override
-        public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+        public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
             Fields parameters = org.eclipse.jetty.server.Request.extractQueryParameters(request);
             String method = request.getMethod().toUpperCase(Locale.ENGLISH);
             switch (method) {
@@ -288,6 +288,7 @@ public class LoadGeneratorStarterTest {
                     break;
                 }
             }
+            return true;
         }
     }
 }

@@ -136,12 +136,13 @@ public class LoadGeneratorTest {
         int iterations = 1;
         CountDownLatch serverLatch = new CountDownLatch(iterations);
         long delay = 500;
-        startServer(new Handler.Processor() {
+        startServer(new Handler.Abstract() {
             @Override
-            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) throws Exception {
+            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) throws Exception {
                 Thread.sleep(delay);
                 serverLatch.countDown();
                 callback.succeeded();
+                return true;
             }
         });
 
@@ -219,10 +220,11 @@ public class LoadGeneratorTest {
 
     @Test
     public void testInterruptAfterResourceComplete() throws Exception {
-        startServer(new Handler.Processor() {
+        startServer(new Handler.Abstract() {
             @Override
-            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 callback.succeeded();
+                return true;
             }
         });
 
@@ -487,17 +489,18 @@ public class LoadGeneratorTest {
 
     @Test
     public void testSomeRequestFailure() throws Exception {
-        startServer(new Handler.Processor() {
+        startServer(new Handler.Abstract() {
             private final AtomicInteger requests = new AtomicInteger();
 
             @Override
-            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 if (requests.incrementAndGet() == 2) {
                     // Fail only the second request.
                     callback.failed(new IOException());
                 } else {
                     callback.succeeded();
                 }
+                return true;
             }
         });
 
@@ -587,11 +590,12 @@ public class LoadGeneratorTest {
     public void testResourceFromRequestAttribute() throws Exception {
         Resource resource = new Resource("/original");
         String extraPath = "/" + Integer.toHexString(resource.hashCode());
-        startServer(new Handler.Processor() {
+        startServer(new Handler.Abstract() {
             @Override
-            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 response.setStatus(org.eclipse.jetty.server.Request.getPathInContext(request).endsWith(extraPath) ? HttpStatus.OK_200 : HttpStatus.INTERNAL_SERVER_ERROR_500);
                 callback.succeeded();
+                return true;
             }
         });
 
@@ -622,15 +626,16 @@ public class LoadGeneratorTest {
     @Test
     public void testServerSlowOnFirstIterationFastOnLastIteration() throws Exception {
         int resourceRate = 3;
-        startServer(new Handler.Processor() {
+        startServer(new Handler.Abstract() {
             private final AtomicInteger requests = new AtomicInteger();
 
             @Override
-            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 if (requests.incrementAndGet() == 1) {
                     sleep(4 * 1000 / resourceRate);
                 }
                 callback.succeeded();
+                return true;
             }
         });
 

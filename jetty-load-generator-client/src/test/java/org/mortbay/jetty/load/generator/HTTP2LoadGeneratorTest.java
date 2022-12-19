@@ -100,7 +100,7 @@ public class HTTP2LoadGeneratorTest {
     public void testPush() throws Exception {
         startServer(new TestHandler() {
             @Override
-            public void process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 if ("/".equals(org.eclipse.jetty.server.Request.getPathInContext(request))) {
                     MetaData.Request push1 = new MetaData.Request(
                             HttpMethod.GET.asString(),
@@ -118,7 +118,7 @@ public class HTTP2LoadGeneratorTest {
                     );
                     request.push(push2);
                 }
-                super.process(request, response, callback);
+                return super.process(request, response, callback);
             }
         });
 

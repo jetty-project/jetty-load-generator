@@ -20,9 +20,9 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.IteratingNestedCallback;
 
-public class TestHandler extends Handler.Processor {
+public class TestHandler extends Handler.Abstract {
     @Override
-    public void process(Request request, Response response, Callback callback) {
+    public boolean process(Request request, Response response, Callback callback) {
         String header = request.getHeaders().get(Resource.RESPONSE_LENGTH);
         int length = header != null ? Integer.parseInt(header) : 0;
         if (length > 0) {
@@ -30,6 +30,7 @@ public class TestHandler extends Handler.Processor {
         } else {
             callback.succeeded();
         }
+        return true;
     }
 
     private void sendResponseContent(Response response, int contentLength, Callback callback) {
