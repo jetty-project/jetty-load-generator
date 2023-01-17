@@ -34,7 +34,6 @@
     <connection>scm:git:git://github.com/jetty-project/jetty-load-generator.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jetty-project/jetty-load-generator.git</developerConnection>
     <url>https://github.com/jetty-project/jetty-load-generator</url>
-    <tag>2.1.3</tag>
   </scm>
 
   <distributionManagement>
