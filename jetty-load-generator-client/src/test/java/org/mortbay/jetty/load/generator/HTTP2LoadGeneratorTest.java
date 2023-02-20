@@ -16,7 +16,7 @@ package org.mortbay.jetty.load.generator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
-import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
@@ -100,7 +100,7 @@ public class HTTP2LoadGeneratorTest {
     public void testPush() throws Exception {
         startServer(new TestHandler() {
             @Override
-            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 if ("/".equals(org.eclipse.jetty.server.Request.getPathInContext(request))) {
                     MetaData.Request push1 = new MetaData.Request(
                             HttpMethod.GET.asString(),
@@ -118,7 +118,7 @@ public class HTTP2LoadGeneratorTest {
                     );
                     request.push(push2);
                 }
-                return super.process(request, response, callback);
+                return super.handle(request, response, callback);
             }
         });
 

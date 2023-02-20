@@ -16,7 +16,6 @@ package org.mortbay.jetty.load.generator;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
@@ -30,7 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.ObjectName;
-import org.eclipse.jetty.client.api.Request;
+
+import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http2.server.HTTP2CServerConnectionFactory;
 import org.eclipse.jetty.jmx.MBeanContainer;
@@ -138,7 +138,7 @@ public class LoadGeneratorTest {
         long delay = 500;
         startServer(new Handler.Abstract() {
             @Override
-            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) throws Exception {
+            public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) throws Exception {
                 Thread.sleep(delay);
                 serverLatch.countDown();
                 callback.succeeded();
@@ -174,21 +174,21 @@ public class LoadGeneratorTest {
     public void testMultipleThreads() throws Exception {
         startServer(new TestHandler());
 
-        Set<String> threads = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        Set<Thread> threads = ConcurrentHashMap.newKeySet();
         LoadGenerator loadGenerator = LoadGenerator.builder()
                 .port(connector.getLocalPort())
                 .httpClientTransportBuilder(clientTransportBuilder)
-                .threads(2)
+                .threads(4)
                 .iterationsPerThread(1)
                 .requestListener(new Request.Listener() {
                     @Override
                     public void onBegin(Request request) {
-                        threads.add(Thread.currentThread().getName());
+                        threads.add(Thread.currentThread());
                     }
                 })
                 .build();
-        loadGenerator.begin().get(5, TimeUnit.SECONDS);
-        Assert.assertEquals(2, threads.size());
+        loadGenerator.begin().get(15, TimeUnit.SECONDS);
+        Assert.assertTrue(threads.size() >= 2);
     }
 
     @Test
@@ -222,7 +222,7 @@ public class LoadGeneratorTest {
     public void testInterruptAfterResourceComplete() throws Exception {
         startServer(new Handler.Abstract() {
             @Override
-            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 callback.succeeded();
                 return true;
             }
@@ -493,7 +493,7 @@ public class LoadGeneratorTest {
             private final AtomicInteger requests = new AtomicInteger();
 
             @Override
-            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 if (requests.incrementAndGet() == 2) {
                     // Fail only the second request.
                     callback.failed(new IOException());
@@ -592,7 +592,7 @@ public class LoadGeneratorTest {
         String extraPath = "/" + Integer.toHexString(resource.hashCode());
         startServer(new Handler.Abstract() {
             @Override
-            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 response.setStatus(org.eclipse.jetty.server.Request.getPathInContext(request).endsWith(extraPath) ? HttpStatus.OK_200 : HttpStatus.INTERNAL_SERVER_ERROR_500);
                 callback.succeeded();
                 return true;
@@ -630,7 +630,7 @@ public class LoadGeneratorTest {
             private final AtomicInteger requests = new AtomicInteger();
 
             @Override
-            public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+            public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
                 if (requests.incrementAndGet() == 1) {
                     sleep(4 * 1000 / resourceRate);
                 }

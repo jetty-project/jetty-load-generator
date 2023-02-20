@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.HdrHistogram.EncodableHistogram;
 import org.HdrHistogram.HistogramLogReader;
-import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -263,7 +263,7 @@ public class LoadGeneratorStarterTest {
         }
 
         @Override
-        public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+        public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
             Fields parameters = org.eclipse.jetty.server.Request.extractQueryParameters(request);
             String method = request.getMethod().toUpperCase(Locale.ENGLISH);
             switch (method) {

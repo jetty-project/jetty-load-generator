@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -111,7 +111,7 @@ public class FailFastTest {
         }
 
         @Override
-        public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+        public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
             Fields parameters = org.eclipse.jetty.server.Request.extractQueryParameters(request);
             if (requests.incrementAndGet() > Integer.parseInt(parameters.getValue("fail"))) {
                 new Thread(() -> LifeCycle.stop(server)).start();

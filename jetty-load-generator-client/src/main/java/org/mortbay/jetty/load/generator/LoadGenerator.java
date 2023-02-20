@@ -40,12 +40,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
 
+import org.eclipse.jetty.client.BytesRequestContent;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.HttpRequest;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.api.Response;
-import org.eclipse.jetty.client.api.Result;
-import org.eclipse.jetty.client.util.BytesRequestContent;
+import org.eclipse.jetty.client.Request;
+import org.eclipse.jetty.client.Response;
+import org.eclipse.jetty.client.Result;
 import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.util.Callback;
@@ -638,7 +637,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                 for (Resource.Info info : resources) {
                     Resource resource = info.getResource();
                     if (resource.getPath() != null) {
-                        HttpRequest httpRequest = (HttpRequest)newRequest(client, config, resource);
+                        Request httpRequest = newRequest(client, config, resource);
 
                         if (pushCache.contains(httpRequest.getURI())) {
                             if (LOGGER.isDebugEnabled()) {

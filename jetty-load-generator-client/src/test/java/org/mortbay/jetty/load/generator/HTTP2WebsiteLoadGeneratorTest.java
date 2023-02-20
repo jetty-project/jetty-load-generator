@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.HdrHistogram.AtomicHistogram;
 import org.HdrHistogram.Histogram;
-import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.Request;
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpURI;
@@ -107,7 +107,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
 
     private class PushingHandler extends TestHandler {
         @Override
-        public boolean process(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
+        public boolean handle(org.eclipse.jetty.server.Request request, Response response, Callback callback) {
             if ("/".equals(org.eclipse.jetty.server.Request.getPathInContext(request))) {
                 for (Resource resource : resource.getResources()) {
                     MetaData.Request push = new MetaData.Request(
@@ -119,7 +119,7 @@ public class HTTP2WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
                     request.push(push);
                 }
             }
-            return super.process(request, response, callback);
+            return super.handle(request, response, callback);
         }
     }
 }
