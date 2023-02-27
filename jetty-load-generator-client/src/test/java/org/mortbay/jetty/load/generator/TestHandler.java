@@ -14,6 +14,7 @@
 package org.mortbay.jetty.load.generator;
 
 import java.nio.ByteBuffer;
+
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
@@ -23,8 +24,7 @@ import org.eclipse.jetty.util.IteratingNestedCallback;
 public class TestHandler extends Handler.Abstract {
     @Override
     public boolean handle(Request request, Response response, Callback callback) {
-        String header = request.getHeaders().get(Resource.RESPONSE_LENGTH);
-        int length = header != null ? Integer.parseInt(header) : 0;
+        long length = request.getHeaders().getLongField(Resource.RESPONSE_LENGTH);
         if (length > 0) {
             sendResponseContent(response, length, callback);
         } else {
@@ -33,16 +33,16 @@ public class TestHandler extends Handler.Abstract {
         return true;
     }
 
-    private void sendResponseContent(Response response, int contentLength, Callback callback) {
+    private void sendResponseContent(Response response, long contentLength, Callback callback) {
         new IteratingNestedCallback(callback) {
-            private int length = contentLength;
+            private long length = contentLength;
 
             @Override
             protected Action process() {
                 if (length == 0) {
                     return Action.SUCCEEDED;
                 }
-                int l = Math.min(length, 2048);
+                int l = (int)Math.min(length, 2048);
                 length -= l;
                 response.write(length == 0, ByteBuffer.allocate(l), this);
                 return Action.SCHEDULED;

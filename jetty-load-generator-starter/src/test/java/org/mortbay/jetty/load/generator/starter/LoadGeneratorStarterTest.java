@@ -19,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.HdrHistogram.EncodableHistogram;
 import org.HdrHistogram.HistogramLogReader;
 import org.eclipse.jetty.client.Request;
@@ -278,7 +278,7 @@ public class LoadGeneratorStarterTest {
                             }
                         }
                     }
-                    response.write(true, ByteBuffer.wrap("Jetty rocks!!".getBytes(StandardCharsets.UTF_8)), callback);
+                    Content.Sink.write(response, true, "Jetty rocks!!", callback);
                     getNumber.addAndGet(1);
                     break;
                 }

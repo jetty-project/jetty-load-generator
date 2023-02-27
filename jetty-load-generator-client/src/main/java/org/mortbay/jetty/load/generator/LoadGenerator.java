@@ -346,6 +346,8 @@ public class LoadGenerator extends ContainerLifeCycle {
                 }
 
                 HttpClient client = clients[clientIndex];
+                if (LOGGER.isDebugEnabled())
+                    LOGGER.debug("using {} to send resource tree {}", client, client.getExecutor());
                 sendResourceTree(client, config.getResource(), warmup, callback);
 
                 if (lastIteration || anyFailure.isCompletedExceptionally()) {

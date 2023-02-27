@@ -178,7 +178,7 @@ public class LoadGeneratorTest {
         LoadGenerator loadGenerator = LoadGenerator.builder()
                 .port(connector.getLocalPort())
                 .httpClientTransportBuilder(clientTransportBuilder)
-                .threads(4)
+                .threads(2)
                 .iterationsPerThread(1)
                 .requestListener(new Request.Listener() {
                     @Override
@@ -188,7 +188,7 @@ public class LoadGeneratorTest {
                 })
                 .build();
         loadGenerator.begin().get(15, TimeUnit.SECONDS);
-        Assert.assertTrue(threads.size() >= 2);
+        Assert.assertEquals(2, threads.size());
     }
 
     @Test

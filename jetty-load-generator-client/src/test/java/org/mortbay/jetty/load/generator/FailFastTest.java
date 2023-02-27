@@ -13,11 +13,11 @@
 
 package org.mortbay.jetty.load.generator;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.eclipse.jetty.client.Request;
+import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -116,7 +116,7 @@ public class FailFastTest {
             if (requests.incrementAndGet() > Integer.parseInt(parameters.getValue("fail"))) {
                 new Thread(() -> LifeCycle.stop(server)).start();
             }
-            response.write(true, ByteBuffer.wrap("Jetty rocks!!".getBytes(StandardCharsets.UTF_8)), callback);
+            Content.Sink.write(response, true, "Jetty rocks!!", callback);
             return true;
         }
     }
