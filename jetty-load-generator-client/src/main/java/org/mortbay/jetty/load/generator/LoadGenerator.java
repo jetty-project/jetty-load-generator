@@ -57,6 +57,7 @@ import org.eclipse.jetty.util.annotation.ManagedOperation;
 import org.eclipse.jetty.util.component.ContainerLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.AutoLock;
 import org.eclipse.jetty.util.thread.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -591,6 +592,7 @@ public class LoadGenerator extends ContainerLifeCycle {
     }
 
     private class Sender {
+        private final AutoLock lock = new AutoLock();
         private final Queue<Resource.Info> queue = new ArrayDeque<>();
         private final Set<URI> pushCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
         private final HttpClient client;
@@ -605,13 +607,13 @@ public class LoadGenerator extends ContainerLifeCycle {
         }
 
         private void offer(List<Resource.Info> resources) {
-            synchronized (this) {
+            try (AutoLock ignored = lock.lock()) {
                 queue.addAll(resources);
             }
         }
 
         private void send() {
-            synchronized (this) {
+            try (AutoLock ignored = lock.lock()) {
                 if (active) {
                     return;
                 }
@@ -620,7 +622,7 @@ public class LoadGenerator extends ContainerLifeCycle {
 
             List<Resource.Info> resources = new ArrayList<>();
             while (true) {
-                synchronized (this) {
+                try (AutoLock ignored = lock.lock()) {
                     if (queue.isEmpty()) {
                         active = false;
                         return;
