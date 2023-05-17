@@ -129,7 +129,7 @@ public class HTTP2LoadGeneratorTest {
                 .httpClientTransportBuilder(new HTTP2ClientTransportBuilder())
                 .port(connector.getLocalPort())
                 .resource(new Resource("/", new Resource("/1"), new Resource("/2")).responseLength(128 * 1024))
-                .requestListener(new Request.Listener.Adapter() {
+                .requestListener(new Request.Listener() {
                     @Override
                     public void onBegin(Request request) {
                         requests.incrementAndGet();

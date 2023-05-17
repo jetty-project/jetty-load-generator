@@ -52,13 +52,13 @@ public class HTTP1WebsiteLoadGeneratorTest extends WebsiteLoadGeneratorTest {
                     rootHistogram.recordValue(info.getResponseTime() - info.getRequestTime());
                     treeHistogram.recordValue(info.getTreeTime() - info.getRequestTime());
                 })
-                .requestListener(new Request.Listener.Adapter() {
+                .requestListener(new Request.Listener() {
                     @Override
                     public void onQueued(Request request) {
                         requests.incrementAndGet();
                     }
                 })
-                .requestListener(new Request.Listener.Adapter() {
+                .requestListener(new Request.Listener() {
                     @Override
                     public void onBegin(Request request) {
                         requests.decrementAndGet();

@@ -698,7 +698,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             }
         }
 
-        private class ResponseHandler extends Response.Listener.Adapter {
+        private class ResponseHandler implements Response.Listener {
             private final Resource.Info info;
 
             private ResponseHandler(Resource.Info info) {

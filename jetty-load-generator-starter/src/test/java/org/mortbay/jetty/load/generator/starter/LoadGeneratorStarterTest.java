@@ -136,7 +136,7 @@ public class LoadGeneratorStarterTest {
 
         AtomicInteger onFailure = new AtomicInteger(0);
         AtomicInteger onCommit = new AtomicInteger(0);
-        Request.Listener.Adapter requestListener = new Request.Listener.Adapter() {
+        Request.Listener requestListener = new Request.Listener() {
             @Override
             public void onFailure(Request request, Throwable failure) {
                 LOGGER.info("fail: {}", onFailure.incrementAndGet());

@@ -78,7 +78,7 @@ public class FailFastTest {
                 .threads(1)
                 .resourceRate(5)
                 .iterationsPerThread(25)
-                .requestListener(new Request.Listener.Adapter() {
+                .requestListener(new Request.Listener() {
                     @Override
                     public void onFailure(Request request, Throwable failure) {
                         LOGGER.info("fail: {}", onFailure.incrementAndGet());
