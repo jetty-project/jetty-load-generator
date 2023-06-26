@@ -15,7 +15,7 @@ parallel builds
 def newBuild(os, jdk) {
   return {
     node(os) {
-      def mvnName = 'maven3.5'
+      def mvnName = 'maven3'
       def settingsName = 'oss-settings.xml'
       def mvnOpts = '-Xms2g -Xmx4g -Djava.awt.headless=true'
 
