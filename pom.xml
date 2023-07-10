@@ -16,7 +16,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jetty.version>12.0.0.beta2</jetty.version>
+    <jetty.version>12.0.0.beta3</jetty.version>
   </properties>
 
   <licenses>
@@ -185,7 +185,14 @@
         <artifactId>license-maven-plugin</artifactId>
         <inherited>false</inherited>
         <configuration>
-          <header>header-template.txt</header>
+          <licenseSets>
+            <licenseSet>
+              <header>header-template.txt</header>
+              <includes>
+                <include>**/*.java</include>
+              </includes>
+            </licenseSet>
+          </licenseSets>
           <failIfMissing>true</failIfMissing>
           <aggregate>true</aggregate>
           <strictCheck>true</strictCheck>
@@ -195,9 +202,6 @@
           <mapping>
             <java>DOUBLESLASH_STYLE</java>
           </mapping>
-          <includes>
-            <include>**/*.java</include>
-          </includes>
         </configuration>
         <executions>
           <execution>
