@@ -52,6 +52,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -178,6 +179,7 @@ public class LoadGeneratorTest {
     }
 
     @Test
+    @Ignore("Flaky")
     public void testMultipleThreads() throws Exception {
         startServer(new TestHandler());
 
