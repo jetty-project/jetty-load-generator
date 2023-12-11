@@ -205,16 +205,16 @@ public class LoadGenerator extends ContainerLifeCycle {
                             .thenCompose(v -> CompletableFuture.allOf(responses));
                 })
                 .thenRun(this::fireCompleteEvent)
-            // HttpClient cannot be stopped from one of its own threads.
-            .whenCompleteAsync((r, x) ->
-            {
-                if (LOGGER.isDebugEnabled())
+                // HttpClient cannot be stopped from one of its own threads.
+                .whenCompleteAsync((r, x) ->
                 {
-                    LOGGER.debug("stopping http clients");
-                }
-                Collection<HttpClient> clients = getBeans(HttpClient.class);
-                clients.forEach(this::stopHttpClient);
-            }, executorService)
+                    if (LOGGER.isDebugEnabled())
+                    {
+                        LOGGER.debug("stopping http clients");
+                    }
+                    Collection<HttpClient> clients = getBeans(HttpClient.class);
+                    clients.forEach(this::stopHttpClient);
+                }, executorService)
                 // Call halt() even if previous stages failed.
                 .whenCompleteAsync((r, x) -> halt(), executorService);
     }
