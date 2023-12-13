@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EventListener;
@@ -207,6 +206,14 @@ public class LoadGenerator extends ContainerLifeCycle {
                             .thenCompose(v -> CompletableFuture.allOf(responses));
                 })
                 .thenRun(this::fireCompleteEvent)
+                // HttpClient cannot be stopped from one of its own threads.
+                .whenCompleteAsync((r, x) -> {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("stopping http clients");
+                    }
+                    Collection<HttpClient> clients = getBeans(HttpClient.class);
+                    clients.forEach(this::stopHttpClient);
+                }, executorService)
                 // Call halt() even if previous stages failed.
                 .whenCompleteAsync((r, x) -> halt(), executorService);
     }
@@ -234,8 +241,6 @@ public class LoadGenerator extends ContainerLifeCycle {
         // while CompletableFutures propagate completion outwards.
         // The method returns a CompletableFuture, but the implementation
         // uses Callbacks that need to reference the innermost CompletableFuture.
-
-        HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
 
         Callback.Completable anyFailure = new Callback.Completable();
 
@@ -267,6 +272,7 @@ public class LoadGenerator extends ContainerLifeCycle {
             }
 
             Collection<Connection.Listener> connectionListeners = getBeans(Connection.Listener.class);
+            HttpClient[] clients = new HttpClient[config.getUsersPerThread()];
             for (int i = 0; i < clients.length; ++i) {
                 HttpClient client = clients[i] = newHttpClient(getConfig());
                 connectionListeners.forEach(client::addBean);
@@ -386,14 +392,7 @@ public class LoadGenerator extends ContainerLifeCycle {
                             LOGGER.debug("sender thread failed: {}", threadName, x);
                         }
                     }
-                })
-                // HttpClient cannot be stopped from one of its own threads.
-                .whenCompleteAsync((r, x) -> {
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("stopping http clients");
-                    }
-                    Arrays.stream(clients).forEach(this::stopHttpClient);
-                }, executorService);
+                });
     }
 
     protected HttpClient newHttpClient(Config config) {
