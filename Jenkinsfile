@@ -60,7 +60,7 @@ def mavenBuild(jdk, cmdline, mvnName, junitReport) {
                "MAVEN_OPTS=-Xms2g -Xmx4g -Djava.awt.headless=true -client -XX:+UnlockDiagnosticVMOptions -XX:GCLockerRetryAllocationCount=100"]) {
         configFileProvider(
                 [configFile(fileId: 'oss-settings.xml', variable: 'GLOBAL_MVN_SETTINGS')]) {
-          sh "mvn -DsettingsPath=$GLOBAL_MVN_SETTINGS -ntp -s $GLOBAL_MVN_SETTINGS -Dmaven.repo.local=.repository -Pci -V -B -e -U $cmdline"
+          sh "mvn -DsettingsPath=$GLOBAL_MVN_SETTINGS -ntp -s $GLOBAL_MVN_SETTINGS -Dmaven.repo.local=.repository -V -B -e -U $cmdline"
         }
       }
     }
