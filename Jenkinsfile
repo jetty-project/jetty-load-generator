@@ -52,7 +52,7 @@ pipeline {
  * @param cmdline the command line in "<profiles> <goals> <properties>"`format.
  * @return the Jenkinsfile step representing a maven build
  */
-def mavenBuild(jdk, cmdline, mvnName, junit) {
+def mavenBuild(jdk, cmdline, mvnName, junitReport) {
   script {
     try {
       withEnv(["JAVA_HOME=${ tool "$jdk" }",
@@ -66,7 +66,7 @@ def mavenBuild(jdk, cmdline, mvnName, junit) {
     }
     finally
     {
-      if(junit) {
+      if(junitReport) {
         junit testResults: '**/target/surefire-reports/**/*.xml,**/target/invoker-reports/TEST*.xml', allowEmptyResults: true
       }
     }
