@@ -22,7 +22,7 @@ pipeline {
               checkout scm
               mavenBuild( "jdk21", "clean install", "maven3", true)
               recordCoverage id: "coverage-jdk21", name: "Coverage jdk21", tools: [[parser: 'JACOCO']]
-              mavenBuild( "jdk21", "clean javadoc:javadoc", "maven3", false)
+              mavenBuild( "jdk21", "clean javadoc:javadoc -Djacoco.skip=true", "maven3", false)
             }
           }
         }
