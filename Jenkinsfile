@@ -17,6 +17,8 @@ pipeline {
           steps {
             timeout( time: 180, unit: 'MINUTES' ) {
               checkout scm
+              sh "id"
+              sh "pwd"
               sh "sdk use java 21.0.2-graalce"
               mavenBuild( "jdk21", "clean install -Pnative", "maven3", true)
               recordCoverage id: "coverage-jdk21", name: "Coverage jdk21", tools: [[parser: 'JACOCO']]
