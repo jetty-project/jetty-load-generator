@@ -31,9 +31,6 @@ jobs:
           - runner: ubuntu-24.04-arm
             os-name: linux
             arch: aarch64
-          - runner: macos-13
-            os-name: macos
-            arch: amd64
           - runner: macos-latest
             os-name: macos
             arch: aarch64
