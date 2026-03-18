@@ -1,0 +1,94 @@
+name: Native Binaries
+
+on:
+  push:
+    branches:
+      - main
+      - "4.*.x"
+    tags:
+      - "jetty-load-generator-*"
+  pull_request:
+    branches:
+      - main
+      - "4.*.x"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag, or PR ref (e.g. refs/pull/42/head)'
+        required: false
+        default: ''
+
+jobs:
+  native:
+    name: Native / ${{ matrix.os-name }}-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            os-name: linux
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            os-name: linux
+            arch: aarch64
+          - runner: macos-13
+            os-name: macos
+            arch: amd64
+          - runner: macos-latest
+            os-name: macos
+            arch: aarch64
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm-community'
+          native-image-job-reports: 'true'
+          cache: 'maven'
+
+      - name: Build native binary
+        run: mvn clean install -Pnative -DskipTests -pl jetty-load-generator-starter -am -B -V
+
+      - name: Rename binary
+        run: |
+          mv jetty-load-generator-starter/target/load-generator \
+             load-generator-${{ matrix.os-name }}-${{ matrix.arch }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-generator-${{ matrix.os-name }}-${{ matrix.arch }}
+          path: load-generator-${{ matrix.os-name }}-${{ matrix.arch }}
+          if-no-files-found: error
+
+  release:
+    name: Attach binaries to GitHub Release
+    needs: native
+    if: startsWith(github.ref, 'refs/tags/jetty-load-generator-')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all native binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+          merge-multiple: false
+
+      - name: Attach binaries to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            binaries/load-generator-linux-amd64/load-generator-linux-amd64
+            binaries/load-generator-linux-aarch64/load-generator-linux-aarch64
+            binaries/load-generator-macos-amd64/load-generator-macos-amd64
+            binaries/load-generator-macos-aarch64/load-generator-macos-aarch64
+          fail_on_unmatched_files: true

@@ -158,6 +158,7 @@
               <buildArgs>
                 <buildArg>--no-fallback</buildArg>
                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                <buildArg>-march=compatibility</buildArg>
               </buildArgs>
             </configuration>
           </plugin>
