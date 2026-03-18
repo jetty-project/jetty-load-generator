@@ -13,7 +13,7 @@ pipeline {
     stage("Parallel Stage") {
       parallel {
         stage("Build / Test - JDK21") {
-          agent { node { label 'linux-light' } }
+          agent { node { label 'linux' } }
           steps {
             timeout( time: 180, unit: 'MINUTES' ) {
               checkout scm
