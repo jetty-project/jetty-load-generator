@@ -13,21 +13,15 @@
 
 package org.mortbay.jetty.load.generator.listeners;
 
-import java.io.Closeable;
 import java.io.FileNotFoundException;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.HdrHistogram.Histogram;
-import org.HdrHistogram.HistogramLogWriter;
-import org.HdrHistogram.SingleWriterRecorder;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.Resource;
 
 /**
- * <p>A load generator listener that reports information about the status codes.</p>
+ * <p>A load generator listener that reports response time histograms.</p>
  * <p>Usage:</p>
  * <pre>
  * // Create the report listener.
@@ -102,120 +96,6 @@ public class ResponseTimeReportListener implements Resource.NodeListener, LoadGe
     public void onComplete(LoadGenerator generator)
     {
         stopRecording();
-    }
-
-    private static class LatencyRecorder
-    {
-        private final HistogramLogRecorder recorder;
-        private final String histogramFilename;
-
-        public LatencyRecorder(String histogramFilename, int minBufferSize) throws FileNotFoundException
-        {
-            this.recorder = new HistogramLogRecorder(histogramFilename, 3, 1000, minBufferSize);
-            this.histogramFilename = histogramFilename;
-        }
-
-        public String getFilename()
-        {
-            return histogramFilename;
-        }
-
-        public void startRecording()
-        {
-            recorder.startRecording();
-        }
-
-        public void stopRecording()
-        {
-            recorder.close();
-        }
-
-        public void recordValue(long value)
-        {
-            recorder.recordValue(value);
-        }
-
-        private static class HistogramLogRecorder implements Closeable
-        {
-            private enum State
-            {
-                NOT_RECORDING, RECORDING, CLOSED
-            }
-
-            private final ThreadLocal<SingleWriterRecorder> recorderTl;
-            private final List<SingleWriterRecorder> recorders = new CopyOnWriteArrayList<>();
-            private final Timer timer = new Timer();
-            private final HistogramLogWriter writer;
-            private volatile HistogramLogRecorder.State state = HistogramLogRecorder.State.NOT_RECORDING;
-
-            public HistogramLogRecorder(String histogramFilename, int numberOfSignificantValueDigits, int intervalInMs, int minBufferSize) throws FileNotFoundException
-            {
-                recorderTl = ThreadLocal.withInitial(() ->
-                {
-                    SingleWriterRecorder singleWriterRecorder = new SingleWriterRecorder(numberOfSignificantValueDigits);
-                    recorders.add(singleWriterRecorder);
-                    return singleWriterRecorder;
-                });
-                writer = new HistogramLogWriter(histogramFilename);
-                timer.schedule(new TimerTask()
-                {
-                    private final Histogram collectiveHistogram = new Histogram(numberOfSignificantValueDigits)
-                    {
-                        public int getNeededByteBufferCapacity()
-                        {
-                            int superNeededByteBufferCapacity = super.getNeededByteBufferCapacity();
-                            if (minBufferSize > 0)
-                                return Math.max(superNeededByteBufferCapacity, minBufferSize);
-                            else
-                                return superNeededByteBufferCapacity;
-                        }
-                    };
-                    private Histogram intervalHistogram;
-                    @Override
-                    public void run()
-                    {
-                        for (SingleWriterRecorder recorder : recorders)
-                        {
-                            intervalHistogram = recorder.getIntervalHistogram(intervalHistogram, false);
-                            collectiveHistogram.add(intervalHistogram);
-                        }
-                        if (state == HistogramLogRecorder.State.RECORDING)
-                            writer.outputIntervalHistogram(collectiveHistogram);
-                        collectiveHistogram.reset();
-                    }
-                }, intervalInMs, intervalInMs);
-            }
-
-            public void startRecording()
-            {
-                if (state != HistogramLogRecorder.State.NOT_RECORDING)
-                    throw new IllegalStateException("current state: " + state);
-
-                long now = System.currentTimeMillis();
-                writer.setBaseTime(now);
-                writer.outputBaseTime(now);
-                writer.outputStartTime(now);
-                state = HistogramLogRecorder.State.RECORDING;
-            }
-
-            @Override
-            public void close()
-            {
-                if (state == HistogramLogRecorder.State.CLOSED)
-                    return;
-                state = HistogramLogRecorder.State.CLOSED;
-
-                timer.cancel();
-                writer.close();
-            }
-
-            public void recordValue(long value)
-            {
-                // Always record values even if state != State.RECORDING, the timer won't write the
-                // histogram data on disk, but the histogram code will be jit'ed.
-                recorderTl.get().recordValue(value);
-            }
-        }
     }
 }
 
