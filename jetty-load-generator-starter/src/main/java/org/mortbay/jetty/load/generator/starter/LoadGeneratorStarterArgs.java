@@ -112,7 +112,7 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--statuses-file", "-stf"}, description = "Statuses output file path")
     private String statusesFile;
 
-    @Parameter(names = {"--statuses-recording-delay", "-srd"}, description = "Statuses recording delay in ms")
+    @Parameter(names = {"--statuses-recording-delay", "-strd"}, description = "Statuses recording delay in ms")
     private long statusesRecordingDelay;
 
     @Parameter(names = {"--rth-file", "-rthf"}, description = "Response time histograms output file path")
@@ -121,7 +121,7 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--rth-recording-delay", "-rthrd"}, description = "Response time histograms recording delay in ms")
     private long responseTimeHistogramsDelay;
 
-    @Parameter(names = {"--rth-recording-buffer-size", "-rthrbf"}, description = "Response time histograms recording buffer size in bytes")
+    @Parameter(names = {"--rth-recording-buffer-size", "-rthrbs"}, description = "Response time histograms recording buffer size in bytes")
     private int responseTimeHistogramsBufferSize;
 
     @Parameter(names = {"--display-stats", "-ds"}, description = "Whether to display statistics in the terminal")
