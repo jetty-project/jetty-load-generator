@@ -1,5 +1,20 @@
 [
   {
+    "name": "java.util.Base64",
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "java.util.Base64$Decoder",
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "java.util.Base64$Encoder",
+    "allDeclaredMethods": true,
+    "allPublicMethods": true
+  },
+  {
     "name": "org.mortbay.jetty.load.generator.starter.LoadGeneratorStarterArgs",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
