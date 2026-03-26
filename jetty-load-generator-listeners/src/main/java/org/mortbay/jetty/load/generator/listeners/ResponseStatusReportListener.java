@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -58,7 +57,7 @@ import org.mortbay.jetty.load.generator.Resource;
 public class ResponseStatusReportListener implements Resource.NodeListener, LoadGenerator.CompleteListener
 {
     private final Timer timer = new Timer();
-    private final AtomicReference<ConcurrentMap<String, LongAdder>> statuses = new AtomicReference<>(new ConcurrentHashMap<>());
+    private final AtomicReference<ConcurrentHashMap<String, LongAdder>> statuses = new AtomicReference<>(new ConcurrentHashMap<>());
     private final PrintWriter printWriter;
     private final boolean fullStackTrace;
     private int writeCounter;
@@ -118,7 +117,7 @@ public class ResponseStatusReportListener implements Resource.NodeListener, Load
 
     private void writeStatuses()
     {
-        ConcurrentMap<String, LongAdder> toWrite = statuses.getAndSet(new ConcurrentHashMap<>());
+        ConcurrentHashMap<String, LongAdder> toWrite = statuses.getAndSet(new ConcurrentHashMap<>());
         printWriter.println("[" + (writeCounter++) + "]");
         for (Map.Entry<String, LongAdder> entry : toWrite.entrySet())
         {
@@ -163,21 +162,7 @@ public class ResponseStatusReportListener implements Resource.NodeListener, Load
             key = Integer.toString(status);
         }
 
-        LongAdder longAdder = statuses.get().get(key);
-        if (longAdder == null)
-        {
-            statuses.get().compute(key, (k, v) ->
-            {
-                if (v == null)
-                    v = new LongAdder();
-                v.increment();
-                return v;
-            });
-        }
-        else
-        {
-            longAdder.increment();
-        }
+        statuses.get().computeIfAbsent(key, k -> new LongAdder()).increment();
     }
 
     @Override
