@@ -35,6 +35,8 @@ import org.eclipse.jetty.toolchain.perf.HistogramSnapshot;
 import org.eclipse.jetty.util.ajax.JSON;
 import org.mortbay.jetty.load.generator.LoadGenerator;
 import org.mortbay.jetty.load.generator.listeners.ReportListener;
+import org.mortbay.jetty.load.generator.listeners.ResponseStatusReportListener;
+import org.mortbay.jetty.load.generator.listeners.ResponseTimeReportListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,21 @@ public class LoadGeneratorStarter {
             return;
         }
         LoadGenerator.Builder builder = configure(starterArgs);
+        String responseTimeHistogramsFile = starterArgs.getResponseTimeHistogramsFile();
+        if (responseTimeHistogramsFile != null)
+        {
+            long responseTimeHistogramsDelay = starterArgs.getResponseTimeHistogramsDelay();
+            int responseTimeHistogramsBufferSize = starterArgs.getResponseTimeHistogramsBufferSize();
+            ResponseTimeReportListener responseTimeReportListener = new ResponseTimeReportListener(responseTimeHistogramsFile, responseTimeHistogramsBufferSize, responseTimeHistogramsDelay);
+            builder.listener(responseTimeReportListener).resourceListener(responseTimeReportListener);
+        }
+        String statusesFile = starterArgs.getStatusesFile();
+        if (statusesFile != null)
+        {
+            long statusesRecordingDelay = starterArgs.getStatusesRecordingDelay();
+            ResponseStatusReportListener responseStatusReportListener = new ResponseStatusReportListener(statusesFile, statusesRecordingDelay);
+            builder.listener(responseStatusReportListener).resourceListener(responseStatusReportListener);
+        }
         ReportListener listener = new ReportListener();
         LoadGenerator generator = builder
                 .listener(listener)

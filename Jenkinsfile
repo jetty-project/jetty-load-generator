@@ -13,13 +13,13 @@ pipeline {
     stage("Parallel Stage") {
       parallel {
         stage("Build / Test - JDK21") {
-          agent { node { label 'linux-light' } }
+          agent { node { label 'linux' } }
           steps {
             timeout( time: 180, unit: 'MINUTES' ) {
               checkout scm
-              mavenBuild( "jdk21", "clean install", "maven3", true)
+              mavenBuild( "GraalVM-21", "clean install -Pnative", "maven3", true)
               recordCoverage id: "coverage-jdk21", name: "Coverage jdk21", tools: [[parser: 'JACOCO']]
-              mavenBuild( "jdk21", "clean javadoc:javadoc -Djacoco.skip=true", "maven3", false)
+              mavenBuild( "GraalVM-21", "clean javadoc:javadoc -Djacoco.skip=true", "maven3", false)
             }
           }
         }

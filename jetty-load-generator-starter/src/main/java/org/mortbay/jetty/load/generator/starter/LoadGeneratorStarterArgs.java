@@ -109,6 +109,21 @@ public class LoadGeneratorStarterArgs {
     @Parameter(names = {"--stats-file", "-sf"}, description = "Statistics output file path in JSON format")
     private String statsFile;
 
+    @Parameter(names = {"--statuses-file", "-stf"}, description = "Statuses output file path")
+    private String statusesFile;
+
+    @Parameter(names = {"--statuses-recording-delay", "-strd"}, description = "Statuses recording delay in ms")
+    private long statusesRecordingDelay;
+
+    @Parameter(names = {"--rth-file", "-rthf"}, description = "Response time histograms output file path")
+    private String responseTimeHistogramsFile;
+
+    @Parameter(names = {"--rth-recording-delay", "-rthrd"}, description = "Response time histograms recording delay in ms")
+    private long responseTimeHistogramsDelay;
+
+    @Parameter(names = {"--rth-recording-buffer-size", "-rthrbs"}, description = "Response time histograms recording buffer size in bytes")
+    private int responseTimeHistogramsBufferSize;
+
     @Parameter(names = {"--display-stats", "-ds"}, description = "Whether to display statistics in the terminal")
     private boolean displayStats;
 
@@ -329,6 +344,56 @@ public class LoadGeneratorStarterArgs {
 
     public void setStatsFile(String statsFile) {
         this.statsFile = statsFile;
+    }
+
+    public String getStatusesFile()
+    {
+        return statusesFile;
+    }
+
+    public void setStatusesFile(String statusesFile)
+    {
+        this.statusesFile = statusesFile;
+    }
+
+    public long getStatusesRecordingDelay()
+    {
+        return statusesRecordingDelay;
+    }
+
+    public void setStatusesRecordingDelay(long statusesRecordingDelay)
+    {
+        this.statusesRecordingDelay = statusesRecordingDelay;
+    }
+
+    public String getResponseTimeHistogramsFile()
+    {
+        return responseTimeHistogramsFile;
+    }
+
+    public void setResponseTimeHistogramsFile(String responseTimeHistogramsFile)
+    {
+        this.responseTimeHistogramsFile = responseTimeHistogramsFile;
+    }
+
+    public long getResponseTimeHistogramsDelay()
+    {
+        return responseTimeHistogramsDelay;
+    }
+
+    public void setResponseTimeHistogramsDelay(long responseTimeHistogramsDelay)
+    {
+        this.responseTimeHistogramsDelay = responseTimeHistogramsDelay;
+    }
+
+    public int getResponseTimeHistogramsBufferSize()
+    {
+        return responseTimeHistogramsBufferSize;
+    }
+
+    public void setResponseTimeHistogramsBufferSize(int responseTimeHistogramsBufferSize)
+    {
+        this.responseTimeHistogramsBufferSize = responseTimeHistogramsBufferSize;
     }
 
     public boolean isDisplayStats() {
